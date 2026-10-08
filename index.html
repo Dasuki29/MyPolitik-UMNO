@@ -3,306 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UMNO Game</title>
+  <title>Setup Karakter & Lokaliti - UMNO Game</title>
 
-  <!-- CSS Tom Select -->
+  <!-- CSS & JS Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-  
-  <!-- JS Tom Select & PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #1a1a2e;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
+      background-color: #1a1a2e; color: #ffffff;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; margin: 0; padding: 20px;
     }
 
-    /* -----------------------------------
-       1. SKRIN PILIH LOKALITI (FIRST PAGE)
-    ----------------------------------- */
-    #screenPilih {
-      display: flex; /* Aktif secara asal */
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .menu-box {
-      background: #16213e;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-      text-align: center;
-      width: 100%;
-    }
-
-    .header-images {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .logo-img {
-      width: 70px;
-      height: auto;
-    }
-
-    .avatar-img {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      border: 2px solid #e94560;
-      object-fit: cover;
-    }
-
-    h2 {
-      margin-top: 10px;
-      margin-bottom: 20px;
-      color: #e94560;
-      letter-spacing: 1px;
-    }
-
-    /* Reka Bentuk Tom Select Dark Mode */
-    .ts-control {
-      background-color: #0f3460 !important;
-      color: #ffffff !important;
-      border: 1px solid #1f4068 !important;
-      border-radius: 6px !important;
-      padding: 12px !important;
-      font-size: 15px !important;
-    }
-
-    .ts-control input {
-      color: #ffffff !important;
-    }
-
-    .ts-dropdown {
-      background-color: #0f3460 !important;
-      color: #ffffff !important;
-      border: 1px solid #1f4068 !important;
-      border-radius: 6px !important;
-    }
-
-    .ts-dropdown .option {
-      padding: 10px 12px !important;
-      color: #ffffff !important;
-    }
-
-    .ts-dropdown .option:hover, 
-    .ts-dropdown .active {
-      background-color: #e94560 !important;
-      color: #ffffff !important;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 20px;
-      border-radius: 6px;
-      border: none;
-      font-size: 16px;
-      background-color: #e94560;
-      color: #ffffff;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.2s, opacity 0.2s;
-    }
-
-    button:hover:not(:disabled) {
-      background-color: #ff6b81;
-    }
-
-    button:disabled {
-      background-color: #555555;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .status-text {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #a0a0a0;
-    }
-
-    /* -----------------------------------
-       2. SKRIN DASHBOARD / GAME (PAGE 2)
-    ----------------------------------- */
-    #screenDashboard {
-      display: none; /* Sembunyi secara asal */
-      width: 100%;
-      max-width: 600px;
-      background: #16213e;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    .setup-card {
+      background: #16213e; padding: 30px; border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); width: 100%; max-width: 480px;
       text-align: center;
     }
 
-    .badge-cawangan {
-      background-color: #0f3460;
-      color: #e94560;
-      padding: 8px 16px;
-      border-radius: 20px;
-      display: inline-block;
-      font-weight: bold;
-      margin-bottom: 20px;
-      border: 1px solid #e94560;
+    .header-logo { width: 80px; margin-bottom: 10px; }
+    h2 { color: #e94560; margin-top: 0; margin-bottom: 20px; letter-spacing: 1px; }
+
+    .form-group { text-align: left; margin-bottom: 18px; }
+    label { display: block; font-size: 14px; color: #a0a0a0; margin-bottom: 6px; font-weight: bold; }
+    
+    input[type="text"] {
+      width: 100%; padding: 12px; background: #0f3460; border: 1px solid #1f4068;
+      border-radius: 6px; color: #fff; font-size: 15px; outline: none;
     }
 
-    .game-area {
-      background: #0f3460;
-      padding: 40px 20px;
-      border-radius: 8px;
-      margin-top: 20px;
-      border: 2px dashed #1f4068;
+    /* Avatar Selection Grid */
+    .avatar-grid { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+    .avatar-option {
+      width: 65px; height: 65px; border-radius: 50%; border: 3px solid #1f4068;
+      cursor: pointer; object-fit: cover; transition: 0.2s;
     }
+    .avatar-option.selected { border-color: #e94560; transform: scale(1.1); }
+
+    /* Background Theme Selection */
+    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .theme-btn {
+      padding: 10px; border-radius: 6px; border: 2px solid #1f4068; background: #0f3460;
+      color: #fff; cursor: pointer; text-align: center; font-size: 13px;
+    }
+    .theme-btn.selected { border-color: #e94560; background: #e94560; font-weight: bold; }
+
+    /* Tom Select Styling */
+    .ts-control { background-color: #0f3460 !important; color: #fff !important; border-radius: 6px !important; padding: 12px !important; }
+    .ts-control input { color: #fff !important; }
+    .ts-dropdown { background-color: #0f3460 !important; color: #fff !important; }
+    .ts-dropdown .option:hover, .ts-dropdown .active { background-color: #e94560 !important; color: #fff !important; }
+
+    button.btn-submit {
+      width: 100%; padding: 14px; margin-top: 25px; border-radius: 6px; border: none;
+      font-size: 16px; background-color: #e94560; color: #ffffff; font-weight: bold; cursor: pointer;
+    }
+    button.btn-submit:disabled { background-color: #555555; cursor: not-allowed; opacity: 0.6; }
   </style>
 </head>
 <body>
 
-  <!-- Audio element untuk lagu latar -->
-  <audio id="bgmAudio" loop preload="auto">
-    <source src="lagu-bgm.mp3" type="audio/mpeg">
-  </audio>
+  <div class="setup-card">
+    <img src="logo-umno.png" alt="Logo UMNO" class="header-logo">
+    <h2>BINA KARAKTER & LOKALITI</h2>
 
-  <!-- ================= SKRIN 1: PILIH LOKALITI ================= -->
-  <div id="screenPilih">
-    <div class="menu-box">
-      <div class="header-images">
-        <img src="logo-umno.png" alt="Logo UMNO" class="logo-img">
-        <img src="avatar.png" alt="Avatar Player" class="avatar-img">
+    <!-- 1. NAMA PEMAIN -->
+    <div class="form-group">
+      <label for="namaPemain">Nama Pemain / Gelaran:</label>
+      <input type="text" id="namaPemain" placeholder="Masukkan nama anda..." oninput="semakBorang()">
+    </div>
+
+    <!-- 2. PILIHAN AVATAR -->
+    <div class="form-group">
+      <label>Pilih Avatar Pemain:</label>
+      <div class="avatar-grid">
+        <img src="avatar1.png" class="avatar-option selected" onclick="pilihAvatar(this, 'avatar1.png')">
+        <img src="avatar2.png" class="avatar-option" onclick="pilihAvatar(this, 'avatar2.png')">
+        <img src="avatar3.png" class="avatar-option" onclick="pilihAvatar(this, 'avatar3.png')">
       </div>
-
-      <h2>PILIH LOKALITI</h2>
-
-      <select id="selectLokaliti" placeholder="Memuatkan data cawangan..." autocomplete="off">
-        <option value="">Memuatkan data...</option>
-      </select>
-
-      <div id="statusInfo" class="status-text">Membaca senarai dari Google Sheets...</div>
-
-      <button id="btnMula" disabled onclick="mulaGame()">MULA GAME</button>
-    </div>
-  </div>
-
-  <!-- ================= SKRIN 2: DASHBOARD GAME ================= -->
-  <div id="screenDashboard">
-    <div class="header-images">
-      <img src="logo-umno.png" alt="Logo UMNO" class="logo-img">
-      <img src="avatar.png" alt="Avatar Player" class="avatar-img">
     </div>
 
-    <h2>DASHBOARD GAME</h2>
-    
-    <!-- Paparan Nama Cawangan yang dipilih -->
-    <div class="badge-cawangan">
-      Cawangan: <span id="paparCawangan">-</span>
+    <!-- 3. PILIHAN TEMA BACKGROUND -->
+    <div class="form-group">
+      <label>Pilih Tema Latar Belakang Game:</label>
+      <div class="theme-grid">
+        <div class="theme-btn selected" onclick="pilihTema(this, 'dark')">Merah Dark</div>
+        <div class="theme-btn" onclick="pilihTema(this, 'blue')">Biru Moden</div>
+        <div class="theme-btn" onclick="pilihTema(this, 'gold')">Emas Klasik</div>
+      </div>
     </div>
 
-    <!-- Tempat letak elemen game anda -->
-    <div class="game-area">
-      <h3>Selamat Datang ke Game!</h3>
-      <p>Lagu latar sedang dimainkan...</p>
-      <!-- Masukkan komponen atau canvas game anda di sini -->
+    <!-- 4. PILIHAN LOKALITI / CAWANGAN (GSHEETS) -->
+    <div class="form-group">
+      <label>Pilih Lokaliti / Cawangan:</label>
+      <select id="selectLokaliti" placeholder="Memuatkan data cawangan..."><option value="">Memuatkan data...</option></select>
     </div>
 
-    <button onclick="kembaliPilih()" style="background-color: #1f4068; margin-top: 20px;">
-      Tukar Cawangan
-    </button>
+    <button id="btnMula" class="btn-submit" disabled onclick="mulaGame()">MULA GAME & PERGI KE DASHBOARD</button>
   </div>
 
   <script>
     const gsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv';
+    
+    let avatarDipilih = 'avatar1.png';
+    let temaDipilih = 'dark';
 
-    const statusInfo = document.getElementById('statusInfo');
-    const btnMula = document.getElementById('btnMula');
-    const bgmAudio = document.getElementById('bgmAudio');
-
-    // Inisialisasi Tom Select
+    // Tom Select Initialization
     const tomSelectControl = new TomSelect('#selectLokaliti', {
       create: false,
       sortField: { field: "text", direction: "asc" },
       placeholder: "Taip untuk cari cawangan..."
     });
-
     tomSelectControl.disable();
 
-    // Read Google Sheets CSV
+    // Read GSheets CSV
     Papa.parse(gsheetUrl, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
+      download: true, header: true, skipEmptyLines: true,
       complete: function(results) {
         tomSelectControl.clearOptions();
-        let totalRecords = 0;
-
         results.data.forEach(row => {
-          const id = row['id'] || row['ID'] || row['Kod'] || row['kod'] || Object.values(row)[0];
-          const nama = row['nama'] || row['NAMA'] || row['Lokaliti'] || row['lokaliti'] || Object.values(row)[1];
-
+          const id = row['id'] || row['ID'] || Object.values(row)[0];
+          const nama = row['nama'] || row['NAMA'] || Object.values(row)[1];
           if (nama) {
-            tomSelectControl.addOption({
-              value: id ? id.trim() : nama.trim(),
-              text: nama.trim()
-            });
-            totalRecords++;
+            tomSelectControl.addOption({ value: id ? id.trim() : nama.trim(), text: nama.trim() });
           }
         });
-
         tomSelectControl.enable();
         tomSelectControl.refreshOptions(false);
-        statusInfo.textContent = `Pilih 1 daripada ${totalRecords} cawangan tersedia`;
-      },
-      error: function(err) {
-        statusInfo.textContent = 'Gagal memuatkan data dari Google Sheets.';
       }
     });
 
-    tomSelectControl.on('change', function(value) {
-      btnMula.disabled = !value;
-    });
+    function pilihAvatar(el, filename) {
+      document.querySelectorAll('.avatar-option').forEach(img => img.classList.remove('selected'));
+      el.classList.add('selected');
+      avatarDipilih = filename;
+    }
 
-    // FUNGSI UTAMA: PERTUKARAN SKRIN
+    function pilihTema(el, themeName) {
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('selected'));
+      el.classList.add('selected');
+      temaDipilih = themeName;
+    }
+
+    function semakBorang() {
+      const nama = document.getElementById('namaPemain').value.trim();
+      const lokaliti = tomSelectControl.getValue();
+      document.getElementById('btnMula').disabled = !(nama !== "" && lokaliti !== "");
+    }
+
+    tomSelectControl.on('change', semakBorang);
+
     function mulaGame() {
       const selectedId = tomSelectControl.getValue();
       const selectedOption = tomSelectControl.options[selectedId];
       const selectedNama = selectedOption ? selectedOption.text : selectedId;
 
-      // 1. Paparkan nama cawangan di Dashboard
-      document.getElementById('paparCawangan').textContent = selectedNama;
+      // SIMPAN SEMUA DATA PEMAIN KE LOCALSTORAGE
+      localStorage.setItem('playerNama', document.getElementById('namaPemain').value.trim());
+      localStorage.setItem('playerAvatar', avatarDipilih);
+      localStorage.setItem('playerTema', temaDipilih);
+      localStorage.setItem('selectedLokalitiId', selectedId);
+      localStorage.setItem('selectedLokalitiNama', selectedNama);
 
-      // 2. Sembunyikan Skrin Pilih, Tunjukkan Skrin Dashboard
-      document.getElementById('screenPilih').style.display = 'none';
-      document.getElementById('screenDashboard').style.display = 'block';
-
-      // 3. Mainkan Lagu Latar
-      bgmAudio.play().catch(error => {
-        console.error("Gagal memainkan lagu:", error);
-      });
-    }
-
-    // FUNGSI UNTUK TUKAR CAWANGAN SEMULA
-    function kembaliPilih() {
-      document.getElementById('screenDashboard').style.display = 'none';
-      document.getElementById('screenPilih').style.display = 'flex';
-      bgmAudio.pause(); // Hentikan lagu jika kembali
+      // PINDAH KE DASHBOARD
+      window.location.href = "dashboard.html";
     }
   </script>
-
 </body>
 </html>
