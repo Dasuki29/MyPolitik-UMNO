@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MyPolitik: UMNO | Daftar Pemain</title>
+  <meta name="description" content="Daftar sebagai ahli cawangan UMNO dan mulakan perjalanan politik anda.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    /* Gaya khusus borang pendaftaran */
+    :root { color-scheme: dark; }
+    option { background: var(--bg-elev-2); color: var(--text); }
+
+    .form-section { border: 0; margin: 0 0 var(--space-5); padding: 0; min-width: 0; }
+    .form-section legend {
+      padding: 0; margin-bottom: var(--space-3);
+      font: 700 .8rem var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold);
+    }
+    .form-grid { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
+    .form-grid .field { margin-bottom: 0; min-width: 0; }
+    .field label { display: flex; align-items: center; gap: var(--space-2); }
+
+    .step {
+      flex: none; width: 22px; height: 22px; display: grid; place-items: center;
+      border-radius: 50%; background: var(--gold); color: #2B2100;
+      font: 700 .72rem var(--font-body);
+    }
+    .select:disabled, .input:disabled { opacity: .5; cursor: not-allowed; }
+    .select { appearance: auto; cursor: pointer; }
+
+    .field__error { margin: 0; min-height: 0; font-size: .8rem; color: var(--danger); }
+    .field__error:empty { display: none; }
+    [aria-invalid="true"] { border-color: var(--danger) !important; }
+
+    .pill-group { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    .pill { position: relative; }
+    .pill input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+    .pill span {
+      display: flex; align-items: center; justify-content: center; min-height: 46px;
+      border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev-2);
+      font-weight: 600; transition: border-color var(--transition), background var(--transition), color var(--transition);
+    }
+    .pill input:checked + span { border-color: var(--gold); background: rgba(242, 183, 5, .12); color: var(--gold); }
+    .pill input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+    .status { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0 0 var(--space-4); font-size: .85rem; color: var(--text-muted); }
+    .status__dot { flex: none; width: 9px; height: 9px; margin-top: .45em; border-radius: 50%; background: var(--text-dim); }
+    .status[data-state="loading"] .status__dot { animation: glow 1s ease-in-out infinite; background: var(--info); }
+    .status[data-state="sheet"] .status__dot { background: var(--success); }
+    .status[data-state="cache"] .status__dot,
+    .status[data-state="fallback"] .status__dot { background: var(--warning); }
+    .status__text { min-width: 0; flex: 1; }
+
+    .info { margin-top: var(--space-4); }
+    .info[hidden], .status [hidden], #resume[hidden] { display: none; }
+    .info__name { margin: 0 0 var(--space-3); font-size: 1rem; font-weight: 700; color: var(--white); }
+    .stat__value { font-size: 1.3rem; }
+
+    .form-actions { display: grid; gap: var(--space-3); }
+    .form-error { margin: 0; font-size: .9rem; color: var(--danger); }
+    .form-error:empty { display: none; }
+    .form-note { margin: 0; font-size: .8rem; color: var(--text-dim); }
+
+    #resume { margin-bottom: var(--space-4); }
+    .page > .stack > * + * { margin-top: var(--space-5); }
+    .hero h1 { margin-bottom: var(--space-2); }
+    .hero { text-align: left; }
+    .hero p { margin-inline: 0; }
+
+    @media (min-width: 640px) {
+      .form-grid--nama { grid-template-columns: 1fr 1fr; }
+      .form-grid--nama .field--wide { grid-column: 1 / -1; }
+      .form-grid--lokasi { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="index.html" aria-label="MyPolitik UMNO, laman utama">
+      <span class="brand__logo" aria-hidden="true">M</span>
+      <span>MyPolitik <span class="brand__sub">UMNO</span></span>
+    </a>
+  </header>
+
+  <main class="container page">
+    <div class="stack">
+      <section class="hero" aria-labelledby="tajuk">
+        <span class="hero__eyebrow">Tahun 2026</span>
+        <h1 id="tajuk">Mulakan sebagai <span>Ahli Cawangan</span></h1>
+        <p>Pilih cawangan anda daripada senarai ahli sebenar, dan naik setiap peringkat parti daripada Ahli Biasa hingga ke kerusi Presiden.</p>
+      </section>
+
+      <section id="resume" class="card card--gold" hidden aria-live="polite">
+        <div class="card__header">
+          <h2 class="card__title">Anda sudah mendaftar</h2>
+          <span class="badge-office badge-office--ahli">Pemain sedia ada</span>
+        </div>
+        <p class="card__body" id="resume-text"></p>
+        <div class="card__footer">
+          <a class="btn btn--gold" href="dashboard.html">Teruskan permainan</a>
+          <button class="btn btn--ghost" type="button" id="btn-resume-new">Daftar pemain baharu</button>
+        </div>
+      </section>
+
+      <div class="dashboard-layout">
+        <form id="reg-form" class="card" novalidate autocomplete="off" aria-labelledby="tajuk-borang">
+          <div class="card__header">
+            <h2 class="card__title" id="tajuk-borang">Pendaftaran Pemain</h2>
+          </div>
+
+          <fieldset class="form-section">
+            <legend>Maklumat anda</legend>
+            <div class="form-grid form-grid--nama">
+              <div class="field field--wide">
+                <label for="f-nama">Nama penuh</label>
+                <input class="input" id="f-nama" name="nama" type="text" maxlength="60" autocomplete="name" placeholder="cth. Ahmad Faiz bin Hassan" aria-describedby="e-nama" required>
+                <p class="field__error" id="e-nama" role="alert"></p>
+              </div>
+              <div class="field" role="group" aria-labelledby="l-jantina">
+                <label id="l-jantina">Jantina</label>
+                <div class="pill-group">
+                  <label class="pill"><input type="radio" name="jantina" value="L" id="f-jantina"><span>Lelaki</span></label>
+                  <label class="pill"><input type="radio" name="jantina" value="P"><span>Perempuan</span></label>
+                </div>
+                <p class="field__error" id="e-jantina" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="f-umur">Umur</label>
+                <input class="input" id="f-umur" name="umur" type="number" inputmode="numeric" min="18" max="100" placeholder="18 hingga 100" aria-describedby="e-umur" required>
+                <p class="field__error" id="e-umur" role="alert"></p>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Cawangan anda</legend>
+            <p class="status" id="status" data-state="loading" role="status">
+              <span class="status__dot" aria-hidden="true"></span>
+              <span class="status__text" id="status-text">Memuatkan data daripada Google Sheets...</span>
+              <button class="btn btn--ghost btn--sm" type="button" id="btn-retry" hidden>Cuba lagi</button>
+            </p>
+            <div class="form-grid form-grid--lokasi">
+              <div class="field">
+                <label for="s-negeri"><span class="step" aria-hidden="true">1</span>Negeri</label>
+                <select class="select" id="s-negeri" name="negeri" aria-describedby="e-negeri" disabled><option value="">Memuatkan data...</option></select>
+                <p class="field__error" id="e-negeri" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="s-bahagian"><span class="step" aria-hidden="true">2</span>Bahagian (Parlimen)</label>
+                <select class="select" id="s-bahagian" name="bahagian" aria-describedby="e-bahagian" disabled><option value="">Pilih negeri dahulu</option></select>
+                <p class="field__error" id="e-bahagian" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="s-dun"><span class="step" aria-hidden="true">3</span>DUN</label>
+                <select class="select" id="s-dun" name="dun" aria-describedby="e-dun" disabled><option value="">Pilih bahagian dahulu</option></select>
+                <p class="field__error" id="e-dun" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="s-cawangan"><span class="step" aria-hidden="true">4</span>Cawangan (Lokaliti)</label>
+                <select class="select" id="s-cawangan" name="cawangan" aria-describedby="e-cawangan" disabled><option value="">Pilih DUN dahulu</option></select>
+                <p class="field__error" id="e-cawangan" role="alert"></p>
+              </div>
+            </div>
+
+            <div class="stats-panel info" id="info" hidden aria-live="polite">
+              <h3 class="stats-panel__title">Cawangan dipilih</h3>
+              <p class="info__name" id="i-nama"></p>
+              <div class="stat-grid">
+                <div class="stat"><div class="stat__label">Jumlah ahli</div><div class="stat__value stat__value--gold" id="i-jumlah">0</div></div>
+                <div class="stat"><div class="stat__label">Lelaki</div><div class="stat__value" id="i-lelaki">0</div></div>
+                <div class="stat"><div class="stat__label">Perempuan</div><div class="stat__value" id="i-perempuan">0</div></div>
+                <div class="stat"><div class="stat__label">Bawah 40</div><div class="stat__value" id="i-bawah40">0</div></div>
+                <div class="stat"><div class="stat__label">Atas 40</div><div class="stat__value" id="i-atas40">0</div></div>
+                <div class="stat"><div class="stat__label">ID</div><div class="stat__value stat__value--red" id="i-kod">-</div></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <p class="form-error" id="form-error" role="alert"></p>
+            <button class="btn btn--primary btn--lg btn--block" type="submit" id="btn-submit" disabled>Daftar dan Mula Bermain</button>
+            <p class="form-note">Profil anda disimpan dalam pelayar ini sahaja.</p>
+          </div>
+        </form>
+
+        <aside class="dashboard-layout__side stack" aria-label="Keadaan permulaan">
+          <section class="stats-panel">
+            <h2 class="stats-panel__title">Permulaan anda</h2>
+            <p><span class="badge-office badge-office--ahli" id="m-jawatan">Ahli Biasa</span></p>
+            <ul class="stat-list">
+              <li><span>IP</span><b id="m-ip">10</b></li>
+              <li><span>MYR</span><b id="m-myr">RM 1,000</b></li>
+              <li><span>AP</span><b id="m-ap">5</b></li>
+              <li><span>Tahun</span><b id="m-tahun">2026</b></li>
+            </ul>
+          </section>
+          <section class="stats-panel">
+            <h2 class="stats-panel__title">Tangga kerjaya</h2>
+            <ul class="career-ladder">
+              <li class="is-current">Ahli Biasa <span class="badge-office badge-office--ahli">Cawangan</span></li>
+              <li>Ketua Cawangan <span class="badge-office badge-office--cawangan">Cawangan</span></li>
+              <li>Ketua Bahagian <span class="badge-office badge-office--bahagian">Bahagian</span></li>
+              <li>Ahli MKT <span class="badge-office badge-office--mt">Pusat</span></li>
+              <li>Presiden <span class="badge-office badge-office--presiden">Presiden</span></li>
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">MyPolitik: UMNO. Permainan simulasi, bukan laman rasmi parti.</footer>
+
+  <script>
+    /* Tampal pautan Google Sheets (Publish to web > CSV) di sini.
+       Jika kosong, borang menggunakan data contoh. */
+    window.MYPOLITIK_CONFIG = {
+      sheetCsvUrl: '',
+      dashboardUrl: 'dashboard.html'
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
