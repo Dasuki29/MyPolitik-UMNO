@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pilih Lokaliti - Game Start Page</title>
+  <title>UMNO Game</title>
 
   <!-- CSS Tom Select -->
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
@@ -30,6 +30,17 @@
       padding: 20px;
     }
 
+    /* -----------------------------------
+       1. SKRIN PILIH LOKALITI (FIRST PAGE)
+    ----------------------------------- */
+    #screenPilih {
+      display: flex; /* Aktif secara asal */
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 400px;
+    }
+
     .menu-box {
       background: #16213e;
       padding: 30px;
@@ -37,17 +48,36 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       text-align: center;
       width: 100%;
-      max-width: 380px;
+    }
+
+    .header-images {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .logo-img {
+      width: 70px;
+      height: auto;
+    }
+
+    .avatar-img {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 2px solid #e94560;
+      object-fit: cover;
     }
 
     h2 {
-      margin-top: 0;
+      margin-top: 10px;
       margin-bottom: 20px;
       color: #e94560;
       letter-spacing: 1px;
     }
 
-    /* Kemaskini reka bentuk Tom Select mengikut tema game dark mode */
+    /* Reka Bentuk Tom Select Dark Mode */
     .ts-control {
       background-color: #0f3460 !important;
       color: #ffffff !important;
@@ -108,44 +138,111 @@
       font-size: 13px;
       color: #a0a0a0;
     }
+
+    /* -----------------------------------
+       2. SKRIN DASHBOARD / GAME (PAGE 2)
+    ----------------------------------- */
+    #screenDashboard {
+      display: none; /* Sembunyi secara asal */
+      width: 100%;
+      max-width: 600px;
+      background: #16213e;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .badge-cawangan {
+      background-color: #0f3460;
+      color: #e94560;
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: bold;
+      margin-bottom: 20px;
+      border: 1px solid #e94560;
+    }
+
+    .game-area {
+      background: #0f3460;
+      padding: 40px 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border: 2px dashed #1f4068;
+    }
   </style>
 </head>
 <body>
 
-  <div class="menu-box">
-    <h2>PILIH LOKALITI</h2>
+  <!-- Audio element untuk lagu latar -->
+  <audio id="bgmAudio" loop preload="auto">
+    <source src="lagu-bgm.mp3" type="audio/mpeg">
+  </audio>
 
-    <!-- Dropdown dengan carian -->
-    <select id="selectLokaliti" placeholder="Memuatkan data cawangan..." autocomplete="off">
-      <option value="">Memuatkan data...</option>
-    </select>
+  <!-- ================= SKRIN 1: PILIH LOKALITI ================= -->
+  <div id="screenPilih">
+    <div class="menu-box">
+      <div class="header-images">
+        <img src="logo-umno.png" alt="Logo UMNO" class="logo-img">
+        <img src="avatar.png" alt="Avatar Player" class="avatar-img">
+      </div>
 
-    <div id="statusInfo" class="status-text">Membaca senarai dari Google Sheets...</div>
+      <h2>PILIH LOKALITI</h2>
 
-    <button id="btnMula" disabled onclick="mulaGame()">MULA GAME</button>
+      <select id="selectLokaliti" placeholder="Memuatkan data cawangan..." autocomplete="off">
+        <option value="">Memuatkan data...</option>
+      </select>
+
+      <div id="statusInfo" class="status-text">Membaca senarai dari Google Sheets...</div>
+
+      <button id="btnMula" disabled onclick="mulaGame()">MULA GAME</button>
+    </div>
+  </div>
+
+  <!-- ================= SKRIN 2: DASHBOARD GAME ================= -->
+  <div id="screenDashboard">
+    <div class="header-images">
+      <img src="logo-umno.png" alt="Logo UMNO" class="logo-img">
+      <img src="avatar.png" alt="Avatar Player" class="avatar-img">
+    </div>
+
+    <h2>DASHBOARD GAME</h2>
+    
+    <!-- Paparan Nama Cawangan yang dipilih -->
+    <div class="badge-cawangan">
+      Cawangan: <span id="paparCawangan">-</span>
+    </div>
+
+    <!-- Tempat letak elemen game anda -->
+    <div class="game-area">
+      <h3>Selamat Datang ke Game!</h3>
+      <p>Lagu latar sedang dimainkan...</p>
+      <!-- Masukkan komponen atau canvas game anda di sini -->
+    </div>
+
+    <button onclick="kembaliPilih()" style="background-color: #1f4068; margin-top: 20px;">
+      Tukar Cawangan
+    </button>
   </div>
 
   <script>
-    // Pautan Google Sheets CSV anda
     const gsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv';
 
     const statusInfo = document.getElementById('statusInfo');
     const btnMula = document.getElementById('btnMula');
+    const bgmAudio = document.getElementById('bgmAudio');
 
-    // 1. Inisialisasi Tom Select (Dropdown dengan carian A-Z)
+    // Inisialisasi Tom Select
     const tomSelectControl = new TomSelect('#selectLokaliti', {
       create: false,
-      sortField: {
-        field: "text",
-        direction: "asc" // Susun dari A hingga Z
-      },
+      sortField: { field: "text", direction: "asc" },
       placeholder: "Taip untuk cari cawangan..."
     });
 
-    // Disable sementara muat turun data
     tomSelectControl.disable();
 
-    // 2. Baca data CSV terus dari Google Sheets menggunakan PapaParse
+    // Read Google Sheets CSV
     Papa.parse(gsheetUrl, {
       download: true,
       header: true,
@@ -155,8 +252,6 @@
         let totalRecords = 0;
 
         results.data.forEach(row => {
-          // Menggunakan header dalam GSheets
-          // Jika header dalam GSheets anda berlainan (cth: 'KOD', 'NAMA LOKASI'), sila laraskan nama kunci di bawah
           const id = row['id'] || row['ID'] || row['Kod'] || row['kod'] || Object.values(row)[0];
           const nama = row['nama'] || row['NAMA'] || row['Lokaliti'] || row['lokaliti'] || Object.values(row)[1];
 
@@ -174,30 +269,38 @@
         statusInfo.textContent = `Pilih 1 daripada ${totalRecords} cawangan tersedia`;
       },
       error: function(err) {
-        console.error('Ralat membaca Google Sheets:', err);
         statusInfo.textContent = 'Gagal memuatkan data dari Google Sheets.';
       }
     });
 
-    // 3. Aktifkan/Nyahaktifkan butang Mula berdasarkan pilihan pemain
     tomSelectControl.on('change', function(value) {
       btnMula.disabled = !value;
     });
 
-    // 4. Fungsi apabila butang "MULA GAME" ditekan
+    // FUNGSI UTAMA: PERTUKARAN SKRIN
     function mulaGame() {
       const selectedId = tomSelectControl.getValue();
       const selectedOption = tomSelectControl.options[selectedId];
       const selectedNama = selectedOption ? selectedOption.text : selectedId;
 
-      // Simpan ke localStorage untuk dibaca oleh game utama nanti
-      localStorage.setItem('selectedLokalitiId', selectedId);
-      localStorage.setItem('selectedLokalitiNama', selectedNama);
+      // 1. Paparkan nama cawangan di Dashboard
+      document.getElementById('paparCawangan').textContent = selectedNama;
 
-      alert(`Pilihan berjaya disimpan!\n\nCawangan: ${selectedNama}\nID: ${selectedId}`);
+      // 2. Sembunyikan Skrin Pilih, Tunjukkan Skrin Dashboard
+      document.getElementById('screenPilih').style.display = 'none';
+      document.getElementById('screenDashboard').style.display = 'block';
 
-      // Tukar pautan ini ke halaman game utama anda jika perlu
-      // window.location.href = "game.html";
+      // 3. Mainkan Lagu Latar
+      bgmAudio.play().catch(error => {
+        console.error("Gagal memainkan lagu:", error);
+      });
+    }
+
+    // FUNGSI UNTUK TUKAR CAWANGAN SEMULA
+    function kembaliPilih() {
+      document.getElementById('screenDashboard').style.display = 'none';
+      document.getElementById('screenPilih').style.display = 'flex';
+      bgmAudio.pause(); // Hentikan lagu jika kembali
     }
   </script>
 
