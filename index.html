@@ -3,585 +3,203 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyPolitik : UMNO - Hierarki & Tiga Tab Peringkat Parti</title>
+  <title>Pilih Lokaliti - Game Start Page</title>
+
+  <!-- CSS Tom Select -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+  
+  <!-- JS Tom Select & PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
   <style>
-    :root {
-      --primary: #c0392b;
-      --bg-dark: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #f59e0b;
-      --success: #10b981;
+    * {
+      box-sizing: border-box;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text); padding: 20px; line-height: 1.5; }
-
-    .container { max-width: 1400px; margin: 0 auto; }
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* PAGE 1: CREATION PAGE */
-    .creation-container {
-      max-width: 800px; margin: 40px auto; background: var(--card-bg);
-      border: 2px solid var(--primary); border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1a1a2e;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
     }
-    .creation-header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid var(--card-border); padding-bottom: 20px; }
-    .creation-header h1 { color: #ef4444; font-size: 2.2rem; margin-bottom: 8px; }
-    
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: #38bdf8; }
-    .form-control { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--card-border); border-radius: 6px; color: white; font-size: 0.95rem; }
 
-    /* PAGE 2: DASHBOARD UTAMA */
-    header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--card-border); margin-bottom: 20px; }
-    .title-group h1 { font-size: 1.6rem; color: #ef4444; display: flex; align-items: center; gap: 10px; }
+    .menu-box {
+      background: #16213e;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      width: 100%;
+      max-width: 380px;
+    }
 
-    .system-controls { display: flex; gap: 10px; }
-    .btn { padding: 8px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; }
-    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-save { background: var(--success); color: white; }
-    .btn-load { background: #3b82f6; color: white; }
-    .btn-reset { background: #ef4444; color: white; }
-    .btn-primary { background: var(--primary); color: white; }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #e94560;
+      letter-spacing: 1px;
+    }
 
-    /* Masa & Bar Kalendar */
-    .time-bar { background: var(--card-bg); border: 1px solid var(--card-border); padding: 15px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .calendar-display { font-size: 1.2rem; font-weight: bold; color: #38bdf8; }
+    /* Kemaskini reka bentuk Tom Select mengikut tema game dark mode */
+    .ts-control {
+      background-color: #0f3460 !important;
+      color: #ffffff !important;
+      border: 1px solid #1f4068 !important;
+      border-radius: 6px !important;
+      padding: 12px !important;
+      font-size: 15px !important;
+    }
 
-    /* Grid Layout Utama */
-    .dashboard-grid { display: grid; grid-template-columns: 1fr 2.2fr; gap: 20px; }
-    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-    .card-title { font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .ts-control input {
+      color: #ffffff !important;
+    }
 
-    /* TAB HIERARKI PARTI (3 UTAMA) */
-    .hierarchy-nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; background: #0f172a; padding: 6px; border-radius: 8px; border: 1px solid var(--card-border); }
-    .tab-btn { flex: 1; padding: 12px; text-align: center; background: transparent; border: none; color: var(--text-muted); font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
-    .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(192, 57, 43, 0.4); }
-    .tab-btn.locked { opacity: 0.5; cursor: not-allowed; }
+    .ts-dropdown {
+      background-color: #0f3460 !important;
+      color: #ffffff !important;
+      border: 1px solid #1f4068 !important;
+      border-radius: 6px !important;
+    }
 
-    /* SENARAI AJK & CARTA ORGANISASI */
-    .ajk-list { list-style: none; margin-top: 10px; }
-    .ajk-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #0f172a; border-radius: 6px; margin-bottom: 6px; border: 1px solid #1e293b; font-size: 0.85rem; }
-    .ajk-role { font-weight: bold; color: #38bdf8; }
-    .ajk-name { color: var(--text); }
-    .ajk-badge { background: #334155; color: #f59e0b; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+    .ts-dropdown .option {
+      padding: 10px 12px !important;
+      color: #ffffff !important;
+    }
 
-    /* PANEL TINDAKAN MESYUARAT */
-    .meeting-box { background: #0f172a; border: 1px solid var(--accent); border-radius: 8px; padding: 15px; margin-top: 15px; }
-    .status-locked-box { background: #1e1b4b; border: 1px solid #6366f1; padding: 25px; border-radius: 8px; text-align: center; }
+    .ts-dropdown .option:hover, 
+    .ts-dropdown .active {
+      background-color: #e94560 !important;
+      color: #ffffff !important;
+    }
 
-    .log-box { background: #020617; border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; height: 180px; overflow-y: auto; font-family: monospace; font-size: 0.78rem; color: #38bdf8; }
-    .log-entry { margin-bottom: 4px; border-bottom: 1px dashed #1e293b; padding-bottom: 2px; }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+      background-color: #e94560;
+      color: #ffffff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #ff6b81;
+    }
+
+    button:disabled {
+      background-color: #555555;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .status-text {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #a0a0a0;
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
+  <div class="menu-box">
+    <h2>PILIH LOKALITI</h2>
 
-  <!-- PAGE 1: PENDAFTARAN WATAK -->
-  <div id="page-creation" class="page active">
-    <div class="creation-container">
-      <div class="creation-header">
-        <h1>⚜️ MyPolitik : UMNO</h1>
-        <p>Pengurusan Hierarki 3 Peringkat Parti (Cawangan, Bahagian & PAU Pusat)</p>
-      </div>
+    <!-- Dropdown dengan carian -->
+    <select id="selectLokaliti" placeholder="Memuatkan data cawangan..." autocomplete="off">
+      <option value="">Memuatkan data...</option>
+    </select>
 
-      <div class="form-group">
-        <label>Nama Penuh Watak:</label>
-        <input type="text" id="input-name" class="form-control" value="Khairul Azman">
-      </div>
+    <div id="statusInfo" class="status-text">Membaca senarai dari Google Sheets...</div>
 
-      <div class="form-group">
-        <label>Pilih Bahagian UMNO (Selangor):</label>
-        <select id="input-bahagian" class="form-control" onchange="updateCawanganOptions()">
-          <option value="Selayang">Selayang</option>
-          <option value="Gombak">Gombak</option>
-          <option value="Shah Alam">Shah Alam</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Pilih Cawangan Akar Umbi:</label>
-        <select id="input-cawangan" class="form-control"></select>
-      </div>
-
-      <div class="form-group">
-        <label>Latar Belakang (Keistimewaan):</label>
-        <select id="input-trait" class="form-control">
-          <option value="Tokoh Tempatan">Tokoh Tempatan (+15% Kesetiaan Akar Umbi)</option>
-          <option value="Pakar Kewangan">Pakar Kewangan (+RM 3,000 Dana Permulaan)</option>
-          <option value="Strategis Parti">Strategis Parti (+10% Kelebihan Undi)</option>
-        </select>
-      </div>
-
-      <button type="button" onclick="confirmCharacterCreation()" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-size: 1.05rem;">
-        🚀 Mula Berkhidmat Dalam Parti
-      </button>
-    </div>
+    <button id="btnMula" disabled onclick="mulaGame()">MULA GAME</button>
   </div>
 
+  <script>
+    // Pautan Google Sheets CSV anda
+    const gsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv';
 
-  <!-- PAGE 2: DASHBOARD UTAMA -->
-  <div id="page-dashboard" class="page">
-    
-    <header>
-      <div class="title-group">
-        <h1>⚜️ MyPolitik : UMNO</h1>
-        <p>Sistem Pengurusan Hierarki Cawangan, Bahagian & Perhimpunan Agung UMNO</p>
-      </div>
-      <div class="system-controls">
-        <button onclick="saveGame()" class="btn btn-save">💾 Simpan</button>
-        <button onclick="loadGame()" class="btn btn-load">📂 Muat Naik</button>
-        <button onclick="switchPage('page-creation')" class="btn btn-reset">👤 Tukar Watak</button>
-      </div>
-    </header>
+    const statusInfo = document.getElementById('statusInfo');
+    const btnMula = document.getElementById('btnMula');
 
-    <div class="time-bar">
-      <div>
-        <div id="calendar-display" class="calendar-display">📅 Januari 2026</div>
-        <div style="font-size: 0.85rem; color: var(--text-muted);">Musim Mesyuarat: <span id="season-text" style="color: var(--accent); font-weight: bold;">Operasi Harian</span></div>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <button id="btn-play" onclick="toggleGamePause()" class="btn" style="background: #10b981; color: white;">▶️ Mula Kalendar</button>
-        <button onclick="advanceOneMonth()" class="btn" style="background: #0284c7; color: white;">⏭️ Bulan Depan</button>
-      </div>
-    </div>
+    // 1. Inisialisasi Tom Select (Dropdown dengan carian A-Z)
+    const tomSelectControl = new TomSelect('#selectLokaliti', {
+      create: false,
+      sortField: {
+        field: "text",
+        direction: "asc" // Susun dari A hingga Z
+      },
+      placeholder: "Taip untuk cari cawangan..."
+    });
 
-    <div class="dashboard-grid">
-      
-      <!-- SISI KIRI: PROFIL & STATUS KELAYAKAN -->
-      <div>
-        <div class="card">
-          <div class="card-title">
-            <span>👤 Profil Watak</span>
-            <span id="char-trait-badge" style="color: var(--accent); font-size: 0.8rem;">Tokoh Tempatan</span>
-          </div>
-          <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Nama:</strong> <span id="char-name-display">Khairul Azman</span></p>
-          <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Jawatan Cawangan:</strong> <span style="color: var(--success);">AJK Induk Cawangan</span></p>
-          <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Jawatan Bahagian:</strong> <span id="status-bahagian-text" style="color: var(--accent);">Bukan Perwakilan</span></p>
-          <p style="font-size: 0.85rem;"><strong>Jawatan Pusat (PAU):</strong> <span id="status-pusat-text" style="color: #ef4444;">Bukan Perwakilan</span></p>
-        </div>
+    // Disable sementara muat turun data
+    tomSelectControl.disable();
 
-        <div class="card">
-          <div class="card-title"><span>💰 Tabung & Sokongan</span></div>
-          <p style="font-size: 1.2rem; font-weight: bold; color: var(--success); margin-bottom: 10px;">
-            Baki Dana: <span id="funds-display">RM 5,000</span>
-          </p>
-          <p style="font-size: 0.85rem; margin-bottom: 5px;">Sokongan & Kesetiaan Akar Umbi:</p>
-          <div style="background: #334155; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
-            <div id="loyalty-bar" style="height: 100%; width: 75%; background: var(--success); transition: width 0.3s;"></div>
-          </div>
-          <div style="text-align: right; font-size: 0.8rem; color: #38bdf8;" id="loyalty-text">75% Sokongan</div>
-        </div>
+    // 2. Baca data CSV terus dari Google Sheets menggunakan PapaParse
+    Papa.parse(gsheetUrl, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        tomSelectControl.clearOptions();
+        let totalRecords = 0;
 
-        <div class="card">
-          <div class="card-title">📜 Log Aktiviti Parti</div>
-          <div id="log-box" class="log-box">
-            <div class="log-entry">[SISTEM] Permainan bermula di peringkat Cawangan.</div>
-          </div>
-        </div>
-      </div>
+        results.data.forEach(row => {
+          // Menggunakan header dalam GSheets
+          // Jika header dalam GSheets anda berlainan (cth: 'KOD', 'NAMA LOKASI'), sila laraskan nama kunci di bawah
+          const id = row['id'] || row['ID'] || row['Kod'] || row['kod'] || Object.values(row)[0];
+          const nama = row['nama'] || row['NAMA'] || row['Lokaliti'] || row['lokaliti'] || Object.values(row)[1];
 
-      <!-- SISI KANAN: TAB HIERARKI PARTI (CAWANGAN, BAHAGIAN, PUSAT) -->
-      <div>
-        <!-- TAB BAR HIERARKI -->
-        <div class="hierarchy-nav-tabs">
-          <button id="tab-btn-cawangan" class="tab-btn active" onclick="switchHierarchyTab('cawangan')">
-            🏠 Peringkat Cawangan
-          </button>
-          <button id="tab-btn-bahagian" class="tab-btn" onclick="switchHierarchyTab('bahagian')">
-            🏢 Peringkat Bahagian <span id="lock-icon-bahagian">🔒</span>
-          </button>
-          <button id="tab-btn-pusat" class="tab-btn" onclick="switchHierarchyTab('pusat')">
-            🏛️ Peringkat Pusat (PAU) <span id="lock-icon-pusat">🔒</span>
-          </button>
-        </div>
+          if (nama) {
+            tomSelectControl.addOption({
+              value: id ? id.trim() : nama.trim(),
+              text: nama.trim()
+            });
+            totalRecords++;
+          }
+        });
 
-        <!-- 1. PANEL PERINGKAT CAWANGAN -->
-        <div id="panel-cawangan" class="card">
-          <div class="card-title">
-            <span>🏠 Pentadbiran UMNO Cawangan</span>
-            <small style="color: #38bdf8;" id="cawangan-title-display">Cawangan Kampung Langgar</small>
-          </div>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-            Fokus kepada akar umbi tempatan, kebajikan ahli, dan Mesyuarat Tahunan Cawangan pada bulan **April**.
-          </p>
-
-          <h4 style="font-size: 0.9rem; color: #38bdf8; margin-top: 10px;">📋 Senarai Kepimpinan AJK Cawangan:</h4>
-          <ul class="ajk-list" id="ajk-cawangan-list"></ul>
-
-          <!-- BAHAGIAN MESYUARAT CAWANGAN (APRIL) -->
-          <div class="meeting-box">
-            <h4 style="color: var(--accent); margin-bottom: 6px;">🏛️ Mesyuarat Tahunan Cawangan (Bulan April)</h4>
-            <p style="font-size: 0.8rem; margin-bottom: 10px;">Persidangan rasmi untuk membentangkan penyata kewangan dan memilih 5 Perwakilan ke Mesyuarat Bahagian.</p>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-              <button onclick="presentReport('cawangan')" class="btn btn-save" style="flex: 1; justify-content: center;">
-                📄 Bentangkan Laporan Kewangan Cawangan
-              </button>
-            </div>
-            
-            <button onclick="contestElection('cawangan')" class="btn" style="background: #0284c7; color: white; width: 100%; justify-content: center;">
-              🗳️ Bertanding Perwakilan Cawangan ke Bahagian
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. PANEL PERINGKAT BAHAGIAN -->
-        <div id="panel-bahagian" class="card" style="display: none;">
-          <div class="card-title">
-            <span>🏢 Pentadbiran UMNO Bahagian</span>
-            <small style="color: #38bdf8;" id="bahagian-title-display">Bahagian Selayang</small>
-          </div>
-
-          <!-- KANDUNGAN JIKA TERKUNCI -->
-          <div id="bahagian-locked-content" class="status-locked-box" style="display: none;">
-            <h3 style="color: #ef4444; margin-bottom: 8px;">🔒 Peringkat Bahagian Terkunci</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">
-              Anda perlu **menang Pemilihan Perwakilan** pada Mesyuarat Tahunan Cawangan (Bulan April) untuk layak mengakses dan bertanding di peringkat Bahagian.
-            </p>
-          </div>
-
-          <!-- KANDUNGAN JIKA DIBUKA -->
-          <div id="bahagian-unlocked-content">
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-              Tadbir urus peringkat Bahagian/Parlimen. Mesyuarat Perwakilan Bahagian berlangsung pada bulan **Jun**.
-            </p>
-
-            <h4 style="font-size: 0.9rem; color: #38bdf8; margin-top: 10px;">📋 Senarai Jawatan Kuasa UMNO Bahagian:</h4>
-            <ul class="ajk-list" id="ajk-bahagian-list"></ul>
-
-            <div class="meeting-box">
-              <h4 style="color: var(--accent); margin-bottom: 6px;">🏛️ Mesyuarat Perwakilan Bahagian (Bulan Jun)</h4>
-              <p style="font-size: 0.8rem; margin-bottom: 10px;">Membentangkan Penyata Kewangan Bahagian & Memilih 10 Perwakilan ke Perhimpunan Agung UMNO (PAU).</p>
-              
-              <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button onclick="presentReport('bahagian')" class="btn btn-save" style="flex: 1; justify-content: center;">
-                  📄 Bentangkan Laporan Kewangan Bahagian
-                </button>
-              </div>
-
-              <button onclick="contestElection('bahagian')" class="btn" style="background: #0284c7; color: white; width: 100%; justify-content: center;">
-                🗳️ Bertanding Perwakilan Bahagian ke PAU (WTC KL)
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. PANEL PERINGKAT PUSAT (PAU) -->
-        <div id="panel-pusat" class="card" style="display: none;">
-          <div class="card-title">
-            <span>🏛️ Perhimpunan Agung UMNO Pusat (PAU)</span>
-            <small style="color: #ef4444;">WTC Kuala Lumpur</small>
-          </div>
-
-          <!-- KANDUNGAN JIKA TERKUNCI -->
-          <div id="pusat-locked-content" class="status-locked-box" style="display: none;">
-            <h3 style="color: #ef4444; margin-bottom: 8px;">🔒 Peringkat Pusat PAU Terkunci</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">
-              Anda perlu **menang Pemilihan Perwakilan Bahagian** (Bulan Jun) untuk melayakkan diri berpersidangan di WTC Kuala Lumpur.
-            </p>
-          </div>
-
-          <!-- KANDUNGAN JIKA DIBUKA -->
-          <div id="pusat-unlocked-content">
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-              Peringkat Tertinggi Parti. Perhimpunan Agung UMNO berlangsung pada bulan **Ogos** di Dewan Merdeka WTC KL.
-            </p>
-
-            <h4 style="font-size: 0.9rem; color: #38bdf8; margin-top: 10px;">📋 Senarai Majlis Kerja Tertinggi (MKT) Pusat:</h4>
-            <ul class="ajk-list" id="ajk-pusat-list"></ul>
-
-            <div class="meeting-box">
-              <h4 style="color: var(--accent); margin-bottom: 6px;">🏛️ Persidangan PAU & Pemilihan MKT (Bulan Ogos)</h4>
-              <p style="font-size: 0.8rem; margin-bottom: 10px;">Membentangkan Usul Ucapan Dasar Presiden & Bertanding Kerusi Ahli Majlis Kerja Tertinggi (MKT UMNO Malaysia).</p>
-              
-              <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button onclick="presentReport('pusat')" class="btn btn-save" style="flex: 1; justify-content: center;">
-                  📄 Debat & Sokong Usul Kewangan / Politik PAU
-                </button>
-              </div>
-
-              <button onclick="contestElection('pusat')" class="btn" style="background: #0284c7; color: white; width: 100%; justify-content: center;">
-                🗳️ Bertanding Ahli Majlis Kerja Tertinggi (MKT Pusat)
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </div>
-
-</div>
-
-<script>
-  const SAVE_KEY = "MYPOLITIK_UMNO_3TABS_HIERARCHY_V6";
-  const MONTH_NAMES = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
-
-  const SELANGOR_BRANCHES = {
-    "Selayang": ["Cawangan Kampung Langgar Tengah", "Cawangan Bandar Baru Selayang", "Cawangan Batu Arang"],
-    "Gombak": ["Cawangan Taman Seri Gombak", "Cawangan Kampung Sungai Pusu"],
-    "Shah Alam": ["Cawangan Seksyen 7", "Cawangan Batu Tiga"]
-  };
-
-  let gameState = {
-    character: { name: "Khairul Azman", bahagian: "Selayang", cawangan: "Cawangan Kampung Langgar Tengah", trait: "Tokoh Tempatan" },
-    
-    currentMonth: 1,
-    currentYear: 2026,
-    isPaused: true,
-    funds: 5000,
-    loyalty: 0.75,
-    
-    // Status Akses / Kelayakan Hierarki Parti
-    isBahagianUnlocked: false, // Menang di Cawangan -> Unlock Bahagian
-    isPusatUnlocked: false,    // Menang di Bahagian -> Unlock Pusat PAU
-
-    // Laporan Dibentang mengikut peringkat
-    reportsPresented: { cawangan: false, bahagian: false, pusat: false },
-
-    logs: []
-  };
-
-  let gameTimer = null;
-
-  function switchPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-  }
-
-  // PENUKARAN TAB HIERARKI (CAWANGAN / BAHAGIAN / PUSAT)
-  function switchHierarchyTab(level) {
-    document.getElementById("panel-cawangan").style.display = level === 'cawangan' ? 'block' : 'none';
-    document.getElementById("panel-bahagian").style.display = level === 'bahagian' ? 'block' : 'none';
-    document.getElementById("panel-pusat").style.display = level === 'pusat' ? 'block' : 'none';
-
-    document.getElementById("tab-btn-cawangan").classList.toggle('active', level === 'cawangan');
-    document.getElementById("tab-btn-bahagian").classList.toggle('active', level === 'bahagian');
-    document.getElementById("tab-btn-pusat").classList.toggle('active', level === 'pusat');
-  }
-
-  function updateCawanganOptions() {
-    const bahagian = document.getElementById("input-bahagian").value;
-    const branches = SELANGOR_BRANCHES[bahagian] || ["Cawangan Utama"];
-    document.getElementById("input-cawangan").innerHTML = branches.map(c => `<option value="${c}">${c}</option>`).join('');
-  }
-
-  function confirmCharacterCreation() {
-    gameState.character.name = document.getElementById("input-name").value || "Khairul Azman";
-    gameState.character.bahagian = document.getElementById("input-bahagian").value;
-    gameState.character.cawangan = document.getElementById("input-cawangan").value;
-    gameState.character.trait = document.getElementById("input-trait").value;
-
-    if (gameState.character.trait === "Pakar Kewangan") gameState.funds += 3000;
-    if (gameState.character.trait === "Tokoh Tempatan") gameState.loyalty = 0.90;
-
-    addLog(`[PENDAFTARAN] Mula berkhidmat sebagai AJK Cawangan di ${gameState.character.cawangan}.`);
-    switchPage('page-dashboard');
-    updateUI();
-  }
-
-  // BENTANG LAPORAN KEWANAGAN UNTUK PERINGKAT BERKENAAN
-  function presentReport(level) {
-    if (level === 'cawangan' && gameState.currentMonth !== 4) {
-      alert("Mesyuarat Tahunan Cawangan hanya berlangsung pada bulan April!"); return;
-    }
-    if (level === 'bahagian' && (!gameState.isBahagianUnlocked || gameState.currentMonth !== 6)) {
-      alert("Mesyuarat Bahagian hanya terbuka pada bulan Jun untuk Perwakilan Cawangan yang lulus!"); return;
-    }
-    if (level === 'pusat' && (!gameState.isPusatUnlocked || gameState.currentMonth !== 8)) {
-      alert("Perhimpunan Agung UMNO (PAU) hanya berlangsung pada bulan Ogos di WTC KL!"); return;
-    }
-
-    if (gameState.reportsPresented[level]) {
-      alert(`Laporan Kewangan Peringkat ${level.toUpperCase()} telah pun dibentangkan dan diluluskan!`); return;
-    }
-
-    gameState.reportsPresented[level] = true;
-    addLog(`[MESYUARAT] Laporan Kewangan Peringkat ${level.toUpperCase()} diluluskan sebulat suara.`);
-    alert(`Laporan dan Penyata Kewangan Peringkat ${level.toUpperCase()} berjaya diterima!`);
-    updateUI();
-  }
-
-  // PEMILIHAN PERWAKILAN BERPERINGKAT
-  function contestElection(level) {
-    if (!gameState.reportsPresented[level]) {
-      alert("Sila bentangkan Laporan & Penyata Kewangan terlebih dahulu!"); return;
-    }
-
-    const bonus = gameState.character.trait === "Strategis Parti" ? 15 : 0;
-    const votes = Math.round((gameState.loyalty * 100) + (Math.random() * 20) + bonus);
-
-    if (level === 'cawangan') {
-      if (gameState.currentMonth !== 4) { alert("Pemilihan Cawangan hanya pada bulan April!"); return; }
-      if (votes >= 60) {
-        gameState.isBahagianUnlocked = true;
-        addLog(`[PEMILIHAN] TAHNIAH! Anda mendapat ${votes} undi & TERPILIH sebagai Perwakilan ke Bahagian! Tab Bahagian kini DIBUKA.`);
-        alert(`🎉 TAHNIAH! Anda berada di kedudukan teratas dengan ${votes} undi. Tab Bahagian kini dinyahkunci (Unlocked)!`);
-      } else {
-        addLog(`[PEMILIHAN] Anda mendapat ${votes} undi dan gagal menjadi Perwakilan Cawangan.`);
-        alert(`❌ Anda tewas dalam pemilihan kali ini (${votes} undi). Cuba lagi tahun depan.`);
+        tomSelectControl.enable();
+        tomSelectControl.refreshOptions(false);
+        statusInfo.textContent = `Pilih 1 daripada ${totalRecords} cawangan tersedia`;
+      },
+      error: function(err) {
+        console.error('Ralat membaca Google Sheets:', err);
+        statusInfo.textContent = 'Gagal memuatkan data dari Google Sheets.';
       }
-    } 
-    else if (level === 'bahagian') {
-      if (gameState.currentMonth !== 6) { alert("Pemilihan Bahagian hanya pada bulan Jun!"); return; }
-      if (votes >= 70) {
-        gameState.isPusatUnlocked = true;
-        addLog(`[PEMILIHAN] SYABAS! Anda memenangi ${votes} undi & TERPILIH ke Perhimpunan Agung UMNO (PAU). Tab Pusat kini DIBUKA.`);
-        alert(`🎉 TAHNIAH! Anda secara rasmi terpilih sebagai Perwakilan PAU ke WTC Kuala Lumpur!`);
-      } else {
-        addLog(`[PEMILIHAN] Gagal meraih slot Perwakilan PAU (${votes} undi).`);
-        alert(`❌ Anda tidak mendapat slot 10 Perwakilan teratas ke PAU.`);
-      }
-    } 
-    else if (level === 'pusat') {
-      if (gameState.currentMonth !== 8) { alert("Pemilihan MKT PAU hanya pada bulan Ogos!"); return; }
-      if (votes >= 80) {
-        addLog(`[PAU PUSAT] KEMENANGAN BESAR! Anda kini dilantik sebagai Ahli Majlis Kerja Tertinggi (MKT UMNO Pusat)!`);
-        alert(`🏆 TAHNIAH! Anda kini salah seorang Ahli MKT UMNO Malaysia!`);
-      } else {
-        addLog(`[PAU PUSAT] Anda tewas dalam perebutan kerusi MKT Pusat (${votes} undi).`);
-        alert(`❌ Anda tidak berjaya memenangi kerusi Majlis Kerja Tertinggi.`);
-      }
+    });
+
+    // 3. Aktifkan/Nyahaktifkan butang Mula berdasarkan pilihan pemain
+    tomSelectControl.on('change', function(value) {
+      btnMula.disabled = !value;
+    });
+
+    // 4. Fungsi apabila butang "MULA GAME" ditekan
+    function mulaGame() {
+      const selectedId = tomSelectControl.getValue();
+      const selectedOption = tomSelectControl.options[selectedId];
+      const selectedNama = selectedOption ? selectedOption.text : selectedId;
+
+      // Simpan ke localStorage untuk dibaca oleh game utama nanti
+      localStorage.setItem('selectedLokalitiId', selectedId);
+      localStorage.setItem('selectedLokalitiNama', selectedNama);
+
+      alert(`Pilihan berjaya disimpan!\n\nCawangan: ${selectedNama}\nID: ${selectedId}`);
+
+      // Tukar pautan ini ke halaman game utama anda jika perlu
+      // window.location.href = "game.html";
     }
-
-    updateUI();
-  }
-
-  function advanceOneMonth() {
-    gameState.funds += 200; // Aliran Dana
-    gameState.currentMonth++;
-
-    if (gameState.currentMonth > 12) {
-      gameState.currentMonth = 1;
-      gameState.currentYear++;
-      // Reset status laporan tahunan
-      gameState.reportsPresented = { cawangan: false, bahagian: false, pusat: false };
-      addLog(`[KALENDAR] Selamat Tahun Baru ${gameState.currentYear}!`);
-    }
-
-    updateUI();
-  }
-
-  function toggleGamePause() {
-    gameState.isPaused = !gameState.isPaused;
-    const btn = document.getElementById("btn-play");
-    if (!gameState.isPaused) {
-      btn.innerText = "⏸️ Jeda";
-      btn.style.background = "#f59e0b";
-      gameTimer = setInterval(advanceOneMonth, 5000);
-    } else {
-      btn.innerText = "▶️ Mula";
-      btn.style.background = "#10b981";
-      clearInterval(gameTimer);
-    }
-  }
-
-  function addLog(msg) {
-    gameState.logs.unshift(`[${MONTH_NAMES[gameState.currentMonth-1]} ${gameState.currentYear}] ${msg}`);
-    if (gameState.logs.length > 20) gameState.logs.pop();
-    document.getElementById("log-box").innerHTML = gameState.logs.map(l => `<div class="log-entry">${l}</div>`).join('');
-  }
-
-  function renderAJKLists() {
-    // AJK CAWANGAN
-    document.getElementById("ajk-cawangan-list").innerHTML = `
-      <li class="ajk-item"><span class="ajk-role">Ketua Cawangan:</span> <span class="ajk-name">Dato' Haji Ismail</span></li>
-      <li class="ajk-item"><span class="ajk-role">Timbalan Ketua:</span> <span class="ajk-name">Encik Razali Ahmad</span></li>
-      <li class="ajk-item"><span class="ajk-role">AJK Induk Cawangan:</span> <span class="ajk-name" style="color: var(--accent); font-weight: bold;">${gameState.character.name} (Anda)</span> <span class="ajk-badge">Pemain</span></li>
-      <li class="ajk-item"><span class="ajk-role">Ketua Pemuda:</span> <span class="ajk-name">Aiman Hakim</span></li>
-      <li class="ajk-item"><span class="ajk-role">Ketua Wanita:</span> <span class="ajk-name">Puan Aminah Kassim</span></li>
-    `;
-
-    // AJK BAHAGIAN
-    document.getElementById("ajk-bahagian-list").innerHTML = `
-      <li class="ajk-item"><span class="ajk-role">Ketua Bahagian ${gameState.character.bahagian}:</span> <span class="ajk-name">Tan Sri Noh Salleh</span></li>
-      <li class="ajk-item"><span class="ajk-role">Timbalan Ketua Bahagian:</span> <span class="ajk-name">Datuk Seri Ridzuan</span></li>
-      <li class="ajk-item"><span class="ajk-role">Status Anda:</span> <span class="ajk-name">${gameState.isBahagianUnlocked ? '🎟️ Perwakilan Sah' : 'Bukan Perwakilan'}</span></li>
-      <li class="ajk-item"><span class="ajk-role">Setiausaha Bahagian:</span> <span class="ajk-name">Encik Hamzah Samad</span></li>
-    `;
-
-    // AJK PUSAT (PAU)
-    document.getElementById("ajk-pusat-list").innerHTML = `
-      <li class="ajk-item"><span class="ajk-role">Presiden UMNO:</span> <span class="ajk-name">Datuk Seri Utama Ahmad Zahid</span></li>
-      <li class="ajk-item"><span class="ajk-role">Timbalan Presiden:</span> <span class="ajk-name">Datuk Seri Mohamad Hasan</span></li>
-      <li class="ajk-item"><span class="ajk-role">Naib-Naib Presiden:</span> <span class="ajk-name">3 Jawatan Utama Parti</span></li>
-      <li class="ajk-item"><span class="ajk-role">Status Anda:</span> <span class="ajk-name">${gameState.isPusatUnlocked ? '🎟️ Perwakilan PAU WTC' : 'Pemerhati Luar'}</span></li>
-    `;
-  }
-
-  function updateUI() {
-    document.getElementById("char-name-display").innerText = gameState.character.name;
-    document.getElementById("char-trait-badge").innerText = gameState.character.trait;
-    document.getElementById("cawangan-title-display").innerText = gameState.character.cawangan;
-    document.getElementById("bahagian-title-display").innerText = `Bahagian ${gameState.character.bahagian}`;
-    
-    document.getElementById("funds-display").innerText = `RM ${gameState.funds.toLocaleString()}`;
-    
-    const loyaltyPct = Math.round(gameState.loyalty * 100);
-    document.getElementById("loyalty-text").innerText = `${loyaltyPct}% Sokongan`;
-    document.getElementById("loyalty-bar").style.width = `${loyaltyPct}%`;
-
-    document.getElementById("calendar-display").innerText = `📅 ${MONTH_NAMES[gameState.currentMonth-1]} ${gameState.currentYear}`;
-
-    // Kemas kini Musim Mesyuarat
-    const seasonText = document.getElementById("season-text");
-    if (gameState.currentMonth === 4) seasonText.innerText = "🔴 Mesyuarat Tahunan Cawangan (April)";
-    else if (gameState.currentMonth === 6) seasonText.innerText = "🔴 Mesyuarat Perwakilan Bahagian (Jun)";
-    else if (gameState.currentMonth === 8) seasonText.innerText = "🔥 Perhimpunan Agung UMNO / PAU (Ogos)";
-    else seasonText.innerText = "Operasi Harian Akar Umbi";
-
-    // Status Kunci / Buka Tab
-    document.getElementById("lock-icon-bahagian").innerText = gameState.isBahagianUnlocked ? "✅" : "🔒";
-    document.getElementById("lock-icon-pusat").innerText = gameState.isPusatUnlocked ? "✅" : "🔒";
-
-    document.getElementById("status-bahagian-text").innerText = gameState.isBahagianUnlocked ? "Perwakilan Bahagian" : "Bukan Perwakilan";
-    document.getElementById("status-bahagian-text").style.color = gameState.isBahagianUnlocked ? "var(--success)" : "var(--accent)";
-
-    document.getElementById("status-pusat-text").innerText = gameState.isPusatUnlocked ? "Perwakilan PAU (WTC)" : "Bukan Perwakilan";
-    document.getElementById("status-pusat-text").style.color = gameState.isPusatUnlocked ? "var(--success)" : "#ef4444";
-
-    document.getElementById("bahagian-locked-content").style.display = gameState.isBahagianUnlocked ? "none" : "block";
-    document.getElementById("bahagian-unlocked-content").style.display = gameState.isBahagianUnlocked ? "block" : "none";
-
-    document.getElementById("pusat-locked-content").style.display = gameState.isPusatUnlocked ? "none" : "block";
-    document.getElementById("pusat-unlocked-content").style.display = gameState.isPusatUnlocked ? "block" : "none";
-
-    renderAJKLists();
-  }
-
-  function saveGame() {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
-    alert("Permainan berjaya disimpan!");
-  }
-
-  function loadGame() {
-    const data = localStorage.getItem(SAVE_KEY);
-    if (data) {
-      gameState = JSON.parse(data);
-      switchPage('page-dashboard');
-      updateUI();
-      alert("Permainan dimuat naik!");
-    }
-  }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    updateCawanganOptions();
-    const data = localStorage.getItem(SAVE_KEY);
-    if (data) {
-      gameState = JSON.parse(data);
-      switchPage('page-dashboard');
-      updateUI();
-    } else {
-      switchPage('page-creation');
-    }
-  });
-</script>
+  </script>
 
 </body>
 </html>
