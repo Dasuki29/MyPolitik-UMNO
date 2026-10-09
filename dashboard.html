@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E0F13">
+  <title>Dashboard | MyPolitik: UMNO</title>
+  <meta name="description" content="Dashboard permainan MyPolitik: UMNO. Urus pengaruh, dana, peta, pemilihan dan mesyuarat.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    /* Gaya khusus dashboard sahaja. Token warna datang daripada css/style.css. */
+    .dash-profile { display: grid; gap: var(--space-4); }
+    .dash-profile__top { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
+    .dash-profile__info { min-width: 0; flex: 1 1 240px; }
+    .dash-loc { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+    .dash-loc li { font-size: .78rem; color: var(--text-muted); background: var(--bg-elev-2); border: 1px solid var(--border-soft); border-radius: 999px; padding: .2rem .65rem; }
+    .dash-loc b { color: var(--text-dim); font-weight: 600; margin-right: 4px; }
+    .year-pill { display: inline-flex; align-items: center; gap: 8px; padding: .45rem .9rem; border-radius: 999px; font-weight: 800; font-size: .85rem; letter-spacing: .03em; background: var(--bg-elev-3); border: 1px solid var(--border); color: var(--text); }
+    .year-pill[data-fasa="pemilihan"] { background: linear-gradient(135deg, var(--red), var(--red-dark)); border-color: transparent; color: #fff; box-shadow: var(--shadow-red); }
+    .year-pill[data-fasa="pentadbiran"] { background: linear-gradient(135deg, var(--gold-light), var(--gold-dark)); border-color: transparent; color: #2B2100; }
+    .res-bar { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+    @media (min-width: 720px) { .res-bar { grid-template-columns: repeat(4, 1fr); } }
+    .res-bar .stat__value { font-size: 1.5rem; }
+    .dash-time { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+    .dash-time .grow { flex: 1 1 200px; font-size: .85rem; color: var(--text-muted); }
+    .tabs { display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-1); background: var(--bg-elev-1); border: 1px solid var(--border-soft); border-radius: var(--radius); margin: var(--space-4) 0; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex: 1 0 auto; min-height: 46px; padding: .55rem 1rem; border: 0; border-radius: 10px; background: transparent; color: var(--text-muted); font: 600 .92rem var(--font-body); cursor: pointer; white-space: nowrap; transition: background .2s, color .2s; }
+    .tab:hover { color: var(--text); }
+    .tab[aria-selected="true"] { background: linear-gradient(135deg, var(--red), var(--red-dark)); color: #fff; box-shadow: var(--shadow-red); }
+    .tab:focus-visible, .bottom-nav button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); margin-left: 6px; vertical-align: middle; }
+    .bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: none; border: 0; font: inherit; font-size: .68rem; color: var(--text-dim); cursor: pointer; }
+    .bottom-nav button .icon { font-size: 1.3rem; line-height: 1; }
+    .bottom-nav button.is-active { color: var(--gold); }
+    .panel[hidden] { display: none; }
+    .panel > .card + .card { margin-top: var(--space-4); }
+    .sub-title { margin: 0 0 var(--space-2); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); }
+    .note { margin: 0 0 var(--space-3); font-size: .88rem; color: var(--text-muted); }
+    .banner { padding: var(--space-3) var(--space-4); border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev-2); margin-bottom: var(--space-4); font-size: .9rem; }
+    .banner--warn { border-color: rgba(255, 77, 94, .5); background: rgba(255, 77, 94, .08); }
+    .banner--gold { border-color: rgba(242, 183, 5, .5); background: rgba(242, 183, 5, .07); }
+    .banner strong { display: block; color: var(--white); margin-bottom: 2px; }
+    .choice:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .choice:disabled:hover { border-color: var(--border); background: var(--bg-elev-2); }
+    .item { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev-2); }
+    .item + .item { margin-top: var(--space-3); }
+    .item__head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); flex-wrap: wrap; }
+    .item__title { font-weight: 700; color: var(--white); }
+    .item__desc { font-size: .85rem; color: var(--text-muted); margin: 0; }
+    .item__row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+    .item select { min-height: 40px; background: var(--bg-elev-1); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: .3rem .6rem; font: inherit; max-width: 100%; }
+    .roles { display: flex; flex-wrap: wrap; gap: 6px; }
+    .result { font-size: .85rem; padding: .5rem .75rem; border-radius: 8px; background: var(--bg-elev-1); border-left: 3px solid var(--gold); color: var(--text-muted); }
+    .result.is-good { border-left-color: var(--success); }
+    .result.is-bad { border-left-color: var(--danger); }
+    .status-chip { font-size: .72rem; font-weight: 700; padding: .15rem .6rem; border-radius: 999px; background: var(--bg-elev-3); color: var(--text-muted); border: 1px solid var(--border); white-space: nowrap; }
+    .status-chip.is-open { color: #2B2100; background: var(--gold); border-color: transparent; }
+    .status-chip.is-done { color: #fff; background: #1F7550; border-color: transparent; }
+    .status-chip.is-lock { color: var(--text-dim); }
+    .loy { display: grid; gap: var(--space-3); }
+    .loy__row .progress-wrap { margin: 0; }
+    .loy__label { display: flex; justify-content: space-between; font-size: .8rem; color: var(--text-muted); margin-bottom: 4px; }
+    .loy__label b { color: var(--white); }
+    .side-stack { display: grid; gap: var(--space-4); }
+    .empty { color: var(--text-muted); font-size: .9rem; margin: 0; }
+    .loading { padding: var(--space-6) var(--space-4); text-align: center; color: var(--text-muted); }
+    .modal__body p { margin: 0 0 var(--space-3); color: var(--text-muted); }
+    .modal__body ul { margin: 0 0 var(--space-3); padding-left: 1.2rem; color: var(--text-muted); }
+    .modal__body li { margin-bottom: 4px; }
+    .kv { display: flex; justify-content: space-between; gap: var(--space-3); font-size: .9rem; padding: .35rem 0; border-bottom: 1px dashed var(--border-soft); }
+    .kv:last-child { border-bottom: 0; }
+    .kv b { color: var(--white); }
+    noscript .banner { margin: var(--space-4); }
+    /* Peta berada dalam lajur sempit: susun panel butiran di bawah peta, bukan di sisi */
+    #peta-host .mpm-body { grid-template-columns: minmax(0, 1fr) !important; }
+    #peta-host .mpm-panel { position: static !important; }
+    #r-tahun { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+  <a class="sr-only" href="#kandungan">Langkau ke kandungan</a>
+
+  <header class="app-header">
+    <a class="brand" href="dashboard.html" aria-label="MyPolitik: UMNO">
+      <span class="brand__logo" aria-hidden="true">M</span>
+      <span>MyPolitik <span class="brand__sub">UMNO</span></span>
+    </a>
+    <div class="header-actions">
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-simpan">Simpan</button>
+      <button type="button" class="btn btn--danger btn--sm" id="btn-reset">Reset</button>
+    </div>
+  </header>
+
+  <noscript><div class="banner banner--warn"><strong>JavaScript diperlukan</strong>Aktifkan JavaScript untuk bermain MyPolitik: UMNO.</div></noscript>
+
+  <main class="container page" id="kandungan" hidden>
+
+    <!-- 1. Profil pemain + Bar Sumber + Kawalan Masa -->
+    <section class="card dash-profile" aria-label="Profil pemain">
+      <div class="dash-profile__top">
+        <div class="avatar" id="p-avatar" aria-hidden="true">?</div>
+        <div class="dash-profile__info">
+          <h1 class="profile-card__name" id="p-nama">Pemain</h1>
+          <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="badge-office badge-office--ahli" id="p-jawatan">Ahli Biasa</span>
+            <span class="year-pill" id="p-tahun" data-fasa="">2026</span>
+          </div>
+          <ul class="dash-loc" aria-label="Lokasi">
+            <li><b>Negeri</b><span id="p-negeri">–</span></li>
+            <li><b>Bahagian</b><span id="p-bahagian">–</span></li>
+            <li><b>DUN</b><span id="p-dun">–</span></li>
+            <li><b>Cawangan</b><span id="p-cawangan">–</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="res-bar" role="group" aria-label="Sumber">
+        <div class="stat"><div class="stat__label">Pengaruh (IP)</div><div class="stat__value stat__value--gold" id="r-ip">0</div></div>
+        <div class="stat"><div class="stat__label">Dana (MYR)</div><div class="stat__value" id="r-myr">0</div></div>
+        <div class="stat"><div class="stat__label">Mata Tindakan (AP)</div><div class="stat__value stat__value--red" id="r-ap">0</div></div>
+        <div class="stat"><div class="stat__label">Status Tahun</div><div class="stat__value" id="r-tahun" style="font-size:1.1rem">2026</div><div class="stat__label" id="r-tahun-sub" style="margin-top:2px;text-transform:none;letter-spacing:0"></div></div>
+      </div>
+
+      <div class="dash-time">
+        <div class="grow" id="t-info" aria-live="polite"></div>
+        <button type="button" class="btn btn--gold" id="btn-tahun">Lanjut ke Tahun Depan &rarr;</button>
+      </div>
+    </section>
+
+    <!-- 2. Tab navigasi utama -->
+    <div class="tabs" role="tablist" aria-label="Menu utama">
+      <button class="tab" role="tab" id="tab-peta" data-tab="peta" aria-controls="panel-peta" aria-selected="true">🗺️ Peta Pengaruh</button>
+      <button class="tab" role="tab" id="tab-tindakan" data-tab="tindakan" aria-controls="panel-tindakan" aria-selected="false" tabindex="-1">⚡ Tindakan Pemain</button>
+      <button class="tab" role="tab" id="tab-pemilihan" data-tab="pemilihan" aria-controls="panel-pemilihan" aria-selected="false" tabindex="-1">🗳️ Pemilihan &amp; Kempen</button>
+      <button class="tab" role="tab" id="tab-mesyuarat" data-tab="mesyuarat" aria-controls="panel-mesyuarat" aria-selected="false" tabindex="-1">📜 Mesyuarat &amp; Usul</button>
+    </div>
+
+    <div class="dashboard-layout">
+      <div class="dashboard-layout__main">
+        <section class="panel" id="panel-peta" role="tabpanel" aria-labelledby="tab-peta">
+          <div id="peta-host"><div class="loading">Buka tab ini untuk memuatkan peta...</div></div>
+        </section>
+        <section class="panel" id="panel-tindakan" role="tabpanel" aria-labelledby="tab-tindakan" hidden></section>
+        <section class="panel" id="panel-pemilihan" role="tabpanel" aria-labelledby="tab-pemilihan" hidden></section>
+        <section class="panel" id="panel-mesyuarat" role="tabpanel" aria-labelledby="tab-mesyuarat" hidden></section>
+      </div>
+
+      <aside class="dashboard-layout__side side-stack" aria-label="Status pemain">
+        <section class="card stats-panel">
+          <h2 class="stats-panel__title">Kesetiaan &amp; Reputasi</h2>
+          <div class="loy" id="s-kesetiaan"></div>
+        </section>
+        <section class="card stats-panel">
+          <h2 class="stats-panel__title">Isu Tempatan</h2>
+          <div id="s-isu"></div>
+        </section>
+        <section class="card stats-panel">
+          <h2 class="stats-panel__title">Log Peristiwa</h2>
+          <div class="event-log" id="s-log"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navigasi bawah" id="bottom-nav">
+    <button type="button" data-tab="peta"><span class="icon" aria-hidden="true">🗺️</span>Peta</button>
+    <button type="button" data-tab="tindakan"><span class="icon" aria-hidden="true">⚡</span>Tindakan</button>
+    <button type="button" data-tab="pemilihan"><span class="icon" aria-hidden="true">🗳️</span>Pemilihan</button>
+    <button type="button" data-tab="mesyuarat"><span class="icon" aria-hidden="true">📜</span>Mesyuarat</button>
+  </nav>
+
+  <!-- Modal pengesahan / acara -->
+  <div class="modal-overlay" id="modal" aria-hidden="true">
+    <div class="modal modal--gold" role="dialog" aria-modal="true" aria-labelledby="modal-tajuk">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-tajuk">Pengesahan</h2>
+        <button type="button" class="modal__close" id="modal-tutup" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="modal__body" id="modal-isi"></div>
+      <div class="modal__footer" id="modal-kaki"></div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toasts" role="status" aria-live="polite"></div>
+
+  <!-- Konfigurasi: URL Google Sheets (sama seperti index.html) -->
+  <script>
+    window.MYPOLITIK_CONFIG = {
+      sheetCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv',
+      indexUrl: 'index.html'
+    };
+  </script>
+  <!-- Susunan penting: data > save > modul tindakan > pemilihan > mesyuarat > peta > pengawal -->
+  <script src="js/data.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/ordinaryMember.js"></script>
+  <script src="js/incumbent.js"></script>
+  <script src="js/election.js"></script>
+  <script src="js/meeting.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
