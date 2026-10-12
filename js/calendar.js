@@ -50,8 +50,11 @@
   var CONFIG = {
     BULAN_NAMA: ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'],
     AP_BULANAN: 5,                       // AP ditetapkan kepada nilai ini setiap bulan
-    DANA_ASAS: 600,                      // elaun bulanan semua pemain (MYR)
+    DANA_ASAS: 450,                      // elaun bulanan semua pemain (MYR)
     DANA_JAWATAN: { cawangan: 300, bahagian: 800, pusat: 2000 },   // tambahan bagi pemegang jawatan
+    // v3.8: kesetiaan susut setiap bulan jika tidak dijaga. Pemegang jawatan menanggung susutan Akar Umbi tambahan.
+    SUSUT_BULANAN: { akarUmbi: 3, ajk: 2, perwakilan: 3 },       // ketuaCawangan tidak disusutkan: pemegang jawatan tiada tindakan untuk memulihkannya
+    SUSUT_PEMEGANG_JAWATAN: 2,           // tambahan susutan Akar Umbi bagi pemegang jawatan
     BONUS_AKAR_UMBI: 0.25,               // bulan 1-3: tambahan pada IP dan kesetiaan positif
 
     /* Fasa takwim (bulan mula-tamat, termasuk). */
@@ -142,7 +145,10 @@
   /** Perubahan AP dan MYR pada permulaan bulan baharu. */
   function regenerasi(profil) {
     var p = profil || S.loadPlayer(), d = pendapatanBulanan(p);
-    return { ap: CONFIG.AP_BULANAN - p.ap, apBaharu: CONFIG.AP_BULANAN, myr: d.jumlah, butiran: d.butiran };
+    var susut = {};                                                    // v3.8: susutan kesetiaan bulanan
+    Object.keys(CONFIG.SUSUT_BULANAN).forEach(function (k) { susut[k] = -CONFIG.SUSUT_BULANAN[k]; });
+    if (peringkatDipegang(p).length) { susut.akarUmbi -= CONFIG.SUSUT_PEMEGANG_JAWATAN; }
+    return { ap: CONFIG.AP_BULANAN - p.ap, apBaharu: CONFIG.AP_BULANAN, myr: d.jumlah, butiran: d.butiran, kesetiaan: susut };
   }
 
   /**
@@ -272,9 +278,9 @@
       r = E.majuTahun({ pulihAP: true });                 // tahun + 1, bulan = 1, AP dipulihkan, kitaran dikemas kini
       if (!r.ok) { return r; }
       peristiwa = peristiwa.concat(r.peristiwa || []);
-      r = S.applyEffects({ myr: rg.myr }, { kiraTindakan: false, log: { tindakan: 'regenerasi', nama: 'Elaun bulan ' + bulan + ' ' + tahun, peringkat: 'bulan' } });
+      r = S.applyEffects({ myr: rg.myr, kesetiaan: rg.kesetiaan }, { kiraTindakan: false, log: { tindakan: 'regenerasi', nama: 'Elaun bulan ' + bulan + ' ' + tahun, peringkat: 'bulan' } });
     } else {
-      r = S.applyEffects({ ap: rg.ap, myr: rg.myr }, {
+      r = S.applyEffects({ ap: rg.ap, myr: rg.myr, kesetiaan: rg.kesetiaan }, {
         kiraTindakan: false, patch: tahunBaharu ? { bulan: bulan, tahun: tahun } : { bulan: bulan },
         log: { tindakan: 'bulan_baharu', nama: 'Bulan ' + bulan + ' (' + namaBulan(bulan) + ') ' + tahun, peringkat: 'bulan' }
       });
@@ -288,7 +294,7 @@
       fasa: getFasa(bulan), regenerasi: rg,
       perubahan: { ip: akhir.ip - asal.ip, myr: akhir.myr - asal.myr, ap: akhir.ap - asal.ap, reputasi: akhir.reputasi - asal.reputasi },
       peristiwa: peristiwa,
-      mesej: 'Bulan ' + bulan + ' (' + namaBulan(bulan) + ') ' + tahun + ': AP ' + CONFIG.AP_BULANAN + ', elaun +MYR ' + rg.myr.toLocaleString('ms-MY') + '.',
+      mesej: 'Bulan ' + bulan + ' (' + namaBulan(bulan) + ') ' + tahun + ': AP ' + CONFIG.AP_BULANAN + ', elaun +MYR ' + rg.myr.toLocaleString('ms-MY') + '. Kesetiaan susut jika tidak dijaga.',
       profil: akhir
     };
   }

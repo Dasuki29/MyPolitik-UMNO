@@ -66,6 +66,10 @@
     KERUSI_AJK_CAWANGAN: 7,
     PESAING_TAMBAHAN: 4,                 // bilangan calon = kerusi + nilai ini
     PENYEBARAN_PESAING: { min: 44, sd: 12 },
+    // v3.8 (kesukaran): pesaing lebih kuat pada peringkat tinggi; IP pemain dinilai mengikut skala peringkat
+    ARAS_PESAING: { cawangan: -5, bahagian: 4, pusat: 7 },   // tambahan kekuatan purata pesaing
+    GANDA_KESUKARAN: 0.58,                                   // darab 'kesukaran' jawatan (js/jawatan.js)
+    IP_SKALA: { cawangan: 120, bahagian: 250, pusat: 450 },  // IP sebanyak ini = skor IP penuh (100) pada peringkat itu
     MENANG_IP: { jawatan: 20, perwakilan: 10 },
     KALAH_IP: { jawatan: -5, perwakilan: -3 },
     MENANG_IP_PERINGKAT: { cawangan: 20, bahagian: 30, pusat: 50 },   // jawatan
@@ -338,7 +342,8 @@
   /** Kekuatan pemain (0 hingga 100) mengikut peringkat pengundi. */
   function kekuatanPemain(p, st, peringkat, d) {
     var b = CONFIG.BERAT[peringkat === 'cawangan' ? 'cawangan' : 'bahagian'], k = p.kesetiaan;
-    var v = Math.min(100, p.ip) * b.ip + k.akarUmbi * b.akarUmbi + k.ketuaCawangan * b.ketuaCawangan +
+    var skala = CONFIG.IP_SKALA[peringkat] || CONFIG.IP_SKALA.bahagian;
+    var v = Math.min(100, 100 * p.ip / skala) * b.ip + k.akarUmbi * b.akarUmbi + k.ketuaCawangan * b.ketuaCawangan +
             k.ajk * b.ajk + k.perwakilan * b.perwakilan + st.kempen.mata * b.kempen;
     if (d && d.sayap && J.sayapPemain(p) === d.sayap) { v += CONFIG.BONUS_SAYAP; }
     var Et = etika();
@@ -382,7 +387,7 @@
                (lelaki ? ' bin ' : ' binti ') + NAMA_L[Math.floor(rng() * NAMA_L.length)];
       } while (guna[nama] && ++cuba < 8);
       guna[nama] = true;
-      senarai.push({ nama: nama, pemain: false, kekuatan: clamp(normal(rng, CONFIG.PENYEBARAN_PESAING.min + (tambahan || 0), CONFIG.PENYEBARAN_PESAING.sd), 8, 92) });
+      senarai.push({ nama: nama, pemain: false, kekuatan: clamp(normal(rng, CONFIG.PENYEBARAN_PESAING.min + (tambahan || 0), CONFIG.PENYEBARAN_PESAING.sd), 8, 96) });
     }
     return senarai;
   }
@@ -405,7 +410,8 @@
   function bina(p, st, d, opts) {
     var peringkat = d.peringkat, kerusi = d.kerusi || 1;
     var bil = Math.max(4, kerusi + CONFIG.PESAING_TAMBAHAN);
-    var calon = janaPesaing(p, d.kod, bil - 1, d.kesukaran);
+    var aras = (CONFIG.ARAS_PESAING[peringkat] || 0) + (d.kesukaran || 0) * CONFIG.GANDA_KESUKARAN;
+    var calon = janaPesaing(p, d.kod, bil - 1, aras);
     calon.push({ nama: p.nama, pemain: true, kekuatan: kekuatanPemain(p, st, peringkat, d) });
     return { calon: calon, kerusi: kerusi, pemilih: bilPemilih(p, peringkat, opts) };
   }
@@ -441,30 +447,30 @@
     {
       id: 'ziarah_kasih_kempen', nama: 'Ziarah Kasih',
       penerangan: 'Menziarahi ahli yang uzur dan keluarga yang ditimpa musibah, tanpa meminta undi. Membina Modal Sosial.',
-      kesan: { ap: -1, ip: 4, kesetiaan: { akarUmbi: 6 } }, mata: 6, maksKali: 4,
+      kesan: { myr: -100, ap: -1, ip: 4, kesetiaan: { akarUmbi: 6 } }, mata: 5, maksKali: 4,
       etika: { tahap: 'bersih', modal: 5 }
     },
     {
       id: 'khidmat_masyarakat', nama: 'Khidmat Masyarakat',
       penerangan: 'Gotong-royong, klinik bergerak dan kelas tuisyen percuma. Kerja ikhlas yang dikenang akar umbi.',
-      kesan: { ap: -2, myr: -300, ip: 6, reputasi: 2, kesetiaan: { akarUmbi: 6, ajk: 2 } }, mata: 8, maksKali: 3,
+      kesan: { ap: -2, myr: -375, ip: 6, reputasi: 2, kesetiaan: { akarUmbi: 6, ajk: 2 } }, mata: 7, maksKali: 3,
       etika: { tahap: 'bersih', modal: 7 }
     },
     {
       id: 'jamuan_mesyuarat', nama: 'Jamuan Mesyuarat',
       penerangan: 'Menjamu ahli dan AJK selepas mesyuarat. Zon kelabu: jamuan bertujuan meraih undi boleh dianggap melanggar Perkara 5.6.',
-      kesan: { myr: -800, ap: -1, kesetiaan: { ajk: 8, akarUmbi: 6 } }, mata: 10, maksKali: 3,
+      kesan: { myr: -1000, ap: -1, kesetiaan: { ajk: 8, akarUmbi: 6 } }, mata: 10, maksKali: 3,
       etika: { tahap: 'kelabu', modal: -2, risiko: 6, tambahRisiko: 4, berat: 1, perkara: 'Menganjurkan jamuan sambil berkempen (Tataetika Perkara 5.6)', fasal: 'Tataetika 5.6' }
     },
     {
       id: 'siri_jelajah', nama: 'Siri Jelajah',
       penerangan: 'Menjelajah lokaliti dan bertemu ahli dari rumah ke rumah.',
-      kesan: { myr: -600, ap: -2, ip: 5, kesetiaan: { akarUmbi: 12 } }, mata: 12, maksKali: 3
+      kesan: { myr: -750, ap: -2, ip: 5, kesetiaan: { akarUmbi: 12 } }, mata: 10, maksKali: 3
     },
     {
       id: 'lobi_ketua_bahagian', nama: 'Lobi Ketua Bahagian',
       penerangan: 'Bertemu Ketua Bahagian dan perwakilan untuk meraih sokongan.',
-      kesan: { myr: -700, ap: -1, kesetiaan: { perwakilan: 10 } }, mata: 8, maksKali: 2
+      kesan: { myr: -850, ap: -1, kesetiaan: { perwakilan: 10 } }, mata: 8, maksKali: 2
     },
     {
       id: 'janji_jawatan', nama: 'Janji Jawatan & Projek',
@@ -481,7 +487,7 @@
     {
       id: 'agih_wang_undi', nama: 'Agihan Wang Undi',
       penerangan: 'Memberi wang kepada perwakilan untuk mendapatkan undi. Kemenangan paling pantas, tetapi inilah politik wang yang dilarang Fasal 20.13 dan boleh membawa pemecatan.',
-      kesan: { myr: -3500, ap: -1, kesetiaan: { perwakilan: 18, ajk: 8 } }, mata: 28, maksKali: 2,
+      kesan: { myr: -5000, ap: -1, kesetiaan: { perwakilan: 18, ajk: 8 } }, mata: 28, maksKali: 2,
       etika: { tahap: 'kotor', modal: -10, risiko: 30, tambahRisiko: 30, berat: 3, perkara: 'Memberi wang bagi mendapatkan undi (Tataetika Perkara 5.1.2, politik wang)', fasal: 'Fasal 20.13' }
     },
     {
