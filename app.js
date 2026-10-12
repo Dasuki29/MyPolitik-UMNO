@@ -307,7 +307,7 @@
   if (!document.getElementById('btn-tahun')) { return; }
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
-      I = W.MyPolitikIncumbent, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
+      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -431,6 +431,13 @@
     var lp = $('p-perwakilan'), sp = M ? M.getStatusPerwakilan(p) : null;
     if (lp) { var lb = sp && (sp.pau.lencana || sp.bahagian.lencana); lp.hidden = !lb; lp.textContent = lb || ''; }
     var l = $('p-jawatan'); l.textContent = p.jawatan; l.className = 'badge-office badge-office--' + kelasLencana(p.jawatan);
+    var jl = $('p-jawatan-lain');
+    if (jl) {
+      var semua = J ? J.ringkas(p) : [];
+      jl.innerHTML = semua.length > 1 ? semua.slice(1).map(function (j) {
+        return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + '</span>'; }).join(' ') : '';
+      jl.hidden = semua.length <= 1;
+    }
     $('p-negeri').textContent = p.negeri || '–'; $('p-bahagian').textContent = p.bahagian || '–';
     $('p-dun').textContent = p.dun || '–'; $('p-cawangan').textContent = p.cawangan || '–';
     var pem = adalahTahunPemilihan(p.tahun);
@@ -439,7 +446,7 @@
     $('r-ip').textContent = fmt(p.ip); $('r-myr').textContent = 'RM ' + fmt(p.myr); $('r-ap').textContent = fmt(p.ap);
     $('r-tahun').textContent = labelTahun(p.tahun);
     var seterusnya = E ? E.tahunPemilihanSeterusnya(p.tahun) : p.tahun;
-    $('r-tahun-sub').textContent = (tk ? 'Bulan ' + tk.bulan + ' (' + tk.namaBulan + ') · ' : '') + (pem ? 'Pertandingan & kempen dibuka' : 'Pemilihan seterusnya ' + seterusnya);
+    $('r-tahun-sub').textContent = (tk ? 'Bulan ' + tk.bulan + ' (' + tk.namaBulan + ') · ' : '') + (pem ? 'Pertandingan & kempen dibuka' : 'Perwakilan tahunan dibuka · jawatan ' + seterusnya);
     renderTakwim(p, tk);
     document.title = p.nama + ' | MyPolitik: UMNO';
   }
@@ -451,7 +458,7 @@
     $('tk-judul').textContent = 'Bulan ' + tk.bulan + ' (' + tk.namaBulan + ') ' + tk.tahun;
     $('tk-fasa').textContent = tk.fasa.tajuk + ': ' + tk.fasa.ringkas;
     $('tk-strip').innerHTML = tk.jadual.map(function (j) {
-      var kelas = j.fasa === 'bahagian_pau' ? (j.bulan <= 9 ? 'bahagian' : 'pau') : j.fasa;
+      var kelas = j.fasa;
       return '<li class="f-' + kelas + (j.semasa ? ' is-semasa' : '') + (j.lepas ? ' is-lepas' : '') + '"' + (j.semasa ? ' aria-current="date"' : '') +
         ' title="' + esc(j.nama + (j.acara.length ? ': ' + j.acara.join(', ') : '')) + '"><b>' + j.bulan + '</b>' + esc(j.pendek) + '</li>';
     }).join('');
@@ -528,7 +535,7 @@
     if (!peg && O) {
       var k = O.getKelayakanBertanding(p), peratus = clamp(Math.round(k.ip / k.ipMin * 100), 0, 100);
       h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Kelayakan Bertanding</h2>' +
-        '<p class="note">Capai ' + k.ipMin + ' IP untuk membuka pertandingan AJK / Sayap Cawangan. Jawatan Bahagian dan Pusat masih terkunci.</p>' +
+        '<p class="note">Capai ' + k.ipMin + ' IP untuk membuka pertandingan AJK / Sayap Cawangan (tahun pemilihan). Jawatan Bahagian dan Pusat dibuka selepas anda memegang jawatan peringkat lebih rendah dan menang mandat perwakilan tahun itu.</p>' +
         '<div class="progress-wrap"><div class="progress__label"><span>Pengaruh</span><b>' + fmt(k.ip) + ' / ' + k.ipMin + '</b></div>' +
         '<div class="progress"><div class="progress__bar" style="width:' + peratus + '%"></div></div></div>' +
         '<div style="margin-top:12px">' + k.senarai.map(function (e) {
@@ -545,43 +552,71 @@
     return e.terbuka ? '<span class="status-chip is-open">Terbuka</span>' : '<span class="status-chip is-lock">Terkunci</span>';
   }
 
+  /** Kad "Jawatan & Mandat": semua jawatan dipegang (berbilang peringkat) dan mandat perwakilan tahun ini. */
+  function kadJawatan(p) {
+    if (!J) { return ''; }
+    var senarai = J.ringkas(p), pc = J.perwakilanSah(p, 'cawangan'), pb = J.perwakilanSah(p, 'bahagian');
+    function mandat(nama, x, peringkat) {
+      var teks = x.sah ? 'Sah tahun ' + p.tahun + ' sahaja' : x.exOfficio ? 'Automatik (' + esc(x.sumberExOfficio) + ')' : x.luput ? 'Luput (tahun ' + x.tahun + ')' : 'Belum ada';
+      return '<div class="kv"><span>' + esc(nama) + '</span><b class="' + (x.layak ? 'text-gold' : '') + '">' + teks + '</b></div>';
+    }
+    var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Jawatan &amp; Mandat Anda</h2>';
+    h += '<p class="note">Anda boleh memegang jawatan di Cawangan, Bahagian dan Pusat serentak (satu jawatan utama dan satu jawatan sayap bagi setiap peringkat). ' +
+      (J.sayapPemain(p) ? 'Sayap anda: <b>' + esc(J.NAMA_SAYAP[J.sayapPemain(p)]) + '</b>.' : 'Anda tiada sayap (Ahli Biasa / Veteran), jadi jawatan sayap tidak dibuka.') + '</p>';
+    h += senarai.length ? '<div class="btn-group" style="flex-wrap:wrap;margin-bottom:10px">' + senarai.map(function (j) {
+      return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + ' &middot; ' + esc(j.label) + '</span>'; }).join('') + '</div>'
+      : '<p class="empty">Belum memegang sebarang jawatan.</p>';
+    h += mandat('Perwakilan Cawangan ke Bahagian', pc) + mandat('Perwakilan Bahagian ke PAU', pb);
+    h += '<p class="note" style="margin-top:8px">Mandat perwakilan hanya sah untuk tahun berjalan. Setiap tahun baharu, bertanding semula di Cawangan (bulan 4-6).</p></section>';
+    return h;
+  }
+
+  function barisPertandingan(e) {
+    var a = state.anggaran[e.kod], kep = e.keputusan, h = '';
+    h += '<div class="item"><div class="item__head"><div><div class="item__title">' + esc(e.jawatan) + (e.pertahan ? ' <span class="badge badge--gold">Pertahan</span>' : '') + (e.kumpulan === 'sayap' ? ' <span class="badge">Sayap</span>' : '') + '</div>' +
+      '<p class="item__desc">' + fmt(e.kerusi) + ' kerusi' + (e.ipPerlu && !e.pertahan ? ' · perlu ' + e.ipPerlu + ' IP' : '') + (e.tetingkap ? ' · pengundian ' + esc(e.tetingkap.label.toLowerCase()) : '') + (e.sebab && !e.terbuka ? ' · ' + esc(e.sebab) : '') + '</p></div>' + chipPertandingan(e) + '</div>';
+    if (kep) {
+      h += '<p class="result ' + (kep.menang ? 'is-good' : 'is-bad') + '">' + (kep.menang ? 'Menang' : 'Kalah') + ': kedudukan ' + kep.kedudukan + ' daripada ' + kep.jumlahCalon + ' calon, ' + fmt(kep.undi) + ' undi.</p>';
+    } else {
+      h += '<div class="item__row">';
+      if (!e.didaftar) { h += '<button type="button" class="btn btn--primary btn--sm" data-act="daftar" data-kod="' + esc(e.kod) + '" data-fk="d:' + esc(e.kod) + '"' + (e.terbuka ? '' : ' disabled') + '>' + (e.pertahan ? 'Pertahankan Jawatan' : 'Daftar Bertanding') + '</button>'; }
+      else {
+        h += '<button type="button" class="btn btn--gold btn--sm" data-act="undi" data-kod="' + esc(e.kod) + '" data-fk="u:' + esc(e.kod) + '"' + (e.bolehUndi ? '' : ' disabled') + '>Hari Mengundi' + (e.bolehUndi || !e.tetingkap ? '' : ' (' + esc(e.tetingkap.label.toLowerCase()) + ')') + '</button>' +
+             '<button type="button" class="btn btn--ghost btn--sm" data-act="peluang" data-kod="' + esc(e.kod) + '" data-fk="p:' + esc(e.kod) + '">Anggar Peluang</button>' +
+             '<button type="button" class="btn btn--ghost btn--sm" data-act="tarik" data-kod="' + esc(e.kod) + '" data-fk="x:' + esc(e.kod) + '">Tarik Balik</button>';
+      }
+      h += '</div>';
+      if (a) { h += '<p class="result">' + (a.ok ? 'Anggaran peluang menang: <b>' + a.peluangMenang + '%</b> (kekuatan anda ' + a.kekuatan + '/100, ' + a.jumlahCalon + ' calon, kedudukan purata ' + a.kedudukanPurata + ').' : esc(a.ralat)) + '</p>'; }
+    }
+    return h + '</div>';
+  }
+
+  var TAJUK_PERINGKAT = {
+    cawangan: ['Pemilihan Cawangan', 'Bulan 4-6 · jawatan Cawangan, Sayap Cawangan dan Perwakilan ke Bahagian'],
+    bahagian: ['Pemilihan Bahagian', 'Bulan 7 · jawatan Bahagian, Sayap Bahagian dan Perwakilan ke PAU'],
+    pusat: ['Pemilihan Pusat (PAU)', 'Bulan 8 · Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap']
+  };
+
   function panelPemilihan(p) {
     if (!E) { return '<div class="card"><p class="empty">Modul pemilihan tidak dimuatkan.</p></div>'; }
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
-      (f.fasa === 'pemilihan' ? '' : '. Pemilihan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-
+      (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
+    h += kadJawatan(p);
     if (f.fasa !== 'pemilihan') {
-      return h + '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Pertandingan Ditutup</h2>' +
-        '<p class="note">Tahun pentadbiran: tumpukan pada tindakan, perbahasan usul di Mesyuarat, serta mengumpul IP dan MYR. Pendaftaran dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</p>' +
-        '<div class="btn-group"><button type="button" class="btn btn--primary btn--sm" data-act="ke-tab" data-v="tindakan">Ke Tindakan</button>' +
-        '<button type="button" class="btn btn--ghost btn--sm" data-act="ke-tab" data-v="mesyuarat">Ke Mesyuarat</button></div></section>';
+      h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
 
     var daftar = st.pertandingan.filter(function (e) { return e.didaftar && !e.selesai; });
     if (!daftar.some(function (e) { return e.kod === state.kodSimulasi; })) { state.kodSimulasi = daftar.length ? daftar[0].kod : ''; }
 
-    h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Pertandingan</h2><p class="note">Hanya satu jawatan boleh dipertandingkan pada satu masa. Perwakilan boleh dipertandingkan bersama.</p>';
-    st.pertandingan.forEach(function (e) {
-      var a = state.anggaran[e.kod], kep = e.keputusan;
-      h += '<div class="item"><div class="item__head"><div><div class="item__title">' + esc(e.jawatan) + '</div>' +
-        '<p class="item__desc">' + fmt(e.kerusi) + ' kerusi' + (e.ipPerlu ? ' · perlu ' + e.ipPerlu + ' IP' : '') + (e.tetingkap ? ' · pengundian ' + esc(e.tetingkap.label.toLowerCase()) : '') + (e.sebab && !e.terbuka ? ' · ' + esc(e.sebab) : '') + '</p></div>' + chipPertandingan(e) + '</div>';
-      if (kep) {
-        h += '<p class="result ' + (kep.menang ? 'is-good' : 'is-bad') + '">' + (kep.menang ? 'Menang' : 'Kalah') + ': kedudukan ' + kep.kedudukan + ' daripada ' + kep.jumlahCalon + ' calon, ' + fmt(kep.undi) + ' undi.</p>';
-      } else {
-        h += '<div class="item__row">';
-        if (!e.didaftar) { h += '<button type="button" class="btn btn--primary btn--sm" data-act="daftar" data-kod="' + esc(e.kod) + '" data-fk="d:' + esc(e.kod) + '"' + (e.terbuka ? '' : ' disabled') + '>Daftar Bertanding</button>'; }
-        else {
-          h += '<button type="button" class="btn btn--gold btn--sm" data-act="undi" data-kod="' + esc(e.kod) + '" data-fk="u:' + esc(e.kod) + '"' + (e.bolehUndi ? '' : ' disabled') + '>Hari Mengundi' + (e.bolehUndi || !e.tetingkap ? '' : ' (' + esc(e.tetingkap.label.toLowerCase()) + ')') + '</button>' +
-               '<button type="button" class="btn btn--ghost btn--sm" data-act="peluang" data-kod="' + esc(e.kod) + '" data-fk="p:' + esc(e.kod) + '">Anggar Peluang</button>' +
-               '<button type="button" class="btn btn--ghost btn--sm" data-act="tarik" data-kod="' + esc(e.kod) + '" data-fk="x:' + esc(e.kod) + '">Tarik Balik</button>';
-        }
-        h += '</div>';
-        if (a) { h += '<p class="result">' + (a.ok ? 'Anggaran peluang menang: <b>' + a.peluangMenang + '%</b> (kekuatan anda ' + a.kekuatan + '/100, ' + a.jumlahCalon + ' calon, kedudukan purata ' + a.kedudukanPurata + ').' : esc(a.ralat)) + '</p>'; }
-      }
-      h += '</div>';
+    ['cawangan', 'bahagian', 'pusat'].forEach(function (lv) {
+      var baris = st.pertandingan.filter(function (e) { return e.peringkat === lv; });
+      if (!baris.length) { return; }
+      h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">' + TAJUK_PERINGKAT[lv][0] + '</h2><p class="note">' + TAJUK_PERINGKAT[lv][1] + '. Satu jawatan utama dan satu jawatan sayap boleh dipertandingkan pada satu peringkat; perwakilan dipertandingkan bersama.</p>';
+      baris.forEach(function (e) { h += barisPertandingan(e); });
+      h += '</section>';
     });
-    h += '</section>';
 
     h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Kempen Pemilihan</h2><p class="note">Mata kempen terkumpul: <b>' + fmt(st.mataKempen) + '</b>. Kempen meningkatkan kekuatan anda dalam pengundian.</p>';
     if (daftar.length) {
@@ -642,7 +677,7 @@
           h += '<div class="item" style="margin-top:12px"><div class="item__head"><div class="item__title">' + esc(u.tajuk) + '</div>' +
             '<span class="status-chip' + (u.status === 'selesai' ? ' is-done' : '') + '">' + (u.jenis === 'pemilihan' ? 'Pemilihan' : u.jenis === 'ucapan_dasar' ? 'Ucapan Dasar' : u.status === 'selesai' ? 'Diputuskan' : 'Terbuka') + '</span></div>' +
             '<p class="item__desc">' + esc(u.penerangan || '') + '</p>';
-          if (u.jenis === 'pemilihan') { h += '<p class="item__desc">Keputusan pemilihan perwakilan dikira apabila mesyuarat ditutup.</p>'; }
+          if (u.jenis === 'pemilihan') { h += '<p class="item__desc">Keputusan pemilihan dikira apabila mesyuarat ditutup. Pastikan anda sudah mendaftar bertanding di tab Pemilihan &amp; Kempen.</p>'; }
           else if (u.status === 'selesai' && u.keputusan) {
             var kp = u.keputusan, pil = u.pilihan;
             h += '<p class="result ' + (kp.padan ? 'is-good' : pil ? 'is-bad' : '') + '">' + (kp.lulus ? 'LULUS' : 'DITOLAK') + ': ' + fmt(kp.undiSokong) + ' sokong, ' + fmt(kp.undiBantah) + ' bantah' +
@@ -915,7 +950,7 @@
       render(); lapor(pr);
     }
     else if (act === 'tutup') {
-      modal({ tajuk: 'Tutup Mesyuarat?', isi: '<p>Usul yang belum anda sertai akan diputuskan tanpa kesan kepada anda' + (adalahTahunPemilihan(S.loadPlayer().tahun) ? ', dan pemilihan perwakilan peringkat ini akan diundi' : '') + '.</p>',
+      modal({ tajuk: 'Tutup Mesyuarat?', isi: '<p>Usul yang belum anda sertai akan diputuskan tanpa kesan kepada anda' + ', dan pencalonan yang telah anda daftar pada peringkat ini akan diundi' + '.</p>',
         butang: [{ label: 'Batal', nilai: false }, { label: 'Tutup Mesyuarat', nilai: true, kelas: 'btn--gold' }] })
         .then(function (ya) { if (ya) { tutupDanRingkas(lvl); } });
     }

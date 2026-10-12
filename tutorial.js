@@ -134,7 +134,7 @@
      klik    : true -> pemain mesti menekan elemen yang disorot untuk menyambung
      ------------------------------------------------------------------------ */
   function langkah(p) {
-    var kod = p && p.demografik ? p.demografik.kategoriKod : null, sy = SAYAP[kod] || null;
+    var kod = p && (p.avatar || (p.demografik && p.demografik.kategoriKod)) || null, sy = SAYAP[kod] || null;
     var sayapTeks = sy
       ? (sy.jawatan
           ? 'Anda dalam kategori <b>' + esc(sy.nama) + '</b> (' + esc(sy.huraian) + '). Selepas mencapai <b>50 IP</b>, anda boleh bertanding <b>' + esc(sy.jawatan) + '</b> pada tab ini.'
@@ -145,7 +145,7 @@
       { id: 'ip', sasaran: '#r-ip', bekas: '.stat', tajuk: 'Pengaruh (IP)', isi: 'IP ialah kekuatan politik anda. IP menentukan kelayakan bertanding (AJK dan Sayap perlu <b>50 IP</b>) dan menjadi faktor utama kemenangan dalam pemilihan.', petua: 'Cara paling mudah menambah IP: Ziarah Kasih (+10 IP).' },
       { id: 'myr', sasaran: '#r-myr', bekas: '.stat', tajuk: 'Dana (MYR)', isi: 'Dana digunakan untuk kempen, jamuan dan menyumbang kepada program. Dana <b>terkumpul</b> dan <b>tidak</b> ditetapkan semula; setiap bulan anda menerima elaun (RM 600 asas, ditambah elaun jawatan).' },
       { id: 'ap', sasaran: '#r-ap', bekas: '.stat', tajuk: 'Mata Tindakan (AP)', isi: 'Setiap tindakan menggunakan AP. AP <b>ditetapkan semula kepada 5</b> pada permulaan setiap bulan, jadi AP yang tidak digunakan tidak dibawa ke bulan berikutnya.', petua: 'Gunakan AP anda sebelum menekan Teruskan ke Bulan Seterusnya.' },
-      { id: 'bulan', sasaran: '.takwim', tajuk: 'Masa Bulanan', isi: 'Permainan bergerak <b>bulan demi bulan</b> (Bulan 1–12). <b>Bulan 1–3</b>: kerja akar umbi, bonus +25% IP. <b>Bulan 4–6</b>: Mesyuarat dan Pemilihan Cawangan. <b>Bulan 7–9</b>: Mesyuarat Bahagian. <b>Bulan 10–12</b>: Perhimpunan Agung (PAU).' },
+      { id: 'bulan', sasaran: '.takwim', tajuk: 'Masa Bulanan', isi: 'Permainan bergerak <b>bulan demi bulan</b> (Bulan 1–12). <b>Bulan 1–3</b>: kerja akar umbi, bonus +25% IP. <b>Bulan 4–6</b>: Mesyuarat dan Pemilihan Cawangan &amp; Sayap. <b>Bulan 7</b>: Mesyuarat dan Pemilihan Bahagian &amp; Sayap. <b>Bulan 8</b>: Perhimpunan Agung (PAU) dan Pemilihan Pusat. <b>Bulan 9–12</b>: Akar umbi dan pasca-PAU.' },
       { id: 'lanjut', sasaran: '#btn-tahun', tajuk: 'Teruskan ke Bulan Seterusnya', isi: 'Tekan butang ini bila anda selesai dengan bulan semasa. Anda akan melihat pratonton: AP diset semula dan elaun masuk. Anda tidak boleh kembali ke bulan sebelumnya.' },
       { id: 'tindakan', sasaran: '#tab-tindakan', tajuk: 'Cuba: Tab Tindakan', isi: 'Di sinilah anda melakukan kerja akar umbi. <b>Tekan tab ini sekarang</b> untuk meneruskan.', klik: true, tunggu: 'Menunggu anda menekan tab ⚡ Tindakan Pemain…' },
       { id: 'sayap', sasaran: '#tab-pemilihan', tajuk: 'Peranan Sayap & Pemilihan', isi: sayapTeks + ' <b>Tekan tab ini</b> untuk meneruskan.', klik: true, tunggu: 'Menunggu anda menekan tab 🗳️ Pemilihan…' },
@@ -281,7 +281,7 @@
   }
 
   function topikTopik(p) {
-    var kod = p && p.demografik ? p.demografik.kategoriKod : null, sy = SAYAP[kod] || null;
+    var kod = p && (p.avatar || (p.demografik && p.demografik.kategoriKod)) || null, sy = SAYAP[kod] || null;
     return [
       { id: 'asas', tajuk: 'Asas Permainan', html:
         '<h3>Asas Permainan</h3><p>Anda ialah ahli biasa sebuah cawangan UMNO. Tujuan: kumpul <b>Pengaruh (IP)</b>, menang pemilihan, dan mendaki hierarki: Cawangan → Bahagian → Pusat.</p>' +
@@ -294,11 +294,12 @@
         '<h3>Mekanik Bulanan</h3><p>Masa bergerak <b>satu bulan setiap kali</b> anda menekan <i>Teruskan ke Bulan Seterusnya</i>. Selepas Bulan 12, tahun bertambah dan Bulan 1 bermula semula.</p>' +
         '<h4>Takwim</h4>' + jadual([['Bulan', 'Fasa', 'Apa yang dibuka'],
           ['1–3', 'Akar Umbi', 'Bonus +25% pada IP dan kesetiaan positif daripada tindakan'],
-          ['4–6', 'Musim Cawangan', 'Mesyuarat Cawangan; pemilihan AJK, Sayap dan Perwakilan Cawangan'],
-          ['7–9', 'Mesyuarat Bahagian', 'Hanya untuk perwakilan atau pemegang jawatan tertentu'],
-          ['10–12', 'Perhimpunan Agung', 'PAU; perwakilan Bahagian sahaja']]) +
-        '<h4>Pembaharuan setiap bulan</h4><ul><li><b>AP</b> ditetapkan semula kepada 5 (baki lama hilang).</li><li><b>Dana</b> bertambah: RM 600 asas, ditambah RM 300 (Cawangan), RM 800 (Bahagian) atau RM 2,000 (Pusat).</li></ul>' +
-        '<div class="tut-kotak"><b>Tahun pemilihan</b>: setiap 3 tahun bermula 2026. Dalam tahun lain, pertandingan jawatan tidak dibuka, tetapi mesyuarat dan usul tetap berjalan.</div>' +
+          ['4–6', 'Musim Cawangan', 'Mesyuarat Cawangan; pemilihan jawatan Cawangan, Sayap Cawangan dan Perwakilan ke Bahagian'],
+          ['7', 'Musim Bahagian', 'Mesyuarat Bahagian (perwakilan tahun ini sahaja); pemilihan jawatan Bahagian, Sayap Bahagian dan Perwakilan ke PAU'],
+          ['8', 'PAU & Pusat', 'Perhimpunan Agung; pemilihan Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap (tahun pemilihan)'],
+          ['9–12', 'Pasca-PAU', 'Kembali ke akar umbi; laksana tanggungjawab jawatan']]) +
+        '<h4>Pembaharuan setiap bulan</h4><ul><li><b>AP</b> ditetapkan semula kepada 5 (baki lama hilang).</li><li><b>Dana</b> bertambah: RM 600 asas, ditambah RM 300 (Cawangan), RM 800 (Bahagian) dan RM 2,000 (Pusat) bagi <b>setiap peringkat</b> yang anda pegang.</li></ul>' +
+        '<div class="tut-kotak"><b>Tahun pemilihan</b>: setiap 3 tahun bermula 2026 (pertandingan jawatan). <b>Perwakilan</b> dipilih semula <b>setiap tahun</b> di Cawangan; mandat tahun lalu luput pada Bulan 1.</div>' +
         '<h4>Jika terlepas musim</h4><p>Mesyuarat yang masih berjalan apabila tetingkapnya tamat <b>ditutup secara automatik</b>. Mesyuarat yang tidak sempat dimulakan ditandakan <i>Terlepas</i>. Pertandingan yang anda daftar akan tetap diundi oleh urus setia.</p>' +
         '<h4>Petua</h4><ul><li>Habiskan AP sebelum menekan bulan seterusnya.</li><li>Rancang tindakan IP besar pada Bulan 1–3 untuk bonus.</li></ul>' },
       { id: 'sayap', tajuk: 'Peranan Sayap', html:
@@ -307,26 +308,27 @@
           ['Pemuda', 'Lelaki 18–40', 'Ketua Pemuda Cawangan'], ['Puteri', 'Perempuan 18–35', 'Ketua Puteri Cawangan'],
           ['Wanita', 'Perempuan 36–65', 'Ketua Wanita Cawangan'], ['Veteran/Ahli Biasa', 'Lelaki 41+, perempuan 66+', 'Tiada (sayap)']]) +
         (sy ? '<div class="tut-kotak"><b>Kategori anda: ' + esc(sy.nama) + '</b> (' + esc(sy.huraian) + ').' + (sy.jawatan ? ' Anda boleh bertanding <b>' + esc(sy.jawatan) + '</b> apabila IP mencapai 50.' : ' Fokus pada AJK Cawangan dan Perwakilan.') + '</div>' : '') +
-        '<h4>Mengapa sayap penting?</h4><ul><li>Ketua Sayap Cawangan ialah <b>perwakilan sayap</b>: anda terus layak hadir Mesyuarat Bahagian (bulan 7–9) tanpa perlu menang kerusi perwakilan.</li><li>Kategori anda menentukan avatar dan sokongan akar umbi dalam kumpulan itu.</li><li>Hanya Ahli Biasa yang boleh bertanding jawatan sayap; menang jawatan itu menggantikan status Ahli Biasa anda.</li></ul>' },
+        '<h4>Mengapa sayap penting?</h4><ul><li>Hanya jawatan sayap <b>sayap anda</b> dibuka di setiap peringkat: Cawangan, Bahagian dan Pusat (Ketua Pemuda / Puteri / Wanita).</li><li>Anda mendapat bonus kekuatan dalam pertandingan sayap sendiri. Pemain Veteran/Ahli Biasa tiada jawatan sayap.</li><li>Jawatan sayap dipegang <b>serentak</b> dengan satu jawatan utama pada peringkat yang sama.</li><li>Ketua Sayap Cawangan tidak lagi hadir Bahagian secara automatik; menangi Perwakilan Cawangan tahun itu.</li></ul>' },
       { id: 'pemilihan', tajuk: 'Strategi Pemilihan', html:
-        '<h3>Strategi Pemilihan</h3><h4>Langkah</h4><ol><li>Kumpul <b>50 IP</b> untuk membuka AJK dan Sayap Cawangan.</li><li>Pada tab Pemilihan (tahun pemilihan), <b>daftar</b> sebagai calon sebelum atau semasa tetingkap pemilihan.</li><li>Jalankan <b>kempen</b> untuk menambah mata kempen.</li><li>Pengundian berlaku apabila anda menekan Hari Mengundi (dalam tetingkap) atau apabila mesyuarat ditutup.</li></ol>' +
+        '<h3>Strategi Pemilihan</h3><h4>Langkah</h4><ol><li>Kumpul IP: AJK/Sayap Cawangan <b>50</b>, Ketua Cawangan 65, jawatan Bahagian 70–85, Pusat 80–98 (Presiden).</li><li>Pada tab Pemilihan, <b>daftar</b> sebagai calon sebelum atau semasa tetingkap peringkat itu (Cawangan bulan 4–6, Bahagian bulan 7, Pusat bulan 8).</li><li>Jalankan <b>kempen</b> untuk menambah mata kempen.</li><li>Pengundian berlaku apabila anda menekan Hari Mengundi (dalam tetingkap) atau apabila mesyuarat ditutup.</li></ol>' +
         '<h4>Apa yang mempengaruhi undi</h4>' + jadual([['Faktor', 'Pemilihan Cawangan', 'Pemilihan Bahagian'],
           ['IP', '30%', '30%'], ['Kesetiaan Akar Umbi', '25%', '–'], ['Kesetiaan Ketua Cawangan', '15%', '15%'], ['Kesetiaan AJK', '10%', '–'], ['Kesetiaan Perwakilan', '–', '35%'], ['Mata kempen', '20%', '20%']]) +
         '<h4>Kempen</h4><ul><li><b>Jamuan Mesyuarat</b> dan <b>Siri Jelajah</b>: tambah mata dan sokongan.</li><li><b>Lobi Ketua Bahagian</b>: tingkatkan kesetiaan perwakilan.</li><li><b>Simulasi Pengundian</b>: anggaran peluang menang sebelum bertaruh.</li></ul>' +
-        '<h4>Perwakilan</h4><ul><li>Cawangan memilih <b>5</b> perwakilan ke Bahagian; Bahagian memilih <b>10</b> ke PAU.</li><li>Tiada perwakilan = tidak boleh hadir Mesyuarat Bahagian / PAU.</li></ul>' +
-        '<div class="tut-kotak"><b>Strategi:</b> menang +20 IP (jawatan) atau +10 IP (perwakilan); kalah -5 atau -3. Bina kesetiaan melalui Gotong-Royong dan Ziarah sebelum Bulan 4.</div>' },
+        '<h4>Jawatan berbilang peringkat</h4><ul><li>Anda boleh memegang jawatan di <b>Cawangan, Bahagian dan Pusat serentak</b>. Jawatan paling tinggi dipaparkan sebagai jawatan utama anda.</li><li>Pada satu peringkat: satu jawatan utama + satu jawatan sayap. Jawatan lebih tinggi menggantikan yang lebih rendah pada peringkat yang sama.</li><li>Jawatan Bahagian memerlukan Perwakilan Cawangan tahun itu; jawatan Pusat memerlukan Perwakilan PAU (atau Ketua Bahagian / jawatan Pusat), dan jawatan lebih rendah dahulu (cth. Presiden perlukan Ketua Bahagian).</li></ul>' +
+        '<h4>Perwakilan (1 tahun sahaja)</h4><ul><li>Cawangan memilih <b>5</b> perwakilan ke Bahagian; Bahagian memilih <b>10</b> ke PAU.</li><li>Mandat hanya sah untuk <b>tahun semasa</b>. Setiap tahun baharu anda mesti bertanding semula di Cawangan.</li><li>Pemegang jawatan Bahagian/Pusat hadir secara automatik (ex-officio).</li></ul>' +
+        '<div class="tut-kotak"><b>Strategi:</b> menang jawatan +20 IP (Cawangan), +30 (Bahagian), +50 (Pusat) atau +10 IP (perwakilan); kalah -5/-8/-10 atau -3. Bina kesetiaan melalui Gotong-Royong dan Ziarah sebelum Bulan 4.</div>' },
       { id: 'mesyuarat', tajuk: 'Mesyuarat & Usul', html:
         '<h3>Mesyuarat &amp; Usul</h3><p>Setiap mesyuarat mempunyai agenda usul. Untuk setiap usul pilih peranan:</p>' +
         jadual([['Peranan', 'Kos AP', 'Kesan'], ['Pembawa Usul', '2', 'Lulus +12 IP; ditolak -4 IP; kredit Reputasi penuh'], ['Pembahas', '1', 'Sokong/bantah; kredit separuh'], ['Mengundi', '0', 'Kesan kecil dan percuma']]) +
         '<p>Menutup mesyuarat memutuskan baki usul tanpa kesan kepada anda, mengundi pemilihan peringkat itu, lalu memaparkan <b>ringkasan</b> (usul, pemilihan, perubahan IP/Dana) dan langkah seterusnya.</p>' +
-        '<h4>Siapa boleh hadir?</h4><ul><li><b>Cawangan</b>: semua.</li><li><b>Bahagian</b>: Perwakilan Cawangan terpilih, Ketua Cawangan, Ketua Sayap Cawangan, atau pemegang jawatan lebih tinggi.</li><li><b>PAU</b>: Perwakilan Bahagian terpilih, Ketua Bahagian atau jawatan Pusat.</li></ul>' },
+        '<h4>Siapa boleh hadir?</h4><ul><li><b>Cawangan</b>: semua.</li><li><b>Bahagian</b> (bulan 7): Perwakilan Cawangan terpilih <b>tahun ini</b>, atau pemegang jawatan Bahagian/Pusat.</li><li><b>PAU</b> (bulan 8): Perwakilan Bahagian terpilih tahun ini, Ketua Bahagian atau pemegang jawatan Pusat.</li></ul>' },
       { id: 'acara', tajuk: 'Acara Rawak', html:
         '<h3>Pengurusan Acara Rawak</h3><p>Pop-up acara muncul <b>kira-kira 70%</b> pada pergantian bulan, dan <b>15%</b> selepas tindakan akar umbi (maksimum 2 sebulan). Hanya satu acara pada satu masa.</p>' +
         '<h4>Jenis acara</h4><ul><li><b>Isu cawangan</b>: dana program kering, keahlian tertunggak, pertikaian AJK.</li><li><b>Projek</b>: program kebajikan, Sukaneka Pemuda, Konvensyen Puteri, Kursus Kepimpinan.</li><li><b>Isu tempatan</b>: banjir (lebih kerap Nov–Feb), kebakaran, jalan berlubang.</li><li><b>Politik</b>: fitnah media sosial, tawaran penaja, temu bual.</li></ul>' +
         '<h4>Cara memilih</h4><ul><li><b>Pilihan Dana</b>: mahal tetapi kesan besar dan pasti.</li><li><b>Pilihan AP</b>: murah, kesan sederhana.</li><li><b>Abaikan</b>: percuma, tetapi sering mengurangkan IP atau kesetiaan.</li><li>Pilihan bertanda <i>berisiko</i> mempunyai hasil rawak.</li></ul>' +
         '<div class="tut-kotak"><b>Petua:</b> simpan sedikit Dana untuk acara banjir pada hujung tahun. Jika anda menutup pop-up tanpa memilih, acara kekal menunggu dalam bar di dashboard dan boleh dibuka semula.</div>' },
       { id: 'soalan', tajuk: 'Soalan Lazim', html:
-        '<h3>Soalan Lazim</h3><h4>Mengapa saya tidak boleh mula Mesyuarat Bahagian?</h4><p>Anda mesti menjadi perwakilan atau pemegang jawatan yang layak, dan bulan semasa mesti 7–9. Semak kad Kelayakan Perwakilan di tab Mesyuarat.</p>' +
+        '<h3>Soalan Lazim</h3><h4>Mengapa saya tidak boleh mula Mesyuarat Bahagian?</h4><p>Anda mesti menjadi perwakilan atau pemegang jawatan yang layak, dan bulan semasa mesti 7. Mandat perwakilan tahun lalu sudah luput. Semak kad Kelayakan Perwakilan di tab Mesyuarat.</p>' +
         '<h4>Mengapa AP saya kembali kepada 5?</h4><p>AP diset semula setiap bulan. Ia tidak terkumpul.</p>' +
         '<h4>Bolehkah saya kembali ke bulan sebelumnya?</h4><p>Tidak. Pastikan anda sudah berpuas hati sebelum menekan butang bulan seterusnya.</p>' +
         '<h4>Kemajuan saya hilang?</h4><p>Kemajuan disimpan dalam pelayar ini sahaja. Butang Reset memadam semuanya.</p>' +

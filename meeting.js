@@ -39,10 +39,11 @@
   var S = muat('save.js', 'MyPolitikSave');
   if (!S) { throw new Error('meeting.js memerlukan js/save.js dimuatkan dahulu.'); }
   var E = muat('election.js', 'MyPolitikElection');   // pilihan
-  var api = factory(S, E);
+  var J = muat('jawatan.js', 'MyPolitikJawatan');     // pilihan (v3.0: pegangan berbilang, perwakilan tahunan)
+  var api = factory(S, E, J);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   root.MyPolitikMeeting = api;
-})(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (S, E) {
+})(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (S, E, J) {
   'use strict';
 
   var CONFIG = {
@@ -65,7 +66,7 @@
   var PERINGKAT = {
     cawangan: { kod: 'cawangan', nama: 'Mesyuarat Cawangan', jenisUsul: 'Usul Lokaliti', kesetiaan: ['akarUmbi', 'ketuaCawangan'], perwakilan: { kerusi: 5, ke: 'Bahagian', kod: 'perwakilan_cawangan' } },
     bahagian: { kod: 'bahagian', nama: 'Mesyuarat Bahagian', jenisUsul: 'Usul Kerusi PRU dan Politik', kesetiaan: ['perwakilan'], perwakilan: { kerusi: 10, ke: 'PAU', kod: 'perwakilan_bahagian' } },
-    pau: { kod: 'pau', nama: 'Perhimpunan Agung UMNO (PAU)', jenisUsul: 'Usul Dasar Nasional', kesetiaan: ['perwakilan'], perwakilan: null }
+    pau: { kod: 'pau', nama: 'Perhimpunan Agung UMNO (PAU)', jenisUsul: 'Usul Dasar Nasional', kesetiaan: ['perwakilan'], perwakilan: null, pusat: true }
   };
 
   /* ------------------------------------------------------------------------
@@ -130,20 +131,26 @@
 
   function pemilihanAktif(p) { return !!(E && E.adalahTahunPemilihan(p.tahun)); }
 
-  /** Ketua Sayap Cawangan (Pemuda, Puteri, Wanita) ialah perwakilan sayap ke Bahagian. */
-  function adalahKetuaSayap(jawatan) { return /^Ketua (Pemuda|Puteri|Wanita) Cawangan$/.test(String(jawatan || '')); }
+  /** Adakah mesyuarat peringkat ini mengadakan pengundian? Perwakilan: setiap tahun. Pusat (PAU): tahun pemilihan sahaja. */
+  function adaPemilihan(p, peringkat) { return !!E && (peringkat === 'pau' ? pemilihanAktif(p) : true); }
 
-  /** Siapa boleh hadir. Bahagian dan PAU hanya untuk perwakilan atau pemegang jawatan berkaitan. */
+  function pegangan(p) {
+    if (J) { return { per: J.peringkatTertinggi(p), pw: J.perwakilanSah(p, 'cawangan'), pp: J.perwakilanSah(p, 'bahagian'), exB: J.exOfficio(p, 'bahagian'), exP: J.exOfficio(p, 'pau') }; }
+    var per = p.jawatan === 'Ahli Biasa' ? null : peringkatJawatan(p.jawatan), perw = E ? E.getKeadaanPemilihan(p).perwakilan : { cawangan: false, bahagian: false };
+    return { per: per, pw: { sah: perw.cawangan }, pp: { sah: perw.bahagian },
+             exB: { sah: per === 'bahagian' || per === 'pusat', sumber: p.jawatan }, exP: { sah: per === 'pusat' || p.jawatan === 'Ketua Bahagian', sumber: p.jawatan } };
+  }
+
+  /** Siapa boleh hadir. Bahagian dan PAU: perwakilan TAHUN INI atau pemegang jawatan ex-officio. */
   function bolehHadir(p, peringkat) {
     if (peringkat === 'cawangan') { return { ok: true }; }
-    var perw = E ? E.getKeadaanPemilihan(p).perwakilan : { cawangan: false, bahagian: false };
-    var per = p.jawatan === 'Ahli Biasa' ? 'ahli' : peringkatJawatan(p.jawatan);
+    var g = pegangan(p);
     if (peringkat === 'bahagian') {
-      var ok = perw.cawangan || p.jawatan === 'Ketua Cawangan' || adalahKetuaSayap(p.jawatan) || per === 'bahagian' || per === 'pusat';
-      return ok ? { ok: true } : { ok: false, sebab: 'Hanya Perwakilan Cawangan yang terpilih, Ketua Cawangan, Ketua Sayap Cawangan dan pemegang jawatan lebih tinggi boleh hadir.' };
+      return (g.pw.sah || g.exB.sah) ? { ok: true }
+        : { ok: false, sebab: 'Hanya Perwakilan Cawangan tahun ' + p.tahun + ' yang terpilih dan pemegang jawatan Bahagian/Pusat boleh hadir. Mandat tahun lepas sudah luput.' };
     }
-    var ok2 = perw.bahagian || p.jawatan === 'Ketua Bahagian' || per === 'pusat';
-    return ok2 ? { ok: true } : { ok: false, sebab: 'Hanya Perwakilan Bahagian yang terpilih, Ketua Bahagian dan pemegang jawatan pusat boleh hadir PAU.' };
+    return (g.pp.sah || g.exP.sah) ? { ok: true }
+      : { ok: false, sebab: 'Hanya Perwakilan Bahagian tahun ' + p.tahun + ' yang terpilih, Ketua Bahagian dan pemegang jawatan Pusat boleh hadir PAU.' };
   }
 
   /* ---- Takwim bulanan (js/calendar.js, pilihan) ---- */
@@ -223,13 +230,15 @@
       });
     }
 
-    var perw = PERINGKAT[peringkat].perwakilan;
-    if (perw && pemilihanAktif(p)) {
+    if (adaPemilihan(p, peringkat)) {
+      var buka = pemilihanAktif(p), tajuk, perw = PERINGKAT[peringkat].perwakilan;
+      if (peringkat === 'cawangan') { tajuk = 'Pemilihan Cawangan: ' + (buka ? 'jawatan Cawangan dan Sayap, serta ' : '') + 'perwakilan ke Bahagian (' + perw.kerusi + ' kerusi)'; }
+      else if (peringkat === 'bahagian') { tajuk = 'Pemilihan Bahagian: ' + (buka ? 'jawatan Bahagian dan Sayap, serta ' : '') + 'perwakilan ke PAU (' + perw.kerusi + ' kerusi)'; }
+      else { tajuk = 'Pemilihan Pusat: Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap'; }
       agenda.push({
-        id: peringkat + '-' + p.tahun + '-pemilihan', jenis: 'pemilihan', kod: perw.kod, sumber: 'pemilihan',
-        tajuk: 'Undi ' + perw.kerusi + ' perwakilan ke ' + perw.ke,
-        penerangan: 'Pengundian dijalankan apabila mesyuarat ditutup. Daftar pencalonan anda melalui modul pemilihan sebelum itu.',
-        kerusi: perw.kerusi, status: 'menunggu', keputusan: null
+        id: peringkat + '-' + p.tahun + '-pemilihan', jenis: 'pemilihan', kod: 'pemilihan_' + peringkat, sumber: 'pemilihan', tajuk: tajuk,
+        penerangan: 'Pengundian dijalankan apabila mesyuarat ditutup. Daftar pencalonan anda melalui tab Pemilihan sebelum itu.',
+        kerusi: perw ? perw.kerusi : null, status: 'menunggu', keputusan: null
       });
     }
     return agenda;
@@ -280,19 +289,16 @@
   function getStatusPerwakilan(profil) {
     var p = profil || S.loadPlayer();
     if (!p) { return null; }
-    var perw = E ? E.getKeadaanPemilihan(p).perwakilan : { cawangan: false, bahagian: false };
-    var per = p.jawatan === 'Ahli Biasa' ? 'ahli' : peringkatJawatan(p.jawatan);
+    var g = pegangan(p);
     var b = { layak: false, lencana: null, sumber: '', sebab: '', tetingkap: bulanKe(p, 'bahagian') };
-    if (perw.cawangan) { b.layak = true; b.lencana = 'Perwakilan Bahagian'; b.sumber = 'Menang kerusi Perwakilan Cawangan ke Bahagian'; }
-    else if (adalahKetuaSayap(p.jawatan)) { b.layak = true; b.lencana = 'Perwakilan Bahagian'; b.sumber = 'Perwakilan sayap sebagai ' + p.jawatan; }
-    else if (p.jawatan === 'Ketua Cawangan') { b.layak = true; b.lencana = 'Perwakilan Bahagian'; b.sumber = 'Ketua Cawangan (ex-officio)'; }
-    else if (per === 'bahagian' || per === 'pusat') { b.layak = true; b.sumber = 'Pemegang jawatan ' + (per === 'bahagian' ? 'Bahagian' : 'Pusat'); }
-    else { b.sebab = 'Menangi kerusi Perwakilan Cawangan semasa Mesyuarat Cawangan (bulan 4-6), atau menjadi Ketua Cawangan / Ketua Sayap Cawangan.'; }
+    if (g.pw.sah) { b.layak = true; b.lencana = 'Perwakilan Bahagian ' + p.tahun; b.sumber = 'Menang kerusi Perwakilan Cawangan ke Bahagian (sah tahun ' + p.tahun + ' sahaja)'; }
+    else if (g.exB.sah) { b.layak = true; b.sumber = 'Ex-officio sebagai ' + g.exB.sumber; }
+    else { b.sebab = (g.pw.luput ? 'Mandat perwakilan tahun lepas sudah luput. ' : '') + 'Menangi kerusi Perwakilan Cawangan semasa Mesyuarat Cawangan (bulan 4-6) tahun ' + p.tahun + '.'; }
 
     var u = { layak: false, lencana: null, sumber: '', sebab: '', tetingkap: bulanKe(p, 'pau') };
-    if (perw.bahagian) { u.layak = true; u.lencana = 'Perwakilan PAU'; u.sumber = 'Menang kerusi Perwakilan Bahagian ke PAU'; }
-    else if (p.jawatan === 'Ketua Bahagian' || per === 'pusat') { u.layak = true; u.sumber = 'Pemegang jawatan ' + (per === 'pusat' ? 'Pusat' : 'Ketua Bahagian'); }
-    else { u.sebab = 'Menangi kerusi Perwakilan Bahagian semasa Mesyuarat Bahagian, atau pegang jawatan Ketua Bahagian / Pusat.'; }
+    if (g.pp.sah) { u.layak = true; u.lencana = 'Perwakilan PAU ' + p.tahun; u.sumber = 'Menang kerusi Perwakilan Bahagian ke PAU (sah tahun ' + p.tahun + ' sahaja)'; }
+    else if (g.exP.sah) { u.layak = true; u.sumber = 'Ex-officio sebagai ' + g.exP.sumber; }
+    else { u.sebab = 'Menangi kerusi Perwakilan Bahagian semasa Mesyuarat Bahagian (bulan 7) tahun ' + p.tahun + ', atau pegang jawatan Ketua Bahagian / Pusat.'; }
     return { tahun: p.tahun, bulan: p.bulan, bahagian: b, pau: u };
   }
 
@@ -308,7 +314,7 @@
     }
     if (peringkat === 'cawangan') { buka('bahagian', 'Mesyuarat Bahagian', sp.bahagian); }
     else if (peringkat === 'bahagian') { buka('pau', 'Perhimpunan Agung (PAU)', sp.pau); }
-    else { langkah.push('Perhimpunan Agung tahun ' + p.tahun + ' selesai. Teruskan ke bulan seterusnya untuk memulakan kitaran baharu.'); }
+    else { langkah.push('Perhimpunan Agung tahun ' + p.tahun + ' selesai. Bulan 9 hingga 12 ialah fasa pasca-PAU. Mandat perwakilan anda tamat pada hujung tahun; bertanding semula di Cawangan tahun depan.'); }
     if (K) {
       var tk = K.getTakwim(p);
       langkah.push('Tekan "Teruskan ke Bulan ' + tk.bulanSeterusnya + '" untuk menyambung permainan; AP dan Dana akan diperbaharui.');
@@ -446,7 +452,7 @@
 
     // 1. Pemilihan dijalankan dahulu kerana ia mengubah profil (jawatan, perwakilan).
     var pemilihan = [], sebelumPemilihan = nilaiSumber(p);
-    if (E && pemilihanAktif(p) && PERINGKAT[peringkat].perwakilan) {
+    if (adaPemilihan(p, peringkat)) {
       pemilihan = E.jalankanPemilihanPeringkat(peringkat, { rng: opts.rng });
     }
 
@@ -457,9 +463,9 @@
     var rng = opts.rng || Math.random, hadir = bilHadir(p, peringkat), tanpaPenyertaan = [];
     m.agenda.forEach(function (a) {
       if (a.jenis === 'pemilihan') {
-        var h = pemilihan.filter(function (x) { return x.ok && x.keputusan.kod === a.kod; })[0];
+        var hs = pemilihan.filter(function (x) { return x.ok; });
         a.status = 'selesai';
-        a.keputusan = h ? { dijalankan: true, menang: h.keputusan.menang, kedudukan: h.keputusan.kedudukan } : { dijalankan: false };
+        a.keputusan = hs.length ? { dijalankan: true, bil: hs.length, menang: hs.filter(function (x) { return x.keputusan.menang; }).length } : { dijalankan: false, bil: 0, menang: 0 };
       } else if (a.status !== 'selesai') {
         var k = selesaikanUsul(a, 0, hadir, rng);
         a.status = 'selesai'; a.pilihan = null;
@@ -484,8 +490,8 @@
         return { tajuk: a.tajuk, lulus: k.lulus, undiSokong: k.undiSokong, undiBantah: k.undiBantah, hadir: k.hadir,
                  pilihan: pl ? { peranan: pl.peranan, pendirian: pl.pendirian } : null, padan: !!k.padan, ip: k.ip || 0, reputasi: k.reputasi || 0 };
       }),
-      tidakDidaftar: (E && pemilihanAktif(p) ? E.senaraiPertandingan(p) : []).filter(function (c) {
-        return c.peringkat === peringkat && c.jenis !== undefined && !c.didaftar && !c.selesai && c.kod !== 'pertahan_jawatan';
+      tidakDidaftar: (E && adaPemilihan(p, peringkat) ? E.senaraiPertandingan(p) : []).filter(function (c) {
+        return c.peringkat === (peringkat === 'pau' ? 'pusat' : peringkat) && c.terbuka && !c.didaftar && !c.selesai && !c.pertahan;
       }).map(function (c) { return c.jawatan; }),
       peristiwa: []
     };

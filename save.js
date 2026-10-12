@@ -87,6 +87,11 @@
     if (!Array.isArray(p.log)) { p.log = []; }
     if (p.cabaran === undefined) { p.cabaran = null; }
     if (p.calon === undefined) { p.calon = null; }
+    // v3.0: jawatan berbilang peringkat dan mandat perwakilan tahunan
+    if (!Array.isArray(p.jawatanList)) { p.jawatanList = []; }
+    if (!p.perwakilan || typeof p.perwakilan !== 'object') { p.perwakilan = { cawangan: 0, bahagian: 0 }; }
+    p.perwakilan.cawangan = parseInt(p.perwakilan.cawangan, 10) || 0;
+    p.perwakilan.bahagian = parseInt(p.perwakilan.bahagian, 10) || 0;
     p.bilTindakan = Math.max(0, parseInt(p.bilTindakan, 10) || 0);
     p.amaranAktif = !!p.amaranAktif;
     return p;

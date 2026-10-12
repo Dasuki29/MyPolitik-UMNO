@@ -2,6 +2,10 @@
    MyPolitik: UMNO — js/election.js
    Enjin Kitaran Pemilihan 3 Tahun.
 
+   v3.0: jawatan berbilang peringkat dan mengikut sayap (js/jawatan.js), pusat (bulan 8),
+         mandat perwakilan SETAHUN sahaja (bertanding semula di Cawangan setiap tahun).
+         Pertandingan jawatan: tahun pemilihan sahaja. Pertandingan perwakilan: setiap tahun.
+
    1. Jam kitaran
         Tahun permulaan 2026. Tahun pemilihan jika (tahun - 2026) % 3 === 0,
         iaitu 2026, 2029, 2032. Tahun lain ialah tahun pentadbiran.
@@ -36,12 +40,12 @@
     }
     return null;
   }
-  var S = muat('save.js', 'MyPolitikSave'), O = muat('ordinaryMember.js', 'MyPolitikOrdinaryMember');
-  if (!S || !O) { throw new Error('election.js memerlukan js/save.js dan js/ordinaryMember.js dimuatkan dahulu.'); }
-  var api = factory(S, O);
+  var S = muat('save.js', 'MyPolitikSave'), O = muat('ordinaryMember.js', 'MyPolitikOrdinaryMember'), J = muat('jawatan.js', 'MyPolitikJawatan');
+  if (!S || !O || !J) { throw new Error('election.js memerlukan js/save.js, js/ordinaryMember.js dan js/jawatan.js dimuatkan dahulu.'); }
+  var api = factory(S, O, J);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   root.MyPolitikElection = api;
-})(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (S, O) {
+})(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (S, O, J) {
   'use strict';
 
   var CONFIG = {
@@ -56,6 +60,9 @@
     PENYEBARAN_PESAING: { min: 44, sd: 12 },
     MENANG_IP: { jawatan: 20, perwakilan: 10 },
     KALAH_IP: { jawatan: -5, perwakilan: -3 },
+    MENANG_IP_PERINGKAT: { cawangan: 20, bahagian: 30, pusat: 50 },   // jawatan
+    KALAH_IP_PERINGKAT: { cawangan: -5, bahagian: -8, pusat: -10 },
+    BONUS_SAYAP: 8,                      // kekuatan tambahan dalam pertandingan sayap sendiri
     ANGGARAN_ULANGAN: 300,               // bilangan larian simulasi pengundian
     // Berat kekuatan calon (jumlah setiap peringkat = 1)
     BERAT: {
@@ -113,9 +120,9 @@
     }
     return {
       tahun: kit.tahun, fasa: 'pentadbiran', tajuk: 'Tahun Pentadbiran',
-      pertandinganTerbuka: false, perwakilanTerbuka: false, kempenTerbuka: false, usulTerbuka: true,
+      pertandinganTerbuka: false, perwakilanTerbuka: true, kempenTerbuka: false, usulTerbuka: true,
       pemilihanBerikutnya: kit.pemilihanBerikutnya,
-      fokus: ['Pentadbiran', 'Perbahasan usul', 'Mengumpul sumber (IP dan MYR)']
+      fokus: ['Pentadbiran', 'Pemilihan perwakilan tahunan', 'Perbahasan usul', 'Mengumpul sumber (IP dan MYR)']
     };
   }
 
@@ -132,20 +139,26 @@
       kempen: { mata: 0, aktiviti: {} },
       daftar: {},                                // kod -> pendaftaran
       keputusan: {},                             // kod -> keputusan pengundian
-      perwakilan: { cawangan: false, bahagian: false }
+      perwakilan: { cawangan: false, bahagian: false }      // dikira semula daripada profil.perwakilan (setahun)
     };
   }
 
-  /** Keadaan untuk kitaran semasa. Kitaran baharu bermula dengan keadaan kosong. */
+  /** Keadaan untuk kitaran semasa. Kitaran baharu bermula dengan keadaan kosong.
+   *  Pendaftaran/keputusan perwakilan ialah tahunan: entri tahun lepas dibuang. */
   function getKeadaanPemilihan(profil) {
     var p = profil || S.loadPlayer();
     if (!p) { return null; }
     var kit = getKitaran(p.tahun), st = p.pemilihan ? salin(p.pemilihan) : null;
-    if (!st || st.kitaran !== kit.kitaran) { return keadaanBaharu(p.tahun); }
+    if (!st || st.kitaran !== kit.kitaran) { st = keadaanBaharu(p.tahun); }
     st.kempen = st.kempen || { mata: 0, aktiviti: {} };
     st.kempen.aktiviti = st.kempen.aktiviti || {};
     st.daftar = st.daftar || {}; st.keputusan = st.keputusan || {};
-    st.perwakilan = st.perwakilan || { cawangan: false, bahagian: false };
+    ['daftar', 'keputusan'].forEach(function (f) {
+      Object.keys(st[f]).forEach(function (k) {
+        if (/^perwakilan_/.test(k) && st[f][k].tahun !== p.tahun) { delete st[f][k]; }
+      });
+    });
+    st.perwakilan = { cawangan: J.perwakilanSah(p, 'cawangan').sah, bahagian: J.perwakilanSah(p, 'bahagian').sah };
     return st;
   }
 
@@ -174,15 +187,15 @@
   }
 
   /**
-   * Senarai pertandingan untuk pemain pada tahun ini.
-   * Setiap entri: { kod, jenis:'jawatan'|'perwakilan', jawatan, peringkat, kerusi, terbuka, sebab,
-   *                 didaftar, selesai, keputusan }
-   * Gunakan entri.terbuka untuk mengunci butang bertanding.
+   * Senarai pertandingan untuk pemain pada tahun ini (mengikut sayap dan jawatan dipegang).
+   * Setiap entri: { kod, jenis:'jawatan'|'perwakilan', jawatan, peringkat, kumpulan, sayap, kerusi, terbuka, sebab,
+   *                 pertahan, ipPerlu, kesukaran, didaftar, selesai, keputusan, tetingkap, bolehUndi }
+   * Jawatan: hanya pada tahun pemilihan. Perwakilan: setiap tahun.
    */
   function senaraiPertandingan(profil) {
     var p = profil || S.loadPlayer();
     if (!p) { return []; }
-    var st = getKeadaanPemilihan(p), buka = adalahTahunPemilihan(p.tahun), ahli = p.jawatan === 'Ahli Biasa';
+    var st = getKeadaanPemilihan(p), buka = adalahTahunPemilihan(p.tahun);
     var senarai = [];
 
     function tambah(e) {
@@ -192,39 +205,40 @@
       if (e.terbuka && e.selesai) { e.terbuka = false; e.sebab = 'Pertandingan ini sudah selesai.'; }
       var w = tetingkapPeringkat(p, e.peringkat);
       e.tetingkap = w;                                         // { mula, tamat, label, status } atau null
-      e.bolehUndi = !!(buka && w ? w.status === 'dibuka' : buka) && e.didaftar && !e.selesai;
-      if (w && buka && !e.selesai && w.status === 'tamat' && !e.didaftar) {
+      e.bolehUndi = !!(w ? w.status === 'dibuka' : true) && e.didaftar && !e.selesai;
+      if (w && !e.selesai && w.status === 'tamat' && !e.didaftar) {
         e.terbuka = false; e.sebab = 'Pendaftaran ditutup. Musim ' + w.nama + ' (' + w.label + ') sudah tamat.';
       }
       senarai.push(e);
     }
 
-    if (ahli) {
-      O.getKelayakanBertanding(p).senarai.forEach(function (x) {
+    // 1. Perwakilan tahunan
+    var pc = J.perwakilanSah(p, 'cawangan'), exBhg = J.exOfficio(p, 'bahagian'), exPau = J.exOfficio(p, 'pau');
+    tambah({
+      kod: 'perwakilan_cawangan', jenis: 'perwakilan', jawatan: 'Perwakilan Cawangan ke Bahagian', peringkat: 'cawangan', kumpulan: 'perwakilan', sayap: null,
+      kerusi: CONFIG.PERWAKILAN_CAWANGAN, kesukaran: 0,
+      terbuka: !exBhg.sah,
+      sebab: exBhg.sah ? 'Anda hadir Bahagian secara automatik sebagai ' + exBhg.sumber + '.' : ''
+    });
+    tambah({
+      kod: 'perwakilan_bahagian', jenis: 'perwakilan', jawatan: 'Perwakilan Bahagian ke PAU', peringkat: 'bahagian', kumpulan: 'perwakilan', sayap: null,
+      kerusi: CONFIG.PERWAKILAN_BAHAGIAN, kesukaran: 0,
+      terbuka: !exPau.sah && pc.layak,
+      sebab: exPau.sah ? 'Anda hadir PAU secara automatik sebagai ' + exPau.sumber + '.'
+                       : (pc.layak ? '' : 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu' + (pc.luput ? ' (mandat tahun lepas sudah luput).' : '.'))
+    });
+
+    // 2. Jawatan (tahun pemilihan)
+    if (buka) {
+      J.katalogUntuk(p).forEach(function (d) {
+        var k = J.semakKelayakan(p, d);
         tambah({
-          kod: x.kod, jenis: 'jawatan', jawatan: x.jawatan, peringkat: x.peringkat,
-          kerusi: (x.kod === 'ajk_cawangan') ? CONFIG.KERUSI_AJK_CAWANGAN : (x.kod === 'sayap_cawangan' ? 1 : null),
-          terbuka: x.terbuka, sebab: x.sebab, ipPerlu: x.ipPerlu
+          kod: d.kod, jenis: 'jawatan', jawatan: d.jawatan, peringkat: d.peringkat, kumpulan: d.kumpulan, sayap: d.sayap,
+          kerusi: d.kerusi, kesukaran: d.kesukaran, pangkat: d.pangkat, ipPerlu: d.ipMin,
+          pertahan: !!k.pertahan, terbuka: k.terbuka, sebab: k.sebab
         });
       });
-    } else {
-      tambah({
-        kod: 'pertahan_jawatan', jenis: 'jawatan', jawatan: p.jawatan, peringkat: peringkatJawatan(p.jawatan),
-        kerusi: kerusiJawatan(p.jawatan), terbuka: buka, sebab: buka ? '' : tutupTahun(p)
-      });
     }
-
-    tambah({
-      kod: 'perwakilan_cawangan', jenis: 'perwakilan', jawatan: 'Perwakilan Cawangan ke Bahagian', peringkat: 'cawangan',
-      kerusi: CONFIG.PERWAKILAN_CAWANGAN, terbuka: buka, sebab: buka ? '' : tutupTahun(p)
-    });
-
-    var layakBahagian = buka && (st.perwakilan.cawangan || !ahli);
-    tambah({
-      kod: 'perwakilan_bahagian', jenis: 'perwakilan', jawatan: 'Perwakilan Bahagian ke PAU', peringkat: 'bahagian',
-      kerusi: CONFIG.PERWAKILAN_BAHAGIAN, terbuka: layakBahagian,
-      sebab: !buka ? tutupTahun(p) : (layakBahagian ? '' : 'Menangi kerusi Perwakilan Cawangan atau pegang jawatan dahulu.')
-    });
     return senarai;
   }
 
@@ -245,29 +259,41 @@
     return Object.keys(st.daftar).filter(function (k) { return st.daftar[k].jenis === 'jawatan' && !st.keputusan[k]; });
   }
 
-  /** Daftar sebagai calon. Hanya pada tahun pemilihan. */
+  /** Pertandingan jawatan belum selesai yang didaftarkan pada peringkat dan kumpulan yang sama. */
+  function pendaftaranSekumpulan(st, e) {
+    return Object.keys(st.daftar).filter(function (k) {
+      var d = st.daftar[k];
+      return k !== e.kod && d.jenis === 'jawatan' && !st.keputusan[k] && d.peringkat === e.peringkat && d.kumpulan === e.kumpulan;
+    });
+  }
+
+  /** Daftar sebagai calon. Jawatan: tahun pemilihan sahaja. Perwakilan: setiap tahun. */
   function daftarBertanding(kod) {
     var p = S.loadPlayer();
     if (!p) { return gagal('tiada_profil', 'Tiada profil pemain.'); }
-    if (!adalahTahunPemilihan(p.tahun)) { return gagal('tutup', 'Pertandingan ditutup. ' + tutupTahun(p)); }
     var e = cariPertandingan(p, kod);
-    if (!e) { return gagal('tidak_dikenali', 'Pertandingan tidak dikenali: ' + kod); }
+    if (!e) {
+      return adalahTahunPemilihan(p.tahun) ? gagal('tidak_dikenali', 'Pertandingan tidak dikenali atau tidak dibuka untuk anda: ' + kod)
+                                           : gagal('tutup', 'Pertandingan jawatan ditutup. ' + tutupTahun(p));
+    }
     if (e.selesai) { return gagal('selesai', e.sebab); }
     if (e.didaftar) { return gagal('sudah_daftar', 'Anda sudah mendaftar bertanding ' + e.jawatan + '.'); }
     if (!e.terbuka) { return gagal('terkunci', e.sebab); }
 
     var st = getKeadaanPemilihan(p);
     if (e.jenis === 'jawatan') {
-      var lain = kodJawatanDidaftar(st);
-      if (lain.length) { return gagal('satu_jawatan', 'Anda sudah mendaftar bertanding ' + st.daftar[lain[0]].jawatan + '. Tarik balik dahulu.'); }
+      var lain = pendaftaranSekumpulan(st, e);
+      if (lain.length) {
+        return gagal('satu_jawatan', 'Anda sudah mendaftar bertanding ' + st.daftar[lain[0]].jawatan + ' di peringkat ' + J.LABEL_PERINGKAT[e.peringkat] +
+                     (e.kumpulan === 'sayap' ? ' (sayap)' : '') + '. Tarik balik dahulu.');
+      }
     }
     st.daftar[kod] = {
-      kod: kod, jenis: e.jenis, jawatan: e.jawatan, peringkat: e.peringkat, kerusi: e.kerusi,
+      kod: kod, jenis: e.jenis, jawatan: e.jawatan, peringkat: e.peringkat, kumpulan: e.kumpulan, sayap: e.sayap,
+      kerusi: e.kerusi, kesukaran: e.kesukaran || 0, pertahan: !!e.pertahan,
       tahun: p.tahun, didaftarPada: new Date().toISOString()
     };
-    var patch = { pemilihan: st };
-    if (e.jenis === 'jawatan') { patch.calon = { kod: kod, jawatan: e.jawatan, peringkat: e.peringkat, tahun: p.tahun, didaftarPada: st.daftar[kod].didaftarPada }; }
-    var r = S.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: 'daftar_bertanding', nama: 'Daftar bertanding ' + e.jawatan, peringkat: 'pemilihan' } });
+    var r = S.applyEffects({}, { kiraTindakan: false, patch: { pemilihan: st }, log: { tindakan: 'daftar_bertanding', nama: 'Daftar bertanding ' + e.jawatan, peringkat: 'pemilihan' } });
     return r.ok ? { ok: true, mesej: 'Anda didaftarkan sebagai calon ' + e.jawatan + '.', pendaftaran: st.daftar[kod], profil: r.profil } : r;
   }
 
@@ -280,7 +306,6 @@
     var d = st.daftar[kod];
     delete st.daftar[kod];
     var patch = { pemilihan: st };
-    if (d.jenis === 'jawatan') { patch.calon = null; }
     var r = S.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: 'tarik_balik', nama: 'Tarik balik pencalonan ' + d.jawatan, peringkat: 'pemilihan' } });
     return r.ok ? { ok: true, mesej: 'Pencalonan ' + d.jawatan + ' ditarik balik.', profil: r.profil } : r;
   }
@@ -298,10 +323,11 @@
   }
 
   /** Kekuatan pemain (0 hingga 100) mengikut peringkat pengundi. */
-  function kekuatanPemain(p, st, peringkat) {
+  function kekuatanPemain(p, st, peringkat, d) {
     var b = CONFIG.BERAT[peringkat === 'cawangan' ? 'cawangan' : 'bahagian'], k = p.kesetiaan;
     var v = Math.min(100, p.ip) * b.ip + k.akarUmbi * b.akarUmbi + k.ketuaCawangan * b.ketuaCawangan +
             k.ajk * b.ajk + k.perwakilan * b.perwakilan + st.kempen.mata * b.kempen;
+    if (d && d.sayap && J.sayapPemain(p) === d.sayap) { v += CONFIG.BONUS_SAYAP; }
     return clamp(v, 0, 100);
   }
 
@@ -317,7 +343,7 @@
   }
 
   /** Pesaing tetap bagi satu pertandingan (seed daripada ID pemain, tahun dan kod). */
-  function janaPesaing(p, kod, bilangan) {
+  function janaPesaing(p, kod, bilangan, tambahan) {
     var rng = S.rngBerbenih(p.id + '|' + p.tahun + '|' + kod + '|pesaing');
     var senarai = [], guna = {};
     for (var i = 0; i < bilangan; i++) {
@@ -329,7 +355,7 @@
                (lelaki ? ' bin ' : ' binti ') + NAMA_L[Math.floor(rng() * NAMA_L.length)];
       } while (guna[nama] && ++cuba < 8);
       guna[nama] = true;
-      senarai.push({ nama: nama, pemain: false, kekuatan: clamp(normal(rng, CONFIG.PENYEBARAN_PESAING.min, CONFIG.PENYEBARAN_PESAING.sd), 8, 85) });
+      senarai.push({ nama: nama, pemain: false, kekuatan: clamp(normal(rng, CONFIG.PENYEBARAN_PESAING.min + (tambahan || 0), CONFIG.PENYEBARAN_PESAING.sd), 8, 92) });
     }
     return senarai;
   }
@@ -352,8 +378,8 @@
   function bina(p, st, d, opts) {
     var peringkat = d.peringkat, kerusi = d.kerusi || 1;
     var bil = Math.max(4, kerusi + CONFIG.PESAING_TAMBAHAN);
-    var calon = janaPesaing(p, d.kod, bil - 1);
-    calon.push({ nama: p.nama, pemain: true, kekuatan: kekuatanPemain(p, st, peringkat) });
+    var calon = janaPesaing(p, d.kod, bil - 1, d.kesukaran);
+    calon.push({ nama: p.nama, pemain: true, kekuatan: kekuatanPemain(p, st, peringkat, d) });
     return { calon: calon, kerusi: kerusi, pemilih: bilPemilih(p, peringkat, opts) };
   }
 
@@ -484,7 +510,6 @@
     opts = opts || {};
     var p = S.loadPlayer();
     if (!p) { return gagal('tiada_profil', 'Tiada profil pemain.'); }
-    if (!adalahTahunPemilihan(p.tahun)) { return gagal('tutup', 'Pemilihan hanya berlaku pada tahun pemilihan. ' + tutupTahun(p)); }
     var st = getKeadaanPemilihan(p), d = st.daftar[kod];
     if (!d) { return gagal('belum_daftar', 'Anda belum mendaftar bertanding untuk kod ' + kod + '.'); }
     if (st.keputusan[kod]) { return gagal('sudah_selesai', 'Pertandingan ' + d.jawatan + ' sudah selesai.'); }
@@ -497,6 +522,7 @@
     var rng = opts.rng || Math.random, b = bina(p, st, d, opts), h = undi(b.calon, b.kerusi, b.pemilih, rng);
     var sendiri = h.jadual.filter(function (j) { return j.pemain; })[0], menang = sendiri.menang;
     var jenis = d.jenis === 'perwakilan' ? 'perwakilan' : 'jawatan';
+    if (jenis === 'jawatan' && !adalahTahunPemilihan(p.tahun)) { return gagal('tutup', 'Pemilihan jawatan hanya berlaku pada tahun pemilihan. ' + tutupTahun(p)); }
 
     var keputusan = {
       kod: kod, jawatan: d.jawatan, peringkat: d.peringkat, kerusi: b.kerusi, pemilih: b.pemilih, hadir: h.hadir,
@@ -506,24 +532,20 @@
     st.keputusan[kod] = keputusan;
 
     var patch = { pemilihan: st }, peristiwa = [];
-    if (kod === 'perwakilan_cawangan') { st.perwakilan.cawangan = menang; }
-    if (kod === 'perwakilan_bahagian') { st.perwakilan.bahagian = menang; }
-    if (jenis === 'jawatan') {
-      if (kod !== 'pertahan_jawatan') { patch.calon = null; }
-      if (menang && kod === 'ajk_cawangan') { patch.jawatan = 'AJK Cawangan'; }
-      else if (menang && kod === 'sayap_cawangan') { patch.jawatan = d.jawatan; }
-      else if (!menang && kod === 'pertahan_jawatan') { patch.jawatan = 'Ahli Biasa'; patch.cabaran = null; patch.amaranAktif = false; }
-      if (menang && kod !== 'pertahan_jawatan') {
-        peristiwa.push({ jenis: 'jawatan_baharu', mesej: 'Tahniah. Anda dipilih sebagai ' + d.jawatan + '. Tindakan pemegang jawatan kini dibuka.' });
-      }
-      if (!menang && kod === 'pertahan_jawatan') {
-        peristiwa.push({ jenis: 'jawatan_hilang', mesej: 'Anda kalah mempertahankan jawatan ' + d.jawatan + ' dan kembali menjadi Ahli Biasa.' });
-      }
-    } else if (menang) {
-      peristiwa.push({ jenis: 'perwakilan_terpilih', mesej: 'Anda terpilih sebagai ' + d.jawatan + '.' });
+    if (jenis === 'perwakilan') {
+      var aras = kod === 'perwakilan_cawangan' ? 'cawangan' : 'bahagian', pw = salin(p.perwakilan || { cawangan: 0, bahagian: 0 });
+      pw[aras] = menang ? p.tahun : 0;
+      patch.perwakilan = pw;
+      if (menang) { peristiwa.push({ jenis: 'perwakilan_terpilih', mesej: 'Anda terpilih sebagai ' + d.jawatan + '. Mandat sah untuk tahun ' + p.tahun + ' sahaja.' }); }
+    } else {
+      var def = J.cariDef(kod), pegangSebelum = J.pegang(p, kod);
+      if (def) { var pt = J.terapkan(p, def, menang); Object.keys(pt).forEach(function (k) { patch[k] = pt[k]; }); }
+      if (menang) { peristiwa.push({ jenis: 'jawatan_baharu', mesej: 'Tahniah. ' + (pegangSebelum ? 'Anda kekal sebagai ' : 'Anda dipilih sebagai ') + d.jawatan + '.' }); }
+      else if (pegangSebelum) { peristiwa.push({ jenis: 'jawatan_hilang', mesej: 'Anda kalah mempertahankan ' + d.jawatan + ' dan kehilangan jawatan itu.' }); }
     }
 
-    var ip = menang ? CONFIG.MENANG_IP[jenis] : CONFIG.KALAH_IP[jenis];
+    var ip = jenis === 'jawatan' ? (menang ? CONFIG.MENANG_IP_PERINGKAT[d.peringkat] : CONFIG.KALAH_IP_PERINGKAT[d.peringkat])
+                                 : (menang ? CONFIG.MENANG_IP.perwakilan : CONFIG.KALAH_IP.perwakilan);
     var r = S.applyEffects({ ip: ip }, {
       kiraTindakan: false, patch: patch,
       log: { tindakan: 'pemilihan_' + kod, nama: (menang ? 'Menang ' : 'Kalah ') + d.jawatan, peringkat: 'pemilihan' }
@@ -541,10 +563,11 @@
    */
   function jalankanPemilihanPeringkat(peringkat, opts) {
     var p = S.loadPlayer();
-    if (!p || !adalahTahunPemilihan(p.tahun)) { return []; }
+    if (!p) { return []; }
+    if (peringkat === 'pau') { peringkat = 'pusat'; }
     var st = getKeadaanPemilihan(p);
     var kod = Object.keys(st.daftar).filter(function (k) { return !st.keputusan[k] && st.daftar[k].peringkat === peringkat; });
-    kod.sort(function (a, b) { return (st.daftar[a].jenis === 'jawatan' ? 0 : 1) - (st.daftar[b].jenis === 'jawatan' ? 0 : 1); });
+    kod.sort(function (a, b) { return (st.daftar[a].jenis === 'perwakilan' ? 0 : 1) - (st.daftar[b].jenis === 'perwakilan' ? 0 : 1); });   // perwakilan dahulu
     return kod.map(function (k) { return jalankanPemilihan(k, opts); });
   }
 
@@ -580,8 +603,8 @@
     if (!r.ok) { return r; }
     var fokus = getFokusTahun(baru), peristiwa = [];
     peristiwa.push(fokus.fasa === 'pemilihan'
-      ? { jenis: 'pemilihan_dibuka', mesej: 'Tahun ' + baru + ' ialah tahun pemilihan. Pertandingan jawatan, pemilihan perwakilan dan kempen dibuka.' }
-      : { jenis: 'tahun_pentadbiran', mesej: 'Tahun ' + baru + ' ialah tahun pentadbiran. Pertandingan jawatan ditutup. Pemilihan seterusnya ' + tahunPemilihanSeterusnya(baru) + '.' });
+      ? { jenis: 'pemilihan_dibuka', mesej: 'Tahun ' + baru + ' ialah tahun pemilihan. Pertandingan jawatan (Cawangan, Bahagian, Pusat), pemilihan perwakilan dan kempen dibuka. Mandat perwakilan tahun lalu sudah luput.' }
+      : { jenis: 'tahun_pentadbiran', mesej: 'Tahun ' + baru + ' ialah tahun pentadbiran. Pertandingan jawatan ditutup (pemilihan seterusnya ' + tahunPemilihanSeterusnya(baru) + '), tetapi mandat perwakilan tahun lalu sudah luput: bertanding semula di Cawangan.' });
     return { ok: true, tahunLama: lama, tahunBaru: baru, fasa: fokus.fasa, mesej: peristiwa[0].mesej, peristiwa: peristiwa, perubahan: r.perubahan, profil: r.profil };
   }
 
@@ -603,6 +626,7 @@
     anggarkanPeluang: anggarkanPeluang,
     jalankanPemilihan: jalankanPemilihan,
     jalankanPemilihanPeringkat: jalankanPemilihanPeringkat,
+    J: J,
     majuTahun: majuTahun
   };
 });

@@ -2,12 +2,13 @@
    MyPolitik: UMNO — js/calendar.js
    Sistem masa BULANAN (Bulan 1 hingga 12) dan Takwim Aktiviti UMNO.
 
-   Takwim:
-     Bulan 1-3   Awal Tahun        Aktiviti akar umbi dan membina pengaruh
+   Takwim (v3.0):
+     Bulan 1-3   Akar umbi         Aktiviti akar umbi dan membina pengaruh
                                     (bonus +25% IP dan kesetiaan positif bagi tindakan)
-     Bulan 4-6   Pertengahan Tahun Musim Mesyuarat dan Pemilihan Cawangan
-     Bulan 7-12  Akhir Tahun       Mesyuarat Bahagian (bulan 7-9) dan
-                                    Perhimpunan Agung UMNO / PAU (bulan 10-12)
+     Bulan 4-6   Musim Cawangan    Mesyuarat dan Pemilihan Cawangan (Cawangan dan Sayap)
+     Bulan 7     Musim Bahagian    Mesyuarat dan Pemilihan Bahagian (Bahagian dan Sayap)
+     Bulan 8     PAU               Perhimpunan Agung UMNO dan Pemilihan Pusat
+     Bulan 9-12  Pasca-PAU         Aktiviti akar umbi dan pasca-PAU
    Semua angka boleh diubah dalam CONFIG.
 
    Regenerasi pada setiap permulaan bulan:
@@ -57,17 +58,21 @@
     FASA: [
       { kod: 'akar_umbi', mula: 1, tamat: 3, tajuk: 'Awal Tahun', ringkas: 'Akar Umbi & Bina Pengaruh',
         fokus: ['Ziarah dan gotong-royong', 'Bina pengaruh dan kesetiaan akar umbi', 'Kumpul isu tempatan'] },
-      { kod: 'cawangan', mula: 4, tamat: 6, tajuk: 'Pertengahan Tahun', ringkas: 'Musim Mesyuarat & Pemilihan Cawangan',
-        fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Pemilihan jawatan dan perwakilan Cawangan'] },
-      { kod: 'bahagian_pau', mula: 7, tamat: 12, tajuk: 'Akhir Tahun', ringkas: 'Mesyuarat Bahagian & Perhimpunan Agung',
-        fokus: ['Mesyuarat Bahagian (bulan 7-9)', 'Perhimpunan Agung UMNO / PAU (bulan 10-12)'] }
+      { kod: 'cawangan', mula: 4, tamat: 6, tajuk: 'Musim Cawangan', ringkas: 'Musim Mesyuarat & Pemilihan Cawangan (Cawangan & Sayap)',
+        fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Pemilihan jawatan Cawangan dan Sayap Cawangan', 'Pemilihan Perwakilan ke Bahagian'] },
+      { kod: 'bahagian', mula: 7, tamat: 7, tajuk: 'Musim Bahagian', ringkas: 'Musim Mesyuarat & Pemilihan Bahagian (Bahagian & Sayap)',
+        fokus: ['Mesyuarat Bahagian', 'Pemilihan jawatan Bahagian dan Sayap Bahagian', 'Pemilihan Perwakilan ke PAU'] },
+      { kod: 'pau', mula: 8, tamat: 8, tajuk: 'Perhimpunan Agung', ringkas: 'Perhimpunan Agung UMNO (PAU) & Pemilihan Pusat',
+        fokus: ['Perhimpunan Agung UMNO', 'Pemilihan Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap (tahun pemilihan)'] },
+      { kod: 'pasca_pau', mula: 9, tamat: 12, tajuk: 'Akhir Tahun', ringkas: 'Akar Umbi & Pasca-PAU',
+        fokus: ['Pulih dan bina semula sokongan', 'Laksana tanggungjawab jawatan', 'Bersedia untuk kitaran seterusnya'] }
     ],
 
     /* Tetingkap setiap mesyuarat / pengundian. 'pusat' dalam election.js dipetakan kepada 'pau'. */
     TETINGKAP: {
       cawangan: { mula: 4, tamat: 6, nama: 'Mesyuarat Cawangan' },
-      bahagian: { mula: 7, tamat: 9, nama: 'Mesyuarat Bahagian' },
-      pau:      { mula: 10, tamat: 12, nama: 'Perhimpunan Agung UMNO (PAU)' }
+      bahagian: { mula: 7, tamat: 7, nama: 'Mesyuarat Bahagian' },
+      pau:      { mula: 8, tamat: 8, nama: 'Perhimpunan Agung UMNO (PAU)' }
     }
   };
 
@@ -114,11 +119,23 @@
     return 'pusat';
   }
 
-  /** Elaun bulanan: { jumlah, butiran:[{nama, jumlah}] } */
+  /** Peringkat unik yang dipegang (jawatanList v3.0, atau jawatan tunggal sebagai sandaran). */
+  function peringkatDipegang(p) {
+    var out = [];
+    (Array.isArray(p && p.jawatanList) ? p.jawatanList : []).forEach(function (j) {
+      var k = j.peringkat === 'pusat' ? 'pusat' : j.peringkat;
+      if (CONFIG.DANA_JAWATAN[k] && out.indexOf(k) < 0) { out.push(k); }
+    });
+    if (!out.length && p) { var per = peringkatJawatan(p.jawatan); if (per) { out.push(per); } }
+    return out;
+  }
+
+  /** Elaun bulanan: { jumlah, butiran:[{nama, jumlah}] }. Setiap peringkat yang dipegang menambah elaun. */
   function pendapatanBulanan(profil) {
     var p = profil || S.loadPlayer(), butiran = [{ nama: 'Elaun asas', jumlah: CONFIG.DANA_ASAS }];
-    var per = p ? peringkatJawatan(p.jawatan) : null;
-    if (per) { butiran.push({ nama: 'Elaun jawatan (' + p.jawatan + ')', jumlah: CONFIG.DANA_JAWATAN[per] }); }
+    peringkatDipegang(p).forEach(function (per) {
+      butiran.push({ nama: 'Elaun jawatan ' + per.charAt(0).toUpperCase() + per.slice(1), jumlah: CONFIG.DANA_JAWATAN[per] });
+    });
     return { jumlah: butiran.reduce(function (a, b) { return a + b.jumlah; }, 0), butiran: butiran };
   }
 
@@ -170,10 +187,11 @@
      ------------------------------------------------------------------------ */
   function mesejMasuk(bulan, tahun, tahunBaharu) {
     var f = getFasa(bulan), nb = namaBulan(bulan), out = [];
-    if (bulan === 1) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 1 (' + nb + ' ' + tahun + '): ' + f.tajuk + '. ' + f.ringkas + '. Bonus +' + Math.round(CONFIG.BONUS_AKAR_UMBI * 100) + '% IP dan kesetiaan bagi tindakan sehingga bulan 3.' }); }
-    else if (bulan === 4) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 4 (' + nb + '): Musim Mesyuarat & Pemilihan Cawangan dibuka (bulan 4-6).' }); }
-    else if (bulan === 7) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 7 (' + nb + '): Mesyuarat Bahagian dibuka (bulan 7-9).' }); }
-    else if (bulan === 10) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 10 (' + nb + '): Perhimpunan Agung UMNO (PAU) dibuka (bulan 10-12).' }); }
+    if (bulan === 1) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 1 (' + nb + ' ' + tahun + '): ' + f.tajuk + '. ' + f.ringkas + '. Bonus +' + Math.round(CONFIG.BONUS_AKAR_UMBI * 100) + '% IP dan kesetiaan bagi tindakan sehingga bulan 3. Mandat perwakilan tahun lalu telah tamat; bertanding semula di Cawangan (bulan 4-6).' }); }
+    else if (bulan === 4) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 4 (' + nb + '): Musim Mesyuarat & Pemilihan Cawangan dan Sayap dibuka (bulan 4-6).' }); }
+    else if (bulan === 7) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 7 (' + nb + '): Mesyuarat & Pemilihan Bahagian dan Sayap dibuka. Hanya bulan ini.' }); }
+    else if (bulan === 8) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 8 (' + nb + '): Perhimpunan Agung UMNO (PAU) dan Pemilihan Pusat. Hanya bulan ini.' }); }
+    else if (bulan === 9) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 9 (' + nb + '): Pasca-PAU. Kembali ke akar umbi dan laksana tanggungjawab jawatan anda.' }); }
     Object.keys(CONFIG.TETINGKAP).forEach(function (k) {
       var t = CONFIG.TETINGKAP[k];
       if (bulan === t.tamat && bulan !== t.mula) { out.push({ jenis: 'tetingkap_akhir', mesej: 'Bulan ' + bulan + ' ialah bulan terakhir untuk ' + t.nama + '.' }); }
@@ -200,8 +218,8 @@
         if (r.ok) { out.push({ jenis: 'mesyuarat_ditutup_auto', mesej: t.nama + ' ditutup secara automatik kerana musim tamat. ' + r.mesej }); (r.peristiwa || []).forEach(function (e) { out.push(e); }); }
       } else if (lv.status === 'boleh_mula') {
         out.push({ jenis: 'mesyuarat_terlepas', mesej: t.nama + ' tahun ' + p.tahun + ' terlepas kerana tidak dihadiri.' });
-        if (E && k !== 'pau') {
-          (E.jalankanPemilihanPeringkat(k) || []).forEach(function (x) {
+        if (E) {
+          (E.jalankanPemilihanPeringkat(k === 'pau' ? 'pusat' : k) || []).forEach(function (x) {
             if (x.ok) { out.push({ jenis: 'pemilihan_auto', mesej: 'Pengundian dijalankan oleh urus setia. ' + x.mesej }); (x.peristiwa || []).forEach(function (e) { out.push(e); }); }
           });
         }
@@ -282,6 +300,7 @@
     getFasa: getFasa,
     getTetingkap: getTetingkap,
     statusTetingkap: statusTetingkap,
+    peringkatDipegang: peringkatDipegang,
     pendapatanBulanan: pendapatanBulanan,
     regenerasi: regenerasi,
     skalaKesan: skalaKesan,

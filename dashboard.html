@@ -45,14 +45,15 @@
     .takwim__strip li { --tc: var(--bg-elev-3); display: grid; justify-items: center; gap: 1px; padding: 6px 0 5px; border-radius: 8px;
       border: 1px solid var(--border-soft); background: var(--bg-elev-2); border-bottom: 3px solid var(--tc); font-size: .68rem; color: var(--text-dim); }
     .takwim__strip li b { font-size: .95rem; color: var(--text-muted); }
-    .takwim__strip li.f-akar_umbi { --tc: var(--gold-dark); } .takwim__strip li.f-cawangan { --tc: #2B6CB0; }
-    .takwim__strip li.f-bahagian { --tc: #2F9E6B; } .takwim__strip li.f-pau { --tc: #7A4DD8; }
+    .takwim__strip li.f-akar_umbi { --tc: #2ECC71; } .takwim__strip li.f-cawangan { --tc: #4DA3FF; }
+    .takwim__strip li.f-bahagian { --tc: #F2B705; } .takwim__strip li.f-pau { --tc: #E8344F; } .takwim__strip li.f-pasca_pau { --tc: #A78BFA; }
     .takwim__strip li.is-lepas { opacity: .5; }
     .takwim__strip li.is-semasa { opacity: 1; border-color: var(--gold); background: rgba(242,183,5,.14); box-shadow: 0 0 0 1px var(--gold); }
     .takwim__strip li.is-semasa b { color: var(--gold); }
     .takwim__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .72rem; color: var(--text-dim); }
     .takwim__legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-    .c-akar_umbi { background: var(--gold-dark); } .c-cawangan { background: #2B6CB0; } .c-bahagian { background: #2F9E6B; } .c-pau { background: #7A4DD8; }
+    .c-akar_umbi { background: #2ECC71; } .c-cawangan { background: #4DA3FF; } .c-bahagian { background: #F2B705; } .c-pau { background: #E8344F; } .c-pasca_pau { background: #A78BFA; }
+    #p-jawatan-lain { display: inline-flex; flex-wrap: wrap; gap: 4px; }
     .dash-profile { display: grid; gap: var(--space-4); }
     .dash-profile__top { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
     .dash-profile__info { min-width: 0; flex: 1 1 240px; }
@@ -150,6 +151,7 @@
           <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
             <span class="badge-office badge-office--ahli" id="p-jawatan">Ahli Biasa</span>
             <span class="badge-office badge-office--bahagian" id="p-perwakilan" hidden></span>
+            <span id="p-jawatan-lain" hidden></span>
             <span class="year-pill" id="p-tahun" data-fasa="">2026</span>
           </div>
           <ul class="dash-loc" aria-label="Lokasi">
@@ -175,9 +177,10 @@
         <ol class="takwim__strip" id="tk-strip"></ol>
         <ul class="takwim__legend" aria-hidden="true">
           <li><i class="c-akar_umbi"></i>Bulan 1-3 Akar umbi</li>
-          <li><i class="c-cawangan"></i>Bulan 4-6 Mesyuarat Cawangan</li>
-          <li><i class="c-bahagian"></i>Bulan 7-9 Bahagian</li>
-          <li><i class="c-pau"></i>Bulan 10-12 PAU</li>
+          <li><i class="c-cawangan"></i>Bulan 4-6 Cawangan &amp; Sayap</li>
+          <li><i class="c-bahagian"></i>Bulan 7 Bahagian &amp; Sayap</li>
+          <li><i class="c-pau"></i>Bulan 8 PAU &amp; Pusat</li>
+          <li><i class="c-pasca_pau"></i>Bulan 9-12 Pasca-PAU</li>
         </ul>
       </div>
 
@@ -246,7 +249,7 @@
   <!-- Konfigurasi: URL Google Sheets (sama seperti index.html) -->
   <script>
     window.MYPOLITIK_CONFIG = {
-      appsScriptUrl: '',                 // sama seperti index.html
+      appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzclOJJpv1khUQ5nnRE_hiDmNbL94QbVgdtjWZ70JR3fSpx4tXrV9JPbVZymkokJLeP/exec',                 // sama seperti index.html
       musicUrl: '',
       sheetCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv',
       indexUrl: 'index.html'
@@ -260,6 +263,7 @@
   <script src="js/audio.js"></script>
   <script src="js/ordinaryMember.js"></script>
   <script src="js/incumbent.js"></script>
+  <script src="js/jawatan.js"></script>
   <script src="js/election.js"></script>
   <script src="js/meeting.js"></script>
   <script src="js/events.js"></script>
