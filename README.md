@@ -49,9 +49,14 @@ Modul utama dalam `js/`:
 | `events.js` | Peristiwa rawak |
 | `watak.js` | Gaya Kepimpinan dan kad Laluan Karier Sebenar |
 | `map.js`, `geo.js` | Peta SVG negeri, parlimen dan DUN |
+| `menu.js` | Menu utama pada `index.html` (Sambung, Permainan Baharu, Cara Bermain) |
 | `app.js` | Menggabungkan semua modul ke dalam dashboard |
 
 Data permainan disimpan dalam pelayar (localStorage). Tiada pelayan atau akaun diperlukan.
+
+## Latar belakang menu
+
+Menu utama menggunakan ilustrasi asal `assets/images/menara-dato-onn.svg`. Untuk guna foto sebenar, simpan foto anda sebagai `assets/images/menara-dato-onn.jpg` (disyorkan menegak, lebar sekitar 1200 px atau lebih). Foto itu akan dipaparkan menggantikan ilustrasi secara automatik. Pastikan anda berhak menggunakan foto tersebut.
 
 ## Jalankan di komputer
 

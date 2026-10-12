@@ -973,3 +973,71 @@ option { background: var(--bg-elev-2); color: var(--text); }
 .choice--bersih { border-left: 3px solid #34C27A; }
 .choice--kelabu { border-left: 3px solid #F5B800; }
 .choice--kotor { border-left: 3px solid #E5484D; }
+
+/* ==========================================================================
+   v4.4 — Menu utama bergaya kertas undi (index.html #menu)
+   Latar (inline pada #menu): foto menara-dato-onn.jpg jika ada, di atas ilustrasi menara-dato-onn.svg.
+   ========================================================================== */
+body.menu-aktif { overflow: hidden; }
+.menu {
+  position: fixed; inset: 0; z-index: 60; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background-color: #0E0F13;
+  background-size: cover; background-repeat: no-repeat;
+  background-position: center, 55% 30%, center bottom;
+}
+@media (min-aspect-ratio: 1/1) { .menu { background-position: center, center 30%, center 78%; } }
+.menu[hidden] { display: none; }
+.menu__dalam { max-width: 480px; margin: 0 auto; padding: 28px 16px 96px; min-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+
+/* kertas undi */
+.kertas {
+  --dakwat: #1b1a22; --kertas: #f5efdd; --merah: #c8102e;
+  position: relative; color: var(--dakwat); background-color: var(--kertas);
+  background-image: radial-gradient(rgba(120, 100, 60, .10) 1px, transparent 1.2px), linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(0, 0, 0, .04));
+  background-size: 5px 5px, 100% 100%;
+  border-radius: 4px; padding: 0 20px 18px; transform: rotate(-.6deg);
+  box-shadow: 0 1px 0 #fff inset, 0 2px 0 rgba(0, 0, 0, .15), 0 22px 44px rgba(0, 0, 0, .55);
+}
+.kertas__jalur { height: 10px; margin: 0 -20px 16px; border-radius: 4px 4px 0 0;
+  background: repeating-linear-gradient(90deg, var(--merah) 0 22px, #fff 22px 30px, #f2b705 30px 52px, var(--dakwat) 52px 60px); }
+.kertas__kepala { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 3px double var(--dakwat); position: relative; }
+.kertas__logo { width: 56px; height: 56px; object-fit: contain; flex: none; border-radius: 8px; background: #fff; padding: 4px; box-shadow: 0 0 0 2px var(--dakwat); }
+.kertas__kecil { margin: 0; font: 700 .7rem/1 var(--font-body); letter-spacing: .28em; text-transform: uppercase; color: #5a5545; }
+.kertas__tajuk { margin: 5px 0 0; font: 800 clamp(1.5rem, 7vw, 2rem)/1 var(--font-display); text-transform: uppercase; letter-spacing: .02em; color: var(--dakwat); }
+.kertas__cop { position: absolute; right: 0; top: -2px; transform: rotate(8deg); font: 800 .72rem/1 var(--font-display); letter-spacing: .18em; text-transform: uppercase;
+  color: var(--merah); border: 2px solid var(--merah); border-radius: 4px; padding: 4px 7px; opacity: .8; }
+.kertas__arahan { margin: 12px 0 6px; font-size: .92rem; line-height: 1.5; color: #3a3729; }
+
+.baris {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer; text-decoration: none; color: inherit; font: inherit;
+  padding: 12px 6px; background: transparent; border: 0; border-bottom: 1.5px dashed rgba(27, 26, 34, .35); border-radius: 0; position: relative;
+  transition: background .12s ease;
+}
+.baris[hidden] { display: none; }
+.baris:hover, .baris:focus-visible { background: linear-gradient(90deg, rgba(242, 183, 5, .35), rgba(242, 183, 5, .12)); }
+.baris:focus-visible { outline: 3px solid var(--dakwat); outline-offset: -3px; }
+.baris__no { flex: none; width: 26px; font: 800 1.35rem/1 var(--font-display); color: var(--merah); text-align: center; }
+.baris__teks { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.baris__teks b { font: 700 1.08rem/1.15 var(--font-display); color: var(--dakwat); }
+.baris__teks small { font-size: .84rem; line-height: 1.35; color: #5a5545; }
+.baris__kotak { flex: none; position: relative; width: 30px; height: 30px; border: 2.5px solid var(--dakwat); border-radius: 3px; background: rgba(255, 255, 255, .55); }
+.baris__kotak::before, .baris__kotak::after { content: ""; position: absolute; left: 50%; top: 50%; width: 3.5px; height: 30px; margin: -15px 0 0 -1.75px; background: var(--merah); border-radius: 2px;
+  transform: rotate(45deg) scaleY(0); transition: transform .14s ease; }
+.baris__kotak::after { transform: rotate(-45deg) scaleY(0); }
+.baris:hover .baris__kotak::before, .baris:focus-visible .baris__kotak::before, .baris:active .baris__kotak::before { transform: rotate(45deg) scaleY(1); }
+.baris:hover .baris__kotak::after, .baris:focus-visible .baris__kotak::after, .baris:active .baris__kotak::after { transform: rotate(-45deg) scaleY(1); }
+
+/* Sambung: dicop 'disimpan', dicetak lebih menonjol */
+.baris--sambung { background: rgba(200, 16, 46, .07); border-bottom: 2px solid var(--dakwat); padding: 14px 6px; }
+.baris--sambung .baris__teks b { font-size: 1.3rem; }
+.baris--sambung .baris__teks small { color: var(--merah); font-weight: 600; font-style: italic; }
+
+.kertas__nota { margin: 8px 0 4px; padding: 10px 12px 10px 12px; background: #fff2a8; border: 1px solid #e0c64d; transform: rotate(.5deg); box-shadow: 0 3px 8px rgba(0, 0, 0, .18); }
+.kertas__nota[hidden] { display: none; }
+.kertas__nota ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .86rem; line-height: 1.45; color: #3a3320; }
+
+.kertas__kerat { position: relative; margin: 16px -20px 12px; height: 0; border-top: 2px dashed rgba(27, 26, 34, .55); }
+.kertas__kerat span { position: absolute; left: 10px; top: -12px; width: 20px; height: 20px; opacity: .7;
+  background: no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b1a22' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cpath d='M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12'/%3E%3C/svg%3E"); }
+.kertas__nota-kaki { margin: 0; font-size: .72rem; line-height: 1.5; color: #5a5545; }
+@media (prefers-reduced-motion: reduce) { .baris, .baris__kotak::before, .baris__kotak::after { transition: none; } .kertas { transform: none; } }
