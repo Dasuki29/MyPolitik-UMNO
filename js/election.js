@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/election.js
+   Nusa Politik — js/election.js
    Enjin Kitaran Pemilihan 3 Tahun.
 
    v3.0: jawatan berbilang peringkat dan mengikut sayap (js/jawatan.js), pusat (bulan 8),
@@ -18,6 +18,11 @@
         usul (js/meeting.js) dan mengumpul IP serta MYR.
    4. Aktiviti kempen
         Jamuan Mesyuarat, Siri Jelajah, Lobi Ketua Bahagian, Simulasi Pengundian.
+
+   v3.6: Tataetika dan disiplin (js/etika.js). Kempen kini bersih / kelabu / kotor. Kempen kotor
+         (politik wang, fitnah, janji jawatan) memberi mata kempen lebih pantas tetapi mendedahkan pemain
+         kepada aduan, siasatan dan hukuman Lembaga Disiplin (Fasal 20.10). Modal Sosial daripada kempen
+         bersih menambah kekuatan undi. Hak keahlian (gantung/larang/pecat) menghalang pendaftaran dan kempen.
 
    Keadaan disimpan dalam profil.pemilihan (localStorage) melalui
    MyPolitikSave.applyEffects(). Perlu dimuatkan selepas js/save.js dan
@@ -48,12 +53,15 @@
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (S, O, J) {
   'use strict';
 
+  function etika() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikEtika) { return g.MyPolitikEtika; } try { return typeof require === 'function' ? require('./etika.js') : null; } catch (e) { return null; } }
+
   var CONFIG = {
     TAHUN_MULA: 2026,
     KITARAN_TAHUN: 3,
-    PERWAKILAN_CAWANGAN: 5,              // perwakilan Cawangan ke Bahagian
-    PERWAKILAN_BAHAGIAN: 10,             // perwakilan Bahagian ke PAU
-    ANGGARAN_CAWANGAN_PER_BAHAGIAN: 25,  // untuk anggaran pengundi perwakilan Bahagian (5 setiap cawangan)
+    // v3.7: kuota perwakilan mengikut Perlembagaan
+    KUOTA_CAWANGAN: { ahliPerWakil: 50, maks: 5, min: 1 },    // Fasal 14.4.4: 1 wakil / 50 ahli, maks 5 seorang Cawangan
+    KUOTA_BAHAGIAN: { ahliPerWakil: 500, maks: 7, min: 1 },   // Fasal 8.4.3: 1 wakil / 500 ahli, maks 7 seorang Bahagian
+    ANGGARAN_CAWANGAN_PER_BAHAGIAN: 25,  // anggaran bilangan Cawangan dalam satu Bahagian (jika tiada data sebenar)
     PEMILIH_PUSAT: 1500,                 // pengundi simulasi peringkat pusat
     KERUSI_AJK_CAWANGAN: 7,
     PESAING_TAMBAHAN: 4,                 // bilangan calon = kerusi + nilai ini
@@ -198,7 +206,12 @@
     var st = getKeadaanPemilihan(p), buka = adalahTahunPemilihan(p.tahun);
     var senarai = [];
 
+    var Et = etika();
     function tambah(e) {
+      if (Et && e.terbuka) {                                          // hak keahlian (Fasal 20.10)
+        var hak = Et.semakHak(p, e.jenis === 'jawatan' ? 'jawatan' : 'perwakilan');
+        if (!hak.boleh) { e.terbuka = false; e.sebab = hak.sebab; }
+      }
       e.didaftar = !!st.daftar[e.kod];
       e.keputusan = st.keputusan[e.kod] || null;
       e.selesai = !!e.keputusan;
@@ -216,13 +229,13 @@
     var pc = J.perwakilanSah(p, 'cawangan'), exBhg = J.exOfficio(p, 'bahagian'), exPau = J.exOfficio(p, 'pau');
     tambah({
       kod: 'perwakilan_cawangan', jenis: 'perwakilan', jawatan: 'Perwakilan Cawangan ke Bahagian', peringkat: 'cawangan', kumpulan: 'perwakilan', sayap: null,
-      kerusi: CONFIG.PERWAKILAN_CAWANGAN, kesukaran: 0,
+      kerusi: kuotaCawangan(p), kesukaran: 0,
       terbuka: !exBhg.sah,
       sebab: exBhg.sah ? 'Anda hadir Bahagian secara automatik sebagai ' + exBhg.sumber + '.' : ''
     });
     tambah({
       kod: 'perwakilan_bahagian', jenis: 'perwakilan', jawatan: 'Perwakilan Bahagian ke PAU', peringkat: 'bahagian', kumpulan: 'perwakilan', sayap: null,
-      kerusi: CONFIG.PERWAKILAN_BAHAGIAN, kesukaran: 0,
+      kerusi: kuotaBahagian(p), kesukaran: 0,
       terbuka: !exPau.sah && pc.layak,
       sebab: exPau.sah ? 'Anda hadir PAU secara automatik sebagai ' + exPau.sumber + '.'
                        : (pc.layak ? '' : 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu' + (pc.luput ? ' (mandat tahun lepas sudah luput).' : '.'))
@@ -328,8 +341,22 @@
     var v = Math.min(100, p.ip) * b.ip + k.akarUmbi * b.akarUmbi + k.ketuaCawangan * b.ketuaCawangan +
             k.ajk * b.ajk + k.perwakilan * b.perwakilan + st.kempen.mata * b.kempen;
     if (d && d.sayap && J.sayapPemain(p) === d.sayap) { v += CONFIG.BONUS_SAYAP; }
+    var Et = etika();
+    if (Et) { v += Et.bonusUndi(p); }                                // Modal Sosial (kempen bersih)
     return clamp(v, 0, 100);
   }
+
+  /* ---- Kuota perwakilan (v3.7) ---- */
+  function kuota(ahli, r) { return clamp(Math.floor((Number(ahli) || 0) / r.ahliPerWakil), r.min, r.maks); }
+  function ahliCawangan(p) { return p && p.cawanganInfo && p.cawanganInfo.jumlahAhli ? p.cawanganInfo.jumlahAhli : 60; }
+  /** Jumlah ahli Bahagian: opts.jumlahAhliBahagian > profil.bahagianInfo.jumlahAhli > anggaran (ahli Cawangan x bil. Cawangan). */
+  function ahliBahagian(p, opts) {
+    if (opts && opts.jumlahAhliBahagian) { return opts.jumlahAhliBahagian; }
+    if (p && p.bahagianInfo && p.bahagianInfo.jumlahAhli) { return p.bahagianInfo.jumlahAhli; }
+    return ahliCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
+  }
+  function kuotaCawangan(p) { return kuota(ahliCawangan(p), CONFIG.KUOTA_CAWANGAN); }              // wakil Cawangan ke Bahagian
+  function kuotaBahagian(p, opts) { return kuota(ahliBahagian(p, opts), CONFIG.KUOTA_BAHAGIAN); }   // wakil Bahagian ke PAU
 
   function bilPemilih(p, peringkat, opts) {
     if (peringkat === 'cawangan') {
@@ -337,7 +364,7 @@
       return Math.max(50, jumlah);
     }
     if (peringkat === 'bahagian') {
-      return CONFIG.PERWAKILAN_CAWANGAN * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
+      return kuotaCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
     }
     return CONFIG.PEMILIH_PUSAT;
   }
@@ -408,11 +435,26 @@
   /* ------------------------------------------------------------------------
      5. AKTIVITI KEMPEN
      ------------------------------------------------------------------------ */
+  /* etika.tahap: 'bersih' (membina Modal Sosial), 'kelabu' (risiko kecil), 'kotor' (laju tetapi berisiko disiplin).
+     etika.risiko = peluang asas dilapor (%). etika.berat 1-3. Rujukan Tataetika Ahli UMNO 2025. */
   var KEMPEN = [
     {
+      id: 'ziarah_kasih_kempen', nama: 'Ziarah Kasih',
+      penerangan: 'Menziarahi ahli yang uzur dan keluarga yang ditimpa musibah, tanpa meminta undi. Membina Modal Sosial.',
+      kesan: { ap: -1, ip: 4, kesetiaan: { akarUmbi: 6 } }, mata: 6, maksKali: 4,
+      etika: { tahap: 'bersih', modal: 5 }
+    },
+    {
+      id: 'khidmat_masyarakat', nama: 'Khidmat Masyarakat',
+      penerangan: 'Gotong-royong, klinik bergerak dan kelas tuisyen percuma. Kerja ikhlas yang dikenang akar umbi.',
+      kesan: { ap: -2, myr: -300, ip: 6, reputasi: 2, kesetiaan: { akarUmbi: 6, ajk: 2 } }, mata: 8, maksKali: 3,
+      etika: { tahap: 'bersih', modal: 7 }
+    },
+    {
       id: 'jamuan_mesyuarat', nama: 'Jamuan Mesyuarat',
-      penerangan: 'Menjamu ahli dan AJK selepas mesyuarat untuk mengeratkan hubungan.',
-      kesan: { myr: -800, ap: -1, kesetiaan: { ajk: 8, akarUmbi: 6 } }, mata: 10, maksKali: 3
+      penerangan: 'Menjamu ahli dan AJK selepas mesyuarat. Zon kelabu: jamuan bertujuan meraih undi boleh dianggap melanggar Perkara 5.6.',
+      kesan: { myr: -800, ap: -1, kesetiaan: { ajk: 8, akarUmbi: 6 } }, mata: 10, maksKali: 3,
+      etika: { tahap: 'kelabu', modal: -2, risiko: 6, tambahRisiko: 4, berat: 1, perkara: 'Menganjurkan jamuan sambil berkempen (Tataetika Perkara 5.6)', fasal: 'Tataetika 5.6' }
     },
     {
       id: 'siri_jelajah', nama: 'Siri Jelajah',
@@ -423,6 +465,24 @@
       id: 'lobi_ketua_bahagian', nama: 'Lobi Ketua Bahagian',
       penerangan: 'Bertemu Ketua Bahagian dan perwakilan untuk meraih sokongan.',
       kesan: { myr: -700, ap: -1, kesetiaan: { perwakilan: 10 } }, mata: 8, maksKali: 2
+    },
+    {
+      id: 'janji_jawatan', nama: 'Janji Jawatan & Projek',
+      penerangan: 'Menjanjikan pangkat atau projek kepada perwakilan sebagai balasan undi. Cepat meraih sokongan, tetapi dilarang Tataetika.',
+      kesan: { ap: -1, ip: 3, kesetiaan: { ajk: 10, perwakilan: 8 } }, mata: 20, maksKali: 2,
+      etika: { tahap: 'kotor', modal: -6, risiko: 20, tambahRisiko: 18, berat: 2, perkara: 'Menjanjikan pangkat atau projek bagi mendapat undi (Tataetika Perkara 5.1.1)', fasal: 'Fasal 20.13' }
+    },
+    {
+      id: 'serang_media', nama: 'Serang Lawan di Media Sosial',
+      penerangan: 'Menyebar tuduhan dan hantaran memburukkan calon lawan. Melanggar Tataetika Perkara 5.3 dan menjejaskan reputasi parti.',
+      kesan: { myr: -200, ap: -1, reputasi: -6, kesetiaan: { akarUmbi: 4 } }, mata: 16, maksKali: 3,
+      etika: { tahap: 'kotor', modal: -6, risiko: 18, tambahRisiko: 15, berat: 2, perkara: 'Menyebar fitnah terhadap calon di media sosial (Tataetika Perkara 5.3)', fasal: 'Tataetika 5.3' }
+    },
+    {
+      id: 'agih_wang_undi', nama: 'Agihan Wang Undi',
+      penerangan: 'Memberi wang kepada perwakilan untuk mendapatkan undi. Kemenangan paling pantas, tetapi inilah politik wang yang dilarang Fasal 20.13 dan boleh membawa pemecatan.',
+      kesan: { myr: -3500, ap: -1, kesetiaan: { perwakilan: 18, ajk: 8 } }, mata: 28, maksKali: 2,
+      etika: { tahap: 'kotor', modal: -10, risiko: 30, tambahRisiko: 30, berat: 3, perkara: 'Memberi wang bagi mendapatkan undi (Tataetika Perkara 5.1.2, politik wang)', fasal: 'Fasal 20.13' }
     },
     {
       id: 'simulasi_pengundian', nama: 'Simulasi Pengundian',
@@ -439,6 +499,8 @@
   function semakKempen(def, p, st) {
     if (!p) { return { boleh: false, sebab: 'Tiada profil pemain.' }; }
     if (!adalahTahunPemilihan(p.tahun)) { return { boleh: false, sebab: 'Kempen ditutup. ' + tutupTahun(p) }; }
+    var Et = etika();
+    if (Et) { var hak = Et.semakHak(p, 'kempen'); if (!hak.boleh) { return { boleh: false, sebab: hak.sebab }; } }
     var kali = st.kempen.aktiviti[def.id] || 0;
     if (def.maksKali && kali >= def.maksKali) { return { boleh: false, sebab: 'Had ' + def.maksKali + ' kali bagi kitaran ini telah dicapai.' }; }
     if (p.ap + (def.kesan.ap || 0) < 0) { return { boleh: false, sebab: 'AP tidak mencukupi (perlu ' + Math.abs(def.kesan.ap) + ').' }; }
@@ -452,8 +514,10 @@
       var s = semakKempen(d, p, st || { kempen: { aktiviti: {} } });
       return {
         id: d.id, nama: d.nama, penerangan: d.penerangan, perluKod: !!d.perluKod,
+        tahap: d.etika ? d.etika.tahap : 'neutral', modalSosial: d.etika ? d.etika.modal || 0 : 0,
+        peluangLapor: d.etika && d.etika.risiko && p && etika() ? Math.round(etika().peluangLapor(etika().getEtika(p), d.etika)) : 0,
         kos: { ap: Math.abs(d.kesan.ap || 0), myr: Math.abs(d.kesan.myr || 0) },
-        ringkas: S.ringkasPerubahan({ ip: d.kesan.ip || 0, myr: d.kesan.myr || 0, ap: d.kesan.ap || 0, reputasi: 0, kesetiaan: d.kesan.kesetiaan || {} }) + (d.mata ? ', +' + d.mata + ' mata kempen' : ''),
+        ringkas: S.ringkasPerubahan({ ip: d.kesan.ip || 0, myr: d.kesan.myr || 0, ap: d.kesan.ap || 0, reputasi: d.kesan.reputasi || 0, kesetiaan: d.kesan.kesetiaan || {} }) + (d.mata ? ', +' + d.mata + ' mata kempen' : ''),
         kali: st ? (st.kempen.aktiviti[d.id] || 0) : 0, maksKali: d.maksKali,
         boleh: s.boleh, sebab: s.sebab
       };
@@ -482,18 +546,19 @@
 
     st.kempen.aktiviti[def.id] = (st.kempen.aktiviti[def.id] || 0) + 1;
     st.kempen.mata = clamp(st.kempen.mata + def.mata, 0, 100);
+    var Et = etika(), eo = Et && def.etika ? Et.selepasAktiviti(p, def.etika, opts) : null;
     var r = S.applyEffects(salin(def.kesan), {
-      patch: { pemilihan: st },
+      patch: eo ? { pemilihan: st, etika: eo.etika } : { pemilihan: st },
       log: { tindakan: def.id, nama: def.nama, peringkat: 'pemilihan' }
     });
     if (!r.ok) { return r; }
 
-    var mesej = def.nama + ': ' + S.ringkasPerubahan(r.perubahan) + (def.mata ? ', +' + def.mata + ' mata kempen' : '') + '.';
+    var mesej = def.nama + ': ' + S.ringkasPerubahan(r.perubahan) + (def.mata ? ', +' + def.mata + ' mata kempen' : '') + '.' + (eo && eo.mesej ? ' ' + eo.mesej : '');
     if (anggaran) {
       mesej = 'Simulasi Pengundian untuk ' + anggaran.jawatan + ': peluang menang ' + anggaran.peluangMenang + '% (' + anggaran.kerusi +
               ' kerusi, ' + anggaran.jumlahCalon + ' calon, kedudukan purata ' + anggaran.kedudukanPurata + ').';
     }
-    return { ok: true, mesej: mesej, perubahan: r.perubahan, mataKempen: st.kempen.mata, anggaran: anggaran, profil: r.profil };
+    return { ok: true, mesej: mesej, perubahan: r.perubahan, mataKempen: st.kempen.mata, anggaran: anggaran, profil: r.profil, dilapor: !!(eo && eo.dilapor) };
   }
 
   /* ------------------------------------------------------------------------
@@ -513,6 +578,8 @@
     var st = getKeadaanPemilihan(p), d = st.daftar[kod];
     if (!d) { return gagal('belum_daftar', 'Anda belum mendaftar bertanding untuk kod ' + kod + '.'); }
     if (st.keputusan[kod]) { return gagal('sudah_selesai', 'Pertandingan ' + d.jawatan + ' sudah selesai.'); }
+    var Et = etika();
+    if (Et) { var hak = Et.semakHak(p, d.jenis === 'jawatan' ? 'jawatan' : 'perwakilan'); if (!hak.boleh) { return gagal('hak_dicabut', hak.sebab); } }
     var win = tetingkapPeringkat(p, d.peringkat);
     if (win && win.status !== 'dibuka') {
       return gagal('luar_musim', 'Pengundian ' + d.jawatan + ' hanya dijalankan pada ' + win.label.toLowerCase() + ' (' + win.nama + '). ' +
@@ -619,6 +686,7 @@
     getKeadaanPemilihan: getKeadaanPemilihan,
     getStatusModul: getStatusModul,
     senaraiPertandingan: senaraiPertandingan,
+    kuotaCawangan: kuotaCawangan, kuotaBahagian: kuotaBahagian,
     daftarBertanding: daftarBertanding,
     tarikBalik: tarikBalik,
     senaraiKempen: senaraiKempen,
