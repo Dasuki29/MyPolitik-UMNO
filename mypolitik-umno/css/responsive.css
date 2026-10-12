@@ -1,0 +1,154 @@
+/* ==========================================================================
+   MyPolitik: UMNO — responsive.css
+   Mobile-first: style.css sudah direka untuk telefon. Fail ini
+   (a) memperkemas pengalaman telefon (sentuhan, safe-area, bottom sheet)
+   (b) menambah susun atur lebih luas dengan min-width.
+   Pautan dalam HTML (selepas style.css):
+     <link rel="stylesheet" href="css/style.css">
+     <link rel="stylesheet" href="css/responsive.css">
+   Disyorkan: <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+   ========================================================================== */
+
+/* ---------- A. Asas Telefon (semua skrin, ditala untuk < 640px) ---------- */
+
+/* Hormat kawasan selamat (notch / home indicator) */
+.app-header      { padding-top: env(safe-area-inset-top); height: calc(var(--header-h) + env(safe-area-inset-top)); }
+.container       { padding-left: max(var(--space-4), env(safe-area-inset-left));
+                   padding-right: max(var(--space-4), env(safe-area-inset-right)); }
+
+/* Elak limpahan mendatar */
+html, body { overflow-x: hidden; }
+.card, .stat, .stats-panel { min-width: 0; }
+h1, h2, h3, p { overflow-wrap: anywhere; }
+
+/* Peranti sentuh: buang kesan hover yang "melekat" & besarkan sasaran */
+@media (hover: none) {
+  .btn:hover, .card--interactive:hover, .choice:hover { transform: none; filter: none; }
+  .btn:active   { filter: brightness(.9); }
+  .choice:active, .card--interactive:active { border-color: var(--gold); background: var(--bg-elev-3); }
+}
+
+/* Telefon kecil (<= 479px) */
+@media (max-width: 479.98px) {
+  html { font-size: 15px; }
+
+  h1 { font-size: 1.5rem; }
+  .hero { padding: var(--space-5) var(--space-3); border-radius: var(--radius); }
+  .hero h1 { font-size: 1.75rem; }
+
+  .brand__sub { display: none; }                 /* ringkaskan jenama */
+  .header-actions .btn span.btn__text { display: none; }   /* ikon sahaja */
+
+  .stat__value { font-size: 1.3rem; }
+  .stat-grid   { gap: var(--space-2); }
+
+  .profile-card { flex-direction: column; text-align: center; }
+  .profile-card .row { justify-content: center; }
+
+  .btn-group .btn { flex: 1 1 100%; }            /* butang penuh lebar */
+  .card__footer .btn { flex: 1 1 auto; }
+
+  /* Modal menjadi "bottom sheet" di telefon */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    max-width: 100%;
+    max-height: 92dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-bottom: 0;
+    animation: sheet-up .32s cubic-bezier(.22, 1, .36, 1) both;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .modal::before {                               /* pemegang tarik */
+    content: "";
+    align-self: center;
+    width: 44px; height: 5px;
+    margin-top: 8px;
+    border-radius: 999px;
+    background: var(--border);
+  }
+  .modal__footer { flex-direction: column-reverse; }
+  .modal__footer .btn { width: 100%; }
+
+  /* Jadual boleh tatal mendatar dengan petunjuk */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+
+  .event-log { max-height: 220px; }
+}
+
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+
+/* ---------- B. Telefon Besar / Tablet Kecil (>= 480px) ---------- */
+@media (min-width: 480px) {
+  .hero__cta { flex-direction: row; justify-content: center; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .toast-stack { left: auto; width: 360px; right: var(--space-4); }
+}
+
+/* ---------- C. Tablet (>= 640px) ---------- */
+@media (min-width: 640px) {
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.5rem; }
+
+  .container { padding: var(--space-5); }
+
+  .hero { padding: var(--space-7) var(--space-5); }
+  .hero h1 { font-size: 2.5rem; }
+
+  .page-title { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+
+  .grid--2, .grid--3, .grid--4 { grid-template-columns: repeat(2, 1fr); }
+  .stat-grid { grid-template-columns: repeat(3, 1fr); }
+  .stat__value { font-size: 1.65rem; }
+
+  .modal-overlay { padding: var(--space-5); }
+}
+
+/* ---------- D. Desktop Kecil / Tablet Landskap (>= 900px) ---------- */
+@media (min-width: 900px) {
+  /* Tukar navigasi: bottom-nav -> nav atas */
+  .nav { display: flex; gap: var(--space-1); margin-left: var(--space-5); }
+  .bottom-nav { display: none; }
+  body.has-bottom-nav { padding-bottom: 0; }
+
+  .grid--3 { grid-template-columns: repeat(3, 1fr); }
+  .grid--4 { grid-template-columns: repeat(2, 1fr); }
+
+  /* Susun atur dashboard: kandungan utama + sidebar */
+  .dashboard-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .dashboard-layout__side { position: sticky; top: calc(var(--header-h) + var(--space-4)); }
+
+  .stat-grid--wide { grid-template-columns: repeat(4, 1fr); }
+
+  .toast-stack { top: calc(var(--header-h) + 16px); }
+}
+
+/* ---------- E. Desktop (>= 1200px) ---------- */
+@media (min-width: 1200px) {
+  .container { padding: var(--space-6) var(--space-5); }
+  .grid--4 { grid-template-columns: repeat(4, 1fr); }
+  .dashboard-layout { grid-template-columns: minmax(0, 1fr) 380px; }
+  .hero h1 { font-size: 3rem; }
+}
+
+/* ---------- F. Landskap Telefon (tinggi rendah) ---------- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .modal-overlay { align-items: center; padding: var(--space-2); }
+  .modal { max-height: 96dvh; border-radius: var(--radius); }
+  .modal::before { display: none; }
+  .bottom-nav { height: 52px; }
+  .bottom-nav a span.label { display: none; }
+  body.has-bottom-nav { padding-bottom: 52px; }
+}
+
+/* ---------- G. Cetak ---------- */
+@media print {
+  body { background: #fff; color: #000; }
+  .app-header, .bottom-nav, .modal-overlay, .toast-stack, .btn { display: none !important; }
+  .card, .stats-panel { box-shadow: none; border-color: #bbb; background: #fff; }
+  p, .card__body, .stat__label { color: #333; }
+}
