@@ -307,7 +307,7 @@
   if (!document.getElementById('btn-tahun')) { return; }
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
-      I = W.MyPolitikIncumbent, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, K = W.MyPolitikCalendar;
+      I = W.MyPolitikIncumbent, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents;
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -346,7 +346,7 @@
       kaki.innerHTML = '';
       (o.butang || [{ label: 'Tutup', nilai: true, kelas: 'btn--gold' }]).forEach(function (b) {
         var bt = document.createElement('button');
-        bt.type = 'button'; bt.className = 'btn ' + (b.kelas || 'btn--ghost'); bt.textContent = b.label;
+        bt.type = 'button'; bt.className = 'btn ' + (b.kelas || 'btn--ghost'); bt.textContent = b.label; bt.disabled = !!b.nonaktif;
         bt.addEventListener('click', function () { tutup(b.nilai); });
         kaki.appendChild(bt);
       });
@@ -701,6 +701,7 @@
     var p = S.loadPlayer();
     if (!p) { W.location.replace(INDEX_URL); return; }
     renderHeader(p); renderSisi(p); renderTabs(p); renderPanel(p);
+    var bt = $('acara-tunggu'); if (bt) { bt.hidden = !(EV && EV.getTertunggak()); }
   }
   function jadualRender() {
     if (state.renderTerjadual) { return; }
@@ -722,12 +723,46 @@
     var p = S.loadPlayer(), r = (pemegang(p) ? I : O).jalankanTindakan(id);
     state.mesej.tindakan = r.ok ? r.mesej : '';
     render(); await lapor(r);
+    if (r.ok && EV) { await tunjukAcara(EV.selepasAktiviti()); }              // acara rawak selepas aktiviti
   }
 
   async function operasiPemilihan(fn, kunciMesej) {
     var r = fn(); if (kunciMesej) { state.mesej[kunciMesej] = r.ok ? esc(r.mesej) : ''; }
     render(); await lapor(r);
   }
+
+
+  /* ---------- Acara rawak (js/events.js) ---------- */
+  var acaraSibuk = false;
+  /** Papar pop-up acara & minta keputusan. Pulang selepas dijawab, atau jika ditutup acara kekal tertunggak. */
+  async function tunjukAcara(acara) {
+    if (!EV || !acara || acaraSibuk) { return; }
+    acaraSibuk = true;
+    try {
+      var p = S.loadPlayer(), ps = EV.getTertunggak() || acara, abjad = ['A', 'B', 'C'];
+      var senarai = ps.pilihan.map(function (c, i) {
+        return '<li class="' + (c.boleh ? '' : 'is-off') + '"><b>' + abjad[i] + '. ' + esc(c.label) + '</b>' +
+          '<small>' + esc(c.huraian) + (c.berisiko ? ' (berisiko)' : '') + '</small>' +
+          '<small class="acara__kesan">' + esc(c.ringkas) + '</small>' +
+          (c.boleh ? '' : '<small>' + esc(c.sebab) + '</small>') + '</li>';
+      }).join('');
+      var id = await modal({
+        tajuk: ps.tajuk,
+        isi: '<p class="acara__ikon" aria-hidden="true">' + esc(ps.ikon) + '</p><p>' + esc(ps.huraian) + '</p>' +
+          '<p style="margin:8px 0 0;font-size:.82rem">AP: <b>' + p.ap + '</b> · Dana: <b>RM ' + fmt(p.myr) + '</b></p><ul class="acara__pil">' + senarai + '</ul>',
+        butang: ps.pilihan.map(function (c, i) { return { label: abjad[i] + '. ' + c.label, nilai: c.id, nonaktif: !c.boleh, kelas: i === 0 ? 'btn--gold' : 'btn--ghost' }; })
+      });
+      if (!id) { toast('Acara masih menunggu keputusan anda.'); render(); return; }
+      var r = EV.pilih(id);
+      if (!r.ok) { toast(r.ralat, 'ralat'); render(); return; }
+      render();
+      await modal({
+        tajuk: r.acara.tajuk + ' — Keputusan',
+        isi: '<p>' + esc(r.mesej) + '</p><p class="acara__kesan">' + esc(r.ringkas) + '</p>'
+      });
+    } finally { acaraSibuk = false; render(); }
+  }
+  async function bukaAcaraTertunggak() { var a = EV && EV.getTertunggak(); if (a) { await tunjukAcara(a); } }
 
   async function lanjutBulan() {
     if (!K) { toast('Modul takwim (js/calendar.js) tidak dimuatkan.', 'ralat'); return; }
@@ -761,6 +796,7 @@
       else if (a && a.amaran) { toast(a.mesej, 'ralat'); }
     }
     await urusPeristiwa(r.peristiwa);
+    if (EV) { await tunjukAcara(EV.janaAcara({ pencetus: 'bulan' })); }       // acara rawak pergantian bulan
   }
 
   async function reset() {
@@ -770,7 +806,7 @@
       butang: [{ label: 'Batal', nilai: false }, { label: 'Padam & Mula Semula', nilai: true, kelas: 'btn--danger' }]
     });
     if (!ya) { return; }
-    S.clearPlayer();
+    S.clearPlayer(); if (EV) { EV.reset(); }
     W.location.assign(INDEX_URL);
   }
 
@@ -789,6 +825,7 @@
     var act = t.getAttribute('data-act');
     if (!act) { var tb = t.getAttribute('data-tab'); if (tb) { setTab(tb); } return; }
     var kod = t.getAttribute('data-kod'), lvl = t.getAttribute('data-lvl');
+    if (act === 'acara-buka') { bukaAcaraTertunggak(); return; }
     if (act === 'tindakan') { tindakan(t.getAttribute('data-id')); }
     else if (act === 'ke-tab') { setTab(t.getAttribute('data-v')); }
     else if (act === 'ulang-peta') { muatPeta(true); }
@@ -842,7 +879,8 @@
     if (TABS.indexOf(h) >= 0) { state.tab = h; }
     render();
     if (state.tab === 'peta') { muatPeta(); }
-    S.subscribe(jadualRender);                                      // kemas kini masa nyata (juga antara tab pelayar)
+    S.subscribe(jadualRender);
+    if (EV && EV.getTertunggak()) { tunjukAcara(EV.getTertunggak()); }          // acara yang belum dijawab sebelum muat semula                                      // kemas kini masa nyata (juga antara tab pelayar)
   }
   mula();
 })();

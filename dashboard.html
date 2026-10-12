@@ -13,6 +13,14 @@
     .brand__img { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,.06); }
     .avatar { width: 84px; height: 84px; padding: 0; overflow: hidden; }
     .avatar svg { width: 100%; height: 100%; display: block; }
+    .acara-tunggu { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; padding: 10px 14px; border: 1px solid var(--gold-dark, #b8892b); border-radius: 10px; background: rgba(184,137,43,.12); }
+    .acara-tunggu[hidden] { display: none; }
+    .acara__ikon { font-size: 2.2rem; line-height: 1; margin: 0 0 6px; }
+    .acara__pil { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+    .acara__pil li { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 8px 10px; font-size: .88rem; }
+    .acara__pil li.is-off { opacity: .55; }
+    .acara__pil small { display: block; opacity: .8; }
+    .acara__kesan { font-weight: 700; }
     .takwim { display: grid; gap: var(--space-2); }
     .takwim__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
     .takwim__head b { color: var(--white); font-size: 1rem; }
@@ -144,6 +152,8 @@
         <div class="stat"><div class="stat__label">Status Tahun</div><div class="stat__value" id="r-tahun" style="font-size:1.1rem">2026</div><div class="stat__label" id="r-tahun-sub" style="margin-top:2px;text-transform:none;letter-spacing:0"></div></div>
       </div>
 
+      <div class="acara-tunggu" id="acara-tunggu" hidden><span>📜 Satu acara menunggu keputusan anda.</span><button type="button" class="btn btn--gold" data-act="acara-buka">Buka Acara</button></div>
+
       <div class="takwim" aria-label="Takwim bulanan">
         <div class="takwim__head"><b id="tk-judul"></b><span id="tk-fasa"></span></div>
         <ol class="takwim__strip" id="tk-strip"></ol>
@@ -236,6 +246,7 @@
   <script src="js/incumbent.js"></script>
   <script src="js/election.js"></script>
   <script src="js/meeting.js"></script>
+  <script src="js/events.js"></script>
   <script src="js/map.js"></script>
   <script src="js/app.js"></script>
 </body>
