@@ -995,9 +995,10 @@ body.menu-aktif { overflow: hidden; }
 .menu {
   position: fixed; inset: 0; z-index: 60; overflow-y: auto; -webkit-overflow-scrolling: touch;
   background-color: #0E0F13;                      /* lapisan imej ditetapkan pada elemen #menu (index.html) kerana CSS disuntik ke dalam HTML */
-  background-size: cover; background-position: center bottom; background-repeat: no-repeat;
+  background-size: cover; background-repeat: no-repeat;
+  background-position: center, 55% 30%, center bottom;      /* lapisan: gelap, foto, ilustrasi sandaran */
 }
-@media (min-aspect-ratio: 1/1) { .menu { background-position: center 78%; } }
+@media (min-aspect-ratio: 1/1) { .menu { background-position: center, center 30%, center 78%; } }
 .menu[hidden] { display: none; }
 .menu__dalam { max-width: 520px; margin: 0 auto; padding: 28px 20px 96px; min-height: 100%; display: flex; flex-direction: column; gap: 12px; }
 .menu__kepala { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
@@ -1199,7 +1200,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 </head>
 <body>
   <!-- v4.0: Menu utama. Latar: assets/images/menara-dato-onn.jpg (jika ada), kemudian ilustrasi menara-dato-onn.svg -->
-  <section id="menu" class="menu" aria-labelledby="menu-tajuk" style="background-image:linear-gradient(180deg,rgba(8,9,18,.30) 0%,rgba(8,9,18,.58) 55%,rgba(8,9,18,.88) 100%),url(assets/images/menara-dato-onn.jpg),url(assets/images/menara-dato-onn.svg)">
+  <section id="menu" class="menu" aria-labelledby="menu-tajuk" style="background-image:linear-gradient(180deg,rgba(8,9,18,.42) 0%,rgba(8,9,18,.62) 55%,rgba(8,9,18,.9) 100%),url(assets/images/menara-dato-onn.jpg),url(assets/images/menara-dato-onn.svg)">
     <div class="menu__dalam">
       <div class="menu__kepala">
         <img class="menu__logo" src="assets/images/logo.png" alt="" width="84" height="84" onerror="this.onerror=null;this.src='assets/images/logo-placeholder.svg'">

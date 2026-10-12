@@ -982,9 +982,10 @@ body.menu-aktif { overflow: hidden; }
 .menu {
   position: fixed; inset: 0; z-index: 60; overflow-y: auto; -webkit-overflow-scrolling: touch;
   background-color: #0E0F13;                      /* lapisan imej ditetapkan pada elemen #menu (index.html) kerana CSS disuntik ke dalam HTML */
-  background-size: cover; background-position: center bottom; background-repeat: no-repeat;
+  background-size: cover; background-repeat: no-repeat;
+  background-position: center, 55% 30%, center bottom;      /* lapisan: gelap, foto, ilustrasi sandaran */
 }
-@media (min-aspect-ratio: 1/1) { .menu { background-position: center 78%; } }
+@media (min-aspect-ratio: 1/1) { .menu { background-position: center, center 30%, center 78%; } }
 .menu[hidden] { display: none; }
 .menu__dalam { max-width: 520px; margin: 0 auto; padding: 28px 20px 96px; min-height: 100%; display: flex; flex-direction: column; gap: 12px; }
 .menu__kepala { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
