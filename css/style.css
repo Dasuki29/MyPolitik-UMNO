@@ -973,3 +973,55 @@ option { background: var(--bg-elev-2); color: var(--text); }
 .choice--bersih { border-left: 3px solid #34C27A; }
 .choice--kelabu { border-left: 3px solid #F5B800; }
 .choice--kotor { border-left: 3px solid #E5484D; }
+
+/* ==========================================================================
+   v4.0 — Menu utama (index.html #menu)
+   Latar (inline pada #menu): foto menara-dato-onn.jpg jika ada, di atas ilustrasi menara-dato-onn.svg.
+   ========================================================================== */
+body.menu-aktif { overflow: hidden; }
+.menu {
+  position: fixed; inset: 0; z-index: 60; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background-color: #0E0F13;                      /* lapisan imej ditetapkan pada elemen #menu (index.html) kerana CSS disuntik ke dalam HTML */
+  background-size: cover; background-position: center bottom; background-repeat: no-repeat;
+}
+@media (min-aspect-ratio: 1/1) { .menu { background-position: center 78%; } }
+.menu[hidden] { display: none; }
+.menu__dalam { max-width: 520px; margin: 0 auto; padding: 28px 20px 96px; min-height: 100%; display: flex; flex-direction: column; gap: 12px; }
+.menu__kepala { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+.menu__logo { width: 84px; height: 84px; border-radius: 22px; object-fit: contain; background: rgba(255, 255, 255, .06); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); flex: none; }
+.menu__tajuk { margin: 0; font-size: clamp(1.9rem, 8vw, 2.5rem); line-height: 1.05; font-weight: 800; letter-spacing: -.01em; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, .6); }
+.menu__tajuk b { color: var(--gold); }
+.menu__sub { margin: 4px 0 0; color: rgba(255, 255, 255, .78); font-size: .95rem; text-shadow: 0 1px 8px rgba(0, 0, 0, .6); }
+.menu__intro { margin: 12px 0 8px; font-size: 1.05rem; line-height: 1.55; color: rgba(255, 255, 255, .92); text-shadow: 0 1px 10px rgba(0, 0, 0, .7); }
+
+.menu-item {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
+  padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, .1);
+  border-left: 4px solid var(--item-c, var(--gold)); color: #fff; text-decoration: none; font: inherit;
+  background: rgba(20, 22, 30, .78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+.menu-item[hidden] { display: none; }
+.menu-item:hover { background: rgba(34, 37, 50, .88); }
+.menu-item:active { transform: scale(.985); }
+.menu-item:focus-visible { outline: 3px solid var(--gold-light); outline-offset: 2px; }
+.menu-item__ico { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--item-c, var(--gold)) 22%, transparent); color: var(--item-c, var(--gold)); }
+.menu-item__ico svg { width: 24px; height: 24px; }
+.menu-item__teks { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.menu-item__teks b { font-size: 1.15rem; font-weight: 700; }
+.menu-item__teks small { color: rgba(255, 255, 255, .72); font-size: .9rem; line-height: 1.35; }
+.menu-item__chev { font-size: 1.6rem; color: rgba(255, 255, 255, .6); line-height: 1; }
+.menu-item--sambung { --item-c: #fff; border-left-color: #2fae6f; background: linear-gradient(135deg, #2fae6f, #1f8a55); border-color: transparent; padding: 18px 16px; }
+.menu-item--sambung:hover { background: linear-gradient(135deg, #36c07c, #229a5f); }
+.menu-item--sambung .menu-item__teks b { font-size: 1.4rem; }
+.menu-item--sambung .menu-item__teks small { color: rgba(255, 255, 255, .92); }
+.menu-item--sambung .menu-item__ico { background: rgba(255, 255, 255, .2); }
+.menu-item--baru { --item-c: #3d8bff; }
+.menu-item--bantuan { --item-c: #2fc4b2; }
+.menu-item--lagu { --item-c: #b06cff; }
+.menu-item--maklum { --item-c: var(--gold); }
+.menu__panel { margin: -2px 0 2px; padding: 12px 16px; border-radius: 14px; background: rgba(20, 22, 30, .86); border: 1px solid rgba(255, 255, 255, .1); }
+.menu__panel[hidden] { display: none; }
+.menu__panel ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: .92rem; line-height: 1.5; color: rgba(255, 255, 255, .88); }
+.menu__nota { margin: auto 0 0; padding-top: 18px; font-size: .78rem; line-height: 1.55; color: rgba(255, 255, 255, .7); text-shadow: 0 1px 8px rgba(0, 0, 0, .8); }
+@media (prefers-reduced-motion: reduce) { .menu-item { transition: none; } }
