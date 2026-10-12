@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="responsive.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
   <style>
     /* Gaya khusus borang pendaftaran */
     :root { color-scheme: dark; }
@@ -71,6 +71,42 @@
     .hero { text-align: left; }
     .hero p { margin-inline: 0; }
 
+
+    /* ---- Header bertema ---- */
+    .brand__img { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,.06); }
+    .flagbar { height: 6px; background: linear-gradient(90deg, #C8102E 0 33.3%, #FFFFFF 33.3% 66.6%, #1F8A4C 66.6% 100%); }
+    .hero { padding-top: var(--space-6); }
+    .hero__band { position: absolute; inset: auto 0 0 0; height: 34px; opacity: .35; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 34 34'%3E%3Cpath d='M17 2 32 17 17 32 2 17Z' fill='none' stroke='%23F2B705' stroke-width='1.5'/%3E%3Cpath d='M17 9 25 17 17 25 9 17Z' fill='%23F2B705' fill-opacity='.55'/%3E%3C/svg%3E");
+      background-repeat: repeat-x; }
+    .hero__top { position: relative; display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-3); }
+    .hero__emblem { flex: none; width: 84px; height: 84px; display: grid; place-items: center; border-radius: 22px;
+      background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 6px 22px rgba(0,0,0,.35); }
+    .hero__emblem img { width: 66px; height: 66px; object-fit: contain; }
+    .hero > *:not(.hero__band) { position: relative; }
+    .hero { padding-bottom: calc(var(--space-6) + 24px); }
+
+    /* ---- Pilihan avatar ---- */
+    .avatar-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+    @media (min-width: 640px) { .avatar-grid { grid-template-columns: repeat(4, 1fr); } }
+    .av { position: relative; display: block; margin: 0; }
+    .av input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+    .av__box { display: grid; justify-items: center; gap: 4px; padding: 12px 8px; text-align: center;
+      border: 1px solid var(--border); border-radius: 14px; background: var(--bg-elev-2);
+      transition: border-color var(--transition), background var(--transition), transform var(--transition); }
+    .av__box svg { width: 72px; height: 72px; }
+    .av__nama { font-weight: 700; color: var(--white); }
+    .av__desc { font-size: .72rem; color: var(--text-muted); line-height: 1.25; }
+    .av input:checked + .av__box { border-color: var(--gold); background: rgba(242,183,5,.12); transform: translateY(-2px); }
+    .av input:focus-visible + .av__box { outline: 3px solid var(--gold); outline-offset: 2px; }
+    .av__saran { display: none; margin-top: 4px; font-size: .68rem; font-weight: 700; color: var(--gold); }
+    .av.is-saran .av__saran { display: block; }
+    .avatar-hint { margin: var(--space-3) 0 0; font-size: .8rem; color: var(--text-dim); }
+    .preview-avatar { display: flex; align-items: center; gap: var(--space-3); margin: 0 0 var(--space-3); }
+    .preview-avatar svg { width: 64px; height: 64px; flex: none; }
+    .preview-avatar b { color: var(--white); display: block; }
+    .preview-avatar span { font-size: .8rem; color: var(--text-muted); }
+
     @media (min-width: 640px) {
       .form-grid--nama { grid-template-columns: 1fr 1fr; }
       .form-grid--nama .field--wide { grid-column: 1 / -1; }
@@ -81,17 +117,26 @@
 <body>
   <header class="app-header">
     <a class="brand" href="index.html" aria-label="MyPolitik UMNO, laman utama">
-      <span class="brand__logo" aria-hidden="true">M</span>
+      <img class="brand__img" src="assets/img/logo-umno.png" alt="" width="34" height="34"
+           onerror="this.onerror=null;this.src='assets/img/logo-placeholder.svg'">
       <span>MyPolitik <span class="brand__sub">UMNO</span></span>
     </a>
   </header>
+  <div class="flagbar" aria-hidden="true"></div>
 
   <main class="container page">
     <div class="stack">
       <section class="hero" aria-labelledby="tajuk">
-        <span class="hero__eyebrow">Tahun 2026</span>
+        <div class="hero__top">
+          <div class="hero__emblem">
+            <img src="assets/img/logo-umno.png" alt="Logo" width="66" height="66"
+                 onerror="this.onerror=null;this.src='assets/img/logo-placeholder.svg'">
+          </div>
+          <span class="hero__eyebrow">Tahun 2026</span>
+        </div>
         <h1 id="tajuk">Mulakan sebagai <span>Ahli Cawangan</span></h1>
         <p>Pilih cawangan anda daripada senarai ahli sebenar, dan naik setiap peringkat parti daripada Ahli Biasa hingga ke kerusi Presiden.</p>
+        <div class="hero__band" aria-hidden="true"></div>
       </section>
 
       <section id="resume" class="card card--gold" hidden aria-live="polite">
@@ -134,6 +179,13 @@
                 <p class="field__error" id="e-umur" role="alert"></p>
               </div>
             </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Watak anda</legend>
+            <div class="avatar-grid" id="avatar-grid" role="radiogroup" aria-label="Pilih avatar watak"></div>
+            <p class="avatar-hint" id="avatar-hint">Avatar dicadangkan mengikut jantina dan umur anda. Anda boleh menukarnya.</p>
+            <p class="field__error" id="e-avatar" role="alert"></p>
           </fieldset>
 
           <fieldset class="form-section">
@@ -190,6 +242,7 @@
         <aside class="dashboard-layout__side stack" aria-label="Keadaan permulaan">
           <section class="stats-panel">
             <h2 class="stats-panel__title">Permulaan anda</h2>
+            <div class="preview-avatar" id="preview-avatar" aria-live="polite"></div>
             <p><span class="badge-office badge-office--ahli" id="m-jawatan">Ahli Biasa</span></p>
             <ul class="stat-list">
               <li><span>IP</span><b id="m-ip">10</b></li>
@@ -216,15 +269,22 @@
   <footer class="app-footer">MyPolitik: UMNO. Permainan simulasi, bukan laman rasmi parti.</footer>
 
   <script>
-    /* Pautan Google Sheets (Publish to web > CSV).
-       Jika kosong atau gagal dimuatkan, borang menggunakan salinan tersimpan, kemudian data contoh. */
+    /* Sambungan Google Sheets (dicuba mengikut urutan):
+         1. appsScriptUrl : URL Web App Google Apps Script (JSON). Lihat apps-script/Code.gs. Kosongkan jika tidak guna.
+         2. sheetCsvUrl   : Publish to web > format CSV.
+         3. salinan tersimpan dalam pelayar, kemudian data contoh.
+       musicUrl: laluan fail muzik anda (cth. 'assets/audio/lagu-latar.mp3'). Kosong = gubahan mars asli dijana pelayar. */
     window.MYPOLITIK_CONFIG = {
+      appsScriptUrl: '',
+      musicUrl: '',
       sheetCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv',
       dashboardUrl: 'dashboard.html'
     };
   </script>
   <script src="js/data.js"></script>
   <script src="js/save.js"></script>
+  <script src="js/avatar.js"></script>
+  <script src="js/audio.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -41,7 +41,8 @@
   var CONFIG = {
     // Tampal pautan "File > Share > Publish to web > CSV" di sini (atau hantar melalui opts.url).
     SHEET_CSV_URL: '',
-    FETCH_TIMEOUT_MS: 8000,
+    FETCH_TIMEOUT_MS: 25000,                 // sheet besar (ribuan baris) boleh mengambil masa
+    APPS_SCRIPT_URL: '',                    // URL Web App Google Apps Script (JSON), pilihan
     CACHE_KEY: 'mypolitik_umno_csv_v2',     // CSV terakhir yang berjaya, dipakai jika rangkaian gagal
     MIN_AHLI_CAWANGAN: 50,
     MAX_AHLI_CAWANGAN: 500,                 // had ahli yang dijana setiap cawangan (Jumlah Ahli sebenar kekal dalam data)
@@ -451,24 +452,49 @@
   /* ------------------------------------------------------------------------
      6. FETCH GOOGLE SHEETS (async/await) + CACHE + FALLBACK
      ------------------------------------------------------------------------ */
+  /**
+   * Ambil teks daripada URL (CSV Published atau JSON Apps Script).
+   * PENTING: tiada pengepala tersuai dan tiada `cache:'no-store'`. Kedua-duanya menambah pengepala
+   * Cache-Control yang mencetuskan semakan CORS "preflight" (OPTIONS) yang gagal pada Google.
+   * Pintasan cache dibuat melalui parameter URL sahaja.
+   */
   async function fetchSheetCSV(url, timeoutMs) {
     var ms = timeoutMs || CONFIG.FETCH_TIMEOUT_MS;
     var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, ms) : null;
+    var u = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_t=' + Date.now();
     try {
-      var res = await fetch(url, { signal: ctrl ? ctrl.signal : undefined, cache: 'no-store' });
-      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      var res = await fetch(u, { signal: ctrl ? ctrl.signal : undefined, mode: 'cors', credentials: 'omit', redirect: 'follow' });
+      if (!res.ok) { throw new Error('HTTP ' + res.status + (res.status === 404 ? ' (URL salah atau sheet belum di-publish)' : '')); }
       var text = await res.text();
       if (!text || /^\s*<(!doctype|html)/i.test(text)) {
-        throw new Error('Respons bukan CSV. Semak bahawa sheet sudah di-Publish to web dalam format CSV');
+        throw new Error('Respons bukan data (halaman HTML diterima). Semak bahawa sheet sudah Publish to web dalam format CSV, atau Web App dilancarkan untuk "Anyone"');
       }
       return text;
     } catch (e) {
       if (e && e.name === 'AbortError') { throw new Error('Masa tamat selepas ' + (ms / 1000) + ' saat'); }
+      if (e && e.name === 'TypeError') { throw new Error('Permintaan disekat oleh pelayar (CORS/rangkaian): ' + (e.message || e)); }
       throw e;
     } finally {
       if (timer) { clearTimeout(timer); }
     }
+  }
+
+  /**
+   * Tukar teks respons kepada baris (array of array).
+   * Menyokong CSV, serta JSON: [[...],[...]] | [{...},{...}] | {rows|values|data:[...]}.
+   */
+  function teksKeBaris(teks) {
+    var t = String(teks || '').replace(/^﻿/, '').trim();
+    if (t.charAt(0) === '[' || t.charAt(0) === '{') {
+      var j = JSON.parse(t), arr = Array.isArray(j) ? j : (j.rows || j.values || j.data);
+      if (j && j.ok === false) { throw new Error('Apps Script: ' + (j.ralat || j.error || 'ralat')); }
+      if (!Array.isArray(arr) || !arr.length) { throw new Error('JSON tiada baris data'); }
+      if (Array.isArray(arr[0])) { return arr.map(function (r) { return r.map(function (v) { return v === null || v === undefined ? '' : String(v); }); }); }
+      var kunci = Object.keys(arr[0]);
+      return [kunci].concat(arr.map(function (o) { return kunci.map(function (k) { return o[k] === null || o[k] === undefined ? '' : String(o[k]); }); }));
+    }
+    return parseCSV(t);
   }
 
   function cacheWrite(url, csv) {
@@ -488,45 +514,59 @@
     } catch (e) { return null; }
   }
 
+  function tunggu(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
   /**
    * Muat data parti.
-   * opts: { url, timeoutMs, paksaFallback }
-   * Pulangan: { source: 'sheet' | 'cache' | 'fallback', negeri, bahagian, jumlah, amaran:[], dimuatPada }
-   * Urutan: Google Sheets -> CSV cache terakhir -> data contoh terbina dalam.
+   * opts: { url (CSV), appsScriptUrl (JSON), timeoutMs, paksaFallback }
+   * Pulangan: { source: 'sheet' | 'cache' | 'fallback', sumber:'apps-script'|'csv'|..., negeri, bahagian,
+   *             jumlah, amaran:[], ralat:[], dimuatPada }
+   * Urutan: Apps Script (jika ada) -> CSV Published -> salinan tersimpan -> data contoh terbina dalam.
+   * Setiap sumber dicuba dua kali. Sebab kegagalan dikumpul dalam `amaran` untuk dipaparkan.
    */
   async function loadPartyData(opts) {
     opts = opts || {};
-    var url = opts.url || CONFIG.SHEET_CSV_URL;
-    var hasil = { source: 'fallback', amaran: [], dimuatPada: Date.now() }, h = null;
+    var urls = [];
+    var as = opts.appsScriptUrl || CONFIG.APPS_SCRIPT_URL, csvUrl = opts.url || CONFIG.SHEET_CSV_URL;
+    if (as) { urls.push({ jenis: 'apps-script', url: as }); }
+    if (csvUrl) { urls.push({ jenis: 'csv', url: csvUrl }); }
+    var hasil = { source: 'fallback', sumber: 'contoh', amaran: [], dimuatPada: Date.now() }, h = null;
 
     if (!opts.paksaFallback) {
-      if (!url) {
-        hasil.amaran.push('URL Google Sheets belum ditetapkan.');
+      if (!urls.length) {
+        hasil.amaran.push('URL Google Sheets belum ditetapkan (sheetCsvUrl atau appsScriptUrl).');
       } else if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         hasil.amaran.push('Tiada sambungan internet.');
       } else {
-        try {
-          var csv = await fetchSheetCSV(url, opts.timeoutMs);
-          h = rowsToHierarchy(parseCSV(csv));
-          hasil.source = 'sheet';
-          cacheWrite(url, csv);
-        } catch (e) {
-          hasil.amaran.push('Gagal mengambil Google Sheets: ' + (e && e.message ? e.message : e));
+        for (var i = 0; i < urls.length && !h; i++) {
+          for (var cuba = 0; cuba < 2 && !h; cuba++) {
+            try {
+              var teks = await fetchSheetCSV(urls[i].url, opts.timeoutMs);
+              h = rowsToHierarchy(teksKeBaris(teks));
+              hasil.source = 'sheet'; hasil.sumber = urls[i].jenis; hasil.urlDigunakan = urls[i].url;
+              cacheWrite(urls[i].url, teks);
+            } catch (e) {
+              var msg = (urls[i].jenis === 'apps-script' ? 'Apps Script' : 'CSV') + ': ' + (e && e.message ? e.message : e);
+              if (cuba === 1) { hasil.amaran.push('Gagal mengambil Google Sheets (' + msg + ')'); }
+              else { await tunggu(700); }
+            }
+          }
         }
       }
-      if (!h && url) {
-        var c = cacheRead(url);
-        if (c) {
+      if (!h) {
+        for (var k = 0; k < urls.length && !h; k++) {
+          var c = cacheRead(urls[k].url);
+          if (!c) { continue; }
           try {
-            h = rowsToHierarchy(parseCSV(c.csv));
-            hasil.source = 'cache';
+            h = rowsToHierarchy(teksKeBaris(c.csv));
+            hasil.source = 'cache'; hasil.sumber = 'cache';
             hasil.amaran.push('Menggunakan salinan tersimpan pada ' + new Date(c.simpanPada).toLocaleString('ms-MY') + '.');
           } catch (e) { h = null; }
         }
       }
     }
 
-    if (!h) { h = rowsToHierarchy(fallbackRows()); hasil.source = 'fallback'; }
+    if (!h) { h = rowsToHierarchy(fallbackRows()); hasil.source = 'fallback'; hasil.sumber = 'contoh'; }
     hasil.negeri = h.negeri; hasil.bahagian = h.bahagian; hasil.jumlah = h.jumlah;
     return hasil;
   }
@@ -843,6 +883,7 @@
     loadPartyData: loadPartyData,
     fetchSheetCSV: fetchSheetCSV,
     parseCSV: parseCSV,
+    teksKeBaris: teksKeBaris,
     rowsToHierarchy: rowsToHierarchy,
     getFallbackData: getFallbackData,
     findCawangan: findCawangan,

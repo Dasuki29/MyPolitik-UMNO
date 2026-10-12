@@ -63,9 +63,13 @@
     return !!(p && typeof p === 'object' && typeof p.nama === 'string' && p.nama && typeof p.id === 'string' && p.id);
   }
 
+  var SENARAI_AVATAR = ['pemuda', 'puteri', 'wanita', 'veteran'];
+  function avatarSah(k) { return SENARAI_AVATAR.indexOf(k) >= 0; }
+
   /** Lengkapkan medan yang tiada (profil lama daripada versi 1) dan hadkan nilai. */
   function normalisasi(p) {
     if (!sah(p)) { return p; }
+    if (!avatarSah(p.avatar)) { p.avatar = avatarSah(p.demografik && p.demografik.kategoriKod) ? p.demografik.kategoriKod : 'pemuda'; }
     p.versi = VERSI;
     p.ip = Math.max(0, Math.round(Number(p.ip) || 0));
     p.ap = Math.max(0, Math.round(Number(p.ap) || 0));
@@ -112,6 +116,7 @@
         jumlahAhli: c.jumlahAhli, lelaki: c.lelaki, perempuan: c.perempuan,
         bawah40: c.bawah40, atas40: c.atas40
       },
+      avatar: avatarSah(input.avatar) ? input.avatar : (avatarSah(d.kod) ? d.kod : 'pemuda'),   // pilihan watak (kosmetik)
       jawatan: DEFAULTS.jawatan,
       ip: DEFAULTS.ip,
       myr: DEFAULTS.myr,

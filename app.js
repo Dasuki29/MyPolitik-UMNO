@@ -134,6 +134,57 @@
     if (state.cawangan) { tunjukInfo(state.cawangan); } else { sembunyiInfo(); }
   });
 
+  /* ---------- Pilihan avatar ---------- */
+  var AV = window.MyPolitikAvatar;
+  var avatarState = { kod: 'pemuda', manual: false };
+
+  function avatarTerpilih() {
+    var r = el.form.querySelector('input[name="avatar"]:checked');
+    return r ? r.value : avatarState.kod;
+  }
+
+  function kemaskiniPratonton() {
+    var box = $('preview-avatar');
+    if (!box || !AV) { return; }
+    var kod = avatarTerpilih(), info = AV.LIST.filter(function (a) { return a.kod === kod; })[0];
+    box.innerHTML = AV.svg(kod, { saiz: 64 }) + '<div><b></b><span></span></div>';
+    box.querySelector('b').textContent = el.nama.value.trim() || 'Nama anda';
+    box.querySelector('span').textContent = 'Watak ' + (info ? info.label : '');
+  }
+
+  function pilihAvatar(kod, manual) {
+    avatarState.kod = kod; if (manual) { avatarState.manual = true; }
+    var r = el.form.querySelector('input[name="avatar"][value="' + kod + '"]');
+    if (r) { r.checked = true; }
+    Array.prototype.forEach.call(document.querySelectorAll('#avatar-grid .av'), function (l) {
+      l.classList.toggle('is-saran', !avatarState.manual && l.getAttribute('data-kod') === kod);
+    });
+    setError('avatar'); kemaskiniPratonton();
+  }
+
+  function cadangkanAvatar() {
+    if (avatarState.manual || !AV || !D) { return; }
+    var j = el.form.querySelector('input[name="jantina"]:checked'), u = parseInt(el.umur.value, 10);
+    if (!j || !isFinite(u) || u < 18 || u > 100) { return; }
+    var dem = D.tentukanDemografi(j.value, u);
+    if (dem) { pilihAvatar(AV.cadangan(dem), false); }
+  }
+
+  function binaPemilihAvatar() {
+    var grid = $('avatar-grid');
+    if (!grid || !AV) { if (grid && grid.parentNode) { grid.parentNode.hidden = true; } return; }
+    grid.innerHTML = AV.LIST.map(function (a) {
+      return '<label class="av" data-kod="' + a.kod + '"><input type="radio" name="avatar" value="' + a.kod + '"' + (a.kod === avatarState.kod ? ' checked' : '') + '>' +
+        '<span class="av__box">' + AV.svg(a.kod, { saiz: 72 }) + '<span class="av__nama">' + a.label + '</span><span class="av__desc">' + a.penerangan + '</span><span class="av__saran">Dicadangkan</span></span></label>';
+    }).join('');
+    grid.addEventListener('click', function (ev) { if (ev.target && ev.target.name === 'avatar') { pilihAvatar(ev.target.value, true); } });   // 'click' (bukan 'change') supaya klik pada kad yang sudah dicadangkan pun mengunci pilihan
+    Array.prototype.forEach.call(el.form.querySelectorAll('input[name="jantina"]'), function (r) { r.addEventListener('change', cadangkanAvatar); });
+    el.umur.addEventListener('input', cadangkanAvatar);
+    el.nama.addEventListener('input', kemaskiniPratonton);
+    kemaskiniPratonton();
+  }
+  binaPemilihAvatar();
+
   /* ---------- Muat data ---------- */
   function ringkasan(h) {
     return fmt(h.jumlah.bahagian) + ' bahagian, ' + fmt(h.jumlah.cawangan) + ' cawangan';
@@ -146,7 +197,7 @@
     var url = CFG.sheetCsvUrl || D.CONFIG.SHEET_CSV_URL;
     var h;
     try {
-      h = await D.loadPartyData({ url: url });
+      h = await D.loadPartyData({ url: url, appsScriptUrl: CFG.appsScriptUrl });
     } catch (e) {
       setStatus('fallback', 'Data tidak dapat dimuatkan: ' + (e && e.message ? e.message : e));
       el.retry.hidden = false;
@@ -158,7 +209,7 @@
     } else if (h.source === 'cache') {
       setStatus('cache', 'Tiada sambungan ke Google Sheets. Menggunakan salinan tersimpan (' + ringkasan(h) + ').');
     } else {
-      setStatus('fallback', 'Mod luar talian dengan data contoh (' + ringkasan(h) + '). ' + (h.amaran[0] || ''));
+      setStatus('fallback', 'Tidak dapat menyambung ke Google Sheets, jadi data contoh digunakan (' + ringkasan(h) + '). Sebab: ' + (h.amaran.join(' ') || 'tidak diketahui') + ' Tekan "Cuba lagi" selepas membetulkan.');
     }
     isiNegeri();
     el.submit.disabled = false;
@@ -206,7 +257,7 @@
     var demografik = D.tentukanDemografi(v.jantina, v.umur);
     if (!demografik) { setError('umur', 'Umur dan jantina tidak sah.'); el.umur.focus(); return; }
 
-    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan });
+    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan, avatar: avatarTerpilih() });
     var hasil = S.savePlayer(profil);
     if (!hasil.ok) { el.formError.textContent = hasil.ralat; return; }
 
@@ -374,7 +425,8 @@
   /* ---------- Header & bar sumber ---------- */
   function renderHeader(p) {
     $('p-nama').textContent = p.nama;
-    $('p-avatar').textContent = inisial(p.nama);
+    if (W.MyPolitikAvatar) { W.MyPolitikAvatar.pasang($('p-avatar'), p.avatar || (p.demografik && p.demografik.kategoriKod), { saiz: 84 }); }
+    else { $('p-avatar').textContent = inisial(p.nama); }
     var l = $('p-jawatan'); l.textContent = p.jawatan; l.className = 'badge-office badge-office--' + kelasLencana(p.jawatan);
     $('p-negeri').textContent = p.negeri || '–'; $('p-bahagian').textContent = p.bahagian || '–';
     $('p-dun').textContent = p.dun || '–'; $('p-cawangan').textContent = p.cawangan || '–';
@@ -586,7 +638,7 @@
     pt.status = 'memuat';
     host.innerHTML = '<div class="loading" role="status">Memuatkan data peta...</div>';
     try {
-      if (!pt.data) { pt.data = await D.loadPartyData({ url: CFG.sheetCsvUrl }); }
+      if (!pt.data) { pt.data = await D.loadPartyData({ url: CFG.sheetCsvUrl, appsScriptUrl: CFG.appsScriptUrl }); }
       host.innerHTML = '';
       if (pt.instance) { pt.instance.destroy(); }
       pt.instance = await MAP.mount(host, { data: pt.data, mode: 'negeri' });

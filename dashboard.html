@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="css/responsive.css">
   <style>
     /* Gaya khusus dashboard sahaja. Token warna datang daripada css/style.css. */
+    .brand__img { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,.06); }
+    .avatar { width: 84px; height: 84px; padding: 0; overflow: hidden; }
+    .avatar svg { width: 100%; height: 100%; display: block; }
     .dash-profile { display: grid; gap: var(--space-4); }
     .dash-profile__top { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
     .dash-profile__info { min-width: 0; flex: 1 1 240px; }
@@ -84,7 +87,8 @@
 
   <header class="app-header">
     <a class="brand" href="dashboard.html" aria-label="MyPolitik: UMNO">
-      <span class="brand__logo" aria-hidden="true">M</span>
+      <img class="brand__img" src="assets/img/logo-umno.png" alt="" width="34" height="34"
+           onerror="this.onerror=null;this.src='assets/img/logo-placeholder.svg'">
       <span>MyPolitik <span class="brand__sub">UMNO</span></span>
     </a>
     <div class="header-actions">
@@ -100,7 +104,7 @@
     <!-- 1. Profil pemain + Bar Sumber + Kawalan Masa -->
     <section class="card dash-profile" aria-label="Profil pemain">
       <div class="dash-profile__top">
-        <div class="avatar" id="p-avatar" aria-hidden="true">?</div>
+        <div class="avatar" id="p-avatar" role="img" aria-label="Avatar pemain">?</div>
         <div class="dash-profile__info">
           <h1 class="profile-card__name" id="p-nama">Pemain</h1>
           <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
@@ -188,6 +192,8 @@
   <!-- Konfigurasi: URL Google Sheets (sama seperti index.html) -->
   <script>
     window.MYPOLITIK_CONFIG = {
+      appsScriptUrl: '',                 // sama seperti index.html
+      musicUrl: '',
       sheetCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv',
       indexUrl: 'index.html'
     };
@@ -195,6 +201,8 @@
   <!-- Susunan penting: data > save > modul tindakan > pemilihan > mesyuarat > peta > pengawal -->
   <script src="js/data.js"></script>
   <script src="js/save.js"></script>
+  <script src="js/avatar.js"></script>
+  <script src="js/audio.js"></script>
   <script src="js/ordinaryMember.js"></script>
   <script src="js/incumbent.js"></script>
   <script src="js/election.js"></script>
