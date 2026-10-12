@@ -56,8 +56,9 @@
      ------------------------------------------------------------------------ */
   var CONFIG = {
     FOLDER_PETA: 'assets/maps/',
-    PERWAKILAN_CAWANGAN: 5,                 // perwakilan cawangan ke Bahagian
-    PERWAKILAN_BAHAGIAN: 10,                // perwakilan bahagian ke PAU
+    // v3.7b: kuota perwakilan mengikut bilangan ahli (selaras dengan js/election.js)
+    KUOTA_CAWANGAN: { ahliPerWakil: 50, maks: 5, min: 1 },    // Fasal 14.4.4: 1 wakil / 50 ahli, maks 5 seorang Cawangan
+    KUOTA_BAHAGIAN: { ahliPerWakil: 500, maks: 7, min: 1 },   // Fasal 8.4.3: 1 wakil / 500 ahli, maks 7 seorang Bahagian
     HAD_TINDAKAN_SETAHUN: 3,                // setiap jenis tindakan, setiap kawasan, setahun
     HAD_BONUS: 30,                          // had mata bonus setiap kawasan
     KESAN_BONUS_BAHAGIAN_KE_CAWANGAN: 0.6,  // bonus bahagian meresap ke cawangan di bawahnya
@@ -255,7 +256,7 @@
           if (rumah.cawangan === c) { eff = eff * (1 - CONFIG.GAUN_RUMAH) + akarUmbi * CONFIG.GAUN_RUMAH; }
           c.bonusSendiri = bc; c.tambah = Math.round(tambah);
           c.sokonganRaw = eff; c.sokongan = Math.round(eff); c.kekuatan = Math.round(c.asas);
-          c.perwakilan = CONFIG.PERWAKILAN_CAWANGAN; c.perwakilanPAU = 0;
+          c.perwakilan = kuotaWakil(c.jumlahAhli, CONFIG.KUOTA_CAWANGAN); c.perwakilanPAU = 0;
           var w = Math.max(1, c.jumlahAhli);
           sB += eff * w; kB += c.asas * w; wB += w; ahliB += c.jumlahAhli;
         });
@@ -270,18 +271,20 @@
         b.sokonganRaw = wB ? sB / wB : 0; b.sokongan = Math.round(b.sokonganRaw);
         b.kekuatan = wB ? Math.round(kB / wB) : 0;
         b.tambah = Math.round(b.cawangan.length ? b.cawangan.reduce(function (a, c) { return a + c.tambah; }, 0) / b.cawangan.length : bb);
-        b.perwakilan = b.bilCawangan * CONFIG.PERWAKILAN_CAWANGAN; b.perwakilanPAU = CONFIG.PERWAKILAN_BAHAGIAN;
+        b.perwakilan = b.cawangan.reduce(function (a, c) { return a + c.perwakilan; }, 0); b.perwakilanPAU = kuotaWakil(b.jumlahAhli, CONFIG.KUOTA_BAHAGIAN);
         sN += b.sokonganRaw * Math.max(1, b.jumlahAhli); kN += b.kekuatan * Math.max(1, b.jumlahAhli);
         wN += Math.max(1, b.jumlahAhli); ahliN += b.jumlahAhli; cawN += b.bilCawangan; perwN += b.perwakilan;
       });
       n.jumlahAhli = ahliN; n.bilCawangan = cawN; n.bilBahagian = n.bahagian.length;
       n.sokongan = wN ? Math.round(sN / wN) : 0; n.kekuatan = wN ? Math.round(kN / wN) : 0;
       n.tambah = Math.round(n.bahagian.length ? n.bahagian.reduce(function (a, b) { return a + b.tambah; }, 0) / n.bahagian.length : bn);
-      n.perwakilan = perwN; n.perwakilanPAU = n.bilBahagian * CONFIG.PERWAKILAN_BAHAGIAN;
+      n.perwakilan = perwN; n.perwakilanPAU = n.bahagian.reduce(function (a, b) { return a + b.perwakilanPAU; }, 0);
       n.adaData = n.bahagian.length > 0;
     });
     return m;
   }
+
+  function kuotaWakil(ahli, r) { return clamp(Math.floor((Number(ahli) || 0) / r.ahliPerWakil), r.min, r.maks); }
 
   function dapatkanNod(m, tahap, id) {
     return (tahap === 'negeri' ? m.idxN : tahap === 'bahagian' ? m.idxB : tahap === 'dun' ? m.idxD : m.idxC)[id] || null;
