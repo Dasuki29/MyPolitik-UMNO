@@ -232,6 +232,8 @@
 
     if (adaPemilihan(p, peringkat)) {
       var buka = pemilihanAktif(p), tajuk, perw = PERINGKAT[peringkat].perwakilan;
+      var Eg = typeof globalThis !== 'undefined' ? globalThis.MyPolitikElection : null;      // kuota sebenar (Fasal 14.4.4 / 8.4.3)
+      if (perw && Eg && Eg.kuotaCawangan) { perw = { kerusi: peringkat === 'cawangan' ? Eg.kuotaCawangan(p) : Eg.kuotaBahagian(p) }; }
       if (peringkat === 'cawangan') { tajuk = 'Pemilihan Cawangan: ' + (buka ? 'jawatan Cawangan dan Sayap, serta ' : '') + 'perwakilan ke Bahagian (' + perw.kerusi + ' kerusi)'; }
       else if (peringkat === 'bahagian') { tajuk = 'Pemilihan Bahagian: ' + (buka ? 'jawatan Bahagian dan Sayap, serta ' : '') + 'perwakilan ke PAU (' + perw.kerusi + ' kerusi)'; }
       else { tajuk = 'Pemilihan Pusat: Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap'; }
