@@ -58,9 +58,10 @@
   var CONFIG = {
     TAHUN_MULA: 2026,
     KITARAN_TAHUN: 3,
-    PERWAKILAN_CAWANGAN: 5,              // perwakilan Cawangan ke Bahagian
-    PERWAKILAN_BAHAGIAN: 10,             // perwakilan Bahagian ke PAU
-    ANGGARAN_CAWANGAN_PER_BAHAGIAN: 25,  // untuk anggaran pengundi perwakilan Bahagian (5 setiap cawangan)
+    // v3.7: kuota perwakilan mengikut Perlembagaan
+    KUOTA_CAWANGAN: { ahliPerWakil: 50, maks: 5, min: 1 },    // Fasal 14.4.4: 1 wakil / 50 ahli, maks 5 seorang Cawangan
+    KUOTA_BAHAGIAN: { ahliPerWakil: 500, maks: 7, min: 1 },   // Fasal 8.4.3: 1 wakil / 500 ahli, maks 7 seorang Bahagian
+    ANGGARAN_CAWANGAN_PER_BAHAGIAN: 25,  // anggaran bilangan Cawangan dalam satu Bahagian (jika tiada data sebenar)
     PEMILIH_PUSAT: 1500,                 // pengundi simulasi peringkat pusat
     KERUSI_AJK_CAWANGAN: 7,
     PESAING_TAMBAHAN: 4,                 // bilangan calon = kerusi + nilai ini
@@ -228,13 +229,13 @@
     var pc = J.perwakilanSah(p, 'cawangan'), exBhg = J.exOfficio(p, 'bahagian'), exPau = J.exOfficio(p, 'pau');
     tambah({
       kod: 'perwakilan_cawangan', jenis: 'perwakilan', jawatan: 'Perwakilan Cawangan ke Bahagian', peringkat: 'cawangan', kumpulan: 'perwakilan', sayap: null,
-      kerusi: CONFIG.PERWAKILAN_CAWANGAN, kesukaran: 0,
+      kerusi: kuotaCawangan(p), kesukaran: 0,
       terbuka: !exBhg.sah,
       sebab: exBhg.sah ? 'Anda hadir Bahagian secara automatik sebagai ' + exBhg.sumber + '.' : ''
     });
     tambah({
       kod: 'perwakilan_bahagian', jenis: 'perwakilan', jawatan: 'Perwakilan Bahagian ke PAU', peringkat: 'bahagian', kumpulan: 'perwakilan', sayap: null,
-      kerusi: CONFIG.PERWAKILAN_BAHAGIAN, kesukaran: 0,
+      kerusi: kuotaBahagian(p), kesukaran: 0,
       terbuka: !exPau.sah && pc.layak,
       sebab: exPau.sah ? 'Anda hadir PAU secara automatik sebagai ' + exPau.sumber + '.'
                        : (pc.layak ? '' : 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu' + (pc.luput ? ' (mandat tahun lepas sudah luput).' : '.'))
@@ -345,13 +346,25 @@
     return clamp(v, 0, 100);
   }
 
+  /* ---- Kuota perwakilan (v3.7) ---- */
+  function kuota(ahli, r) { return clamp(Math.floor((Number(ahli) || 0) / r.ahliPerWakil), r.min, r.maks); }
+  function ahliCawangan(p) { return p && p.cawanganInfo && p.cawanganInfo.jumlahAhli ? p.cawanganInfo.jumlahAhli : 60; }
+  /** Jumlah ahli Bahagian: opts.jumlahAhliBahagian > profil.bahagianInfo.jumlahAhli > anggaran (ahli Cawangan x bil. Cawangan). */
+  function ahliBahagian(p, opts) {
+    if (opts && opts.jumlahAhliBahagian) { return opts.jumlahAhliBahagian; }
+    if (p && p.bahagianInfo && p.bahagianInfo.jumlahAhli) { return p.bahagianInfo.jumlahAhli; }
+    return ahliCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
+  }
+  function kuotaCawangan(p) { return kuota(ahliCawangan(p), CONFIG.KUOTA_CAWANGAN); }              // wakil Cawangan ke Bahagian
+  function kuotaBahagian(p, opts) { return kuota(ahliBahagian(p, opts), CONFIG.KUOTA_BAHAGIAN); }   // wakil Bahagian ke PAU
+
   function bilPemilih(p, peringkat, opts) {
     if (peringkat === 'cawangan') {
       var jumlah = p.cawanganInfo && p.cawanganInfo.jumlahAhli ? p.cawanganInfo.jumlahAhli : 60;
       return Math.max(50, jumlah);
     }
     if (peringkat === 'bahagian') {
-      return CONFIG.PERWAKILAN_CAWANGAN * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
+      return kuotaCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
     }
     return CONFIG.PEMILIH_PUSAT;
   }
@@ -673,6 +686,7 @@
     getKeadaanPemilihan: getKeadaanPemilihan,
     getStatusModul: getStatusModul,
     senaraiPertandingan: senaraiPertandingan,
+    kuotaCawangan: kuotaCawangan, kuotaBahagian: kuotaBahagian,
     daftarBertanding: daftarBertanding,
     tarikBalik: tarikBalik,
     senaraiKempen: senaraiKempen,
