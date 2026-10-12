@@ -130,14 +130,17 @@
 
   function pemilihanAktif(p) { return !!(E && E.adalahTahunPemilihan(p.tahun)); }
 
+  /** Ketua Sayap Cawangan (Pemuda, Puteri, Wanita) ialah perwakilan sayap ke Bahagian. */
+  function adalahKetuaSayap(jawatan) { return /^Ketua (Pemuda|Puteri|Wanita) Cawangan$/.test(String(jawatan || '')); }
+
   /** Siapa boleh hadir. Bahagian dan PAU hanya untuk perwakilan atau pemegang jawatan berkaitan. */
   function bolehHadir(p, peringkat) {
     if (peringkat === 'cawangan') { return { ok: true }; }
     var perw = E ? E.getKeadaanPemilihan(p).perwakilan : { cawangan: false, bahagian: false };
     var per = p.jawatan === 'Ahli Biasa' ? 'ahli' : peringkatJawatan(p.jawatan);
     if (peringkat === 'bahagian') {
-      var ok = perw.cawangan || p.jawatan === 'Ketua Cawangan' || per === 'bahagian' || per === 'pusat';
-      return ok ? { ok: true } : { ok: false, sebab: 'Hanya Perwakilan Cawangan yang terpilih, Ketua Cawangan dan pemegang jawatan lebih tinggi boleh hadir.' };
+      var ok = perw.cawangan || p.jawatan === 'Ketua Cawangan' || adalahKetuaSayap(p.jawatan) || per === 'bahagian' || per === 'pusat';
+      return ok ? { ok: true } : { ok: false, sebab: 'Hanya Perwakilan Cawangan yang terpilih, Ketua Cawangan, Ketua Sayap Cawangan dan pemegang jawatan lebih tinggi boleh hadir.' };
     }
     var ok2 = perw.bahagian || p.jawatan === 'Ketua Bahagian' || per === 'pusat';
     return ok2 ? { ok: true } : { ok: false, sebab: 'Hanya Perwakilan Bahagian yang terpilih, Ketua Bahagian dan pemegang jawatan pusat boleh hadir PAU.' };
@@ -152,14 +155,15 @@
     if (s && s.status === 'selesai') { return { status: 'selesai', sebab: '' }; }
     if (s && s.status === 'sedang') { return { status: 'sedang', sebab: '' }; }
     var w = tetingkap(p, peringkat);
+    var h = bolehHadir(p, peringkat);
+    if (!h.ok) { return { status: 'tidak_layak', sebab: h.sebab }; }          // kelayakan disemak dahulu supaya sebab sebenar dipaparkan
     if (w && w.status === 'belum_tiba') {
-      return { status: 'belum_tiba', sebab: PERINGKAT[peringkat].nama + ' dibuka pada ' + w.label.toLowerCase() + '. Sekarang bulan ' + p.bulan + '.' };
+      return { status: 'belum_tiba', sebab: PERINGKAT[peringkat].nama + ' dibuka pada ' + w.label.toLowerCase() + '. Sekarang bulan ' + p.bulan + '.' +
+        (peringkat !== 'cawangan' ? ' Anda layak hadir.' : '') };
     }
     if (w && w.status === 'tamat') {
       return { status: 'terlepas', sebab: 'Musim ' + PERINGKAT[peringkat].nama + ' (' + w.label.toLowerCase() + ') tahun ' + p.tahun + ' sudah tamat.' };
     }
-    var h = bolehHadir(p, peringkat);
-    if (!h.ok) { return { status: 'tidak_layak', sebab: h.sebab }; }
     for (var i = 0; !w && i < URUTAN.indexOf(peringkat); i++) {            // tanpa takwim: urutan peringkat dikuatkuasakan
       var sebelum = URUTAN[i], ss = ms[sebelum];
       if (bolehHadir(p, sebelum).ok && !(ss && ss.status === 'selesai')) {
@@ -259,6 +263,76 @@
     return { ip: ip, reputasi: reputasi, padan: padan };
   }
 
+
+  /* ------------------------------------------------------------------------
+     4b. STATUS PERWAKILAN DAN LANGKAH SETERUSNYA
+     ------------------------------------------------------------------------ */
+  function bulanKe(p, peringkat) {
+    var w = tetingkap(p, peringkat);
+    return w ? { label: w.label, mula: w.mula, tamat: w.tamat, status: w.status, jarak: w.status === 'belum_tiba' ? w.mula - p.bulan : 0 } : null;
+  }
+
+  /**
+   * Status kelayakan hadir ke Mesyuarat Bahagian dan PAU.
+   * Pulang { bahagian:{layak,lencana,sumber,sebab,tetingkap}, pau:{...} }
+   * lencana = "Perwakilan Bahagian" / "Perwakilan PAU" (null jika bukan perwakilan, cth. pemegang jawatan Bahagian).
+   */
+  function getStatusPerwakilan(profil) {
+    var p = profil || S.loadPlayer();
+    if (!p) { return null; }
+    var perw = E ? E.getKeadaanPemilihan(p).perwakilan : { cawangan: false, bahagian: false };
+    var per = p.jawatan === 'Ahli Biasa' ? 'ahli' : peringkatJawatan(p.jawatan);
+    var b = { layak: false, lencana: null, sumber: '', sebab: '', tetingkap: bulanKe(p, 'bahagian') };
+    if (perw.cawangan) { b.layak = true; b.lencana = 'Perwakilan Bahagian'; b.sumber = 'Menang kerusi Perwakilan Cawangan ke Bahagian'; }
+    else if (adalahKetuaSayap(p.jawatan)) { b.layak = true; b.lencana = 'Perwakilan Bahagian'; b.sumber = 'Perwakilan sayap sebagai ' + p.jawatan; }
+    else if (p.jawatan === 'Ketua Cawangan') { b.layak = true; b.lencana = 'Perwakilan Bahagian'; b.sumber = 'Ketua Cawangan (ex-officio)'; }
+    else if (per === 'bahagian' || per === 'pusat') { b.layak = true; b.sumber = 'Pemegang jawatan ' + (per === 'bahagian' ? 'Bahagian' : 'Pusat'); }
+    else { b.sebab = 'Menangi kerusi Perwakilan Cawangan semasa Mesyuarat Cawangan (bulan 4-6), atau menjadi Ketua Cawangan / Ketua Sayap Cawangan.'; }
+
+    var u = { layak: false, lencana: null, sumber: '', sebab: '', tetingkap: bulanKe(p, 'pau') };
+    if (perw.bahagian) { u.layak = true; u.lencana = 'Perwakilan PAU'; u.sumber = 'Menang kerusi Perwakilan Bahagian ke PAU'; }
+    else if (p.jawatan === 'Ketua Bahagian' || per === 'pusat') { u.layak = true; u.sumber = 'Pemegang jawatan ' + (per === 'pusat' ? 'Pusat' : 'Ketua Bahagian'); }
+    else { u.sebab = 'Menangi kerusi Perwakilan Bahagian semasa Mesyuarat Bahagian, atau pegang jawatan Ketua Bahagian / Pusat.'; }
+    return { tahun: p.tahun, bulan: p.bulan, bahagian: b, pau: u };
+  }
+
+  /** Senarai langkah yang disyorkan selepas satu mesyuarat ditutup. */
+  function langkahSeterusnya(p, peringkat) {
+    var langkah = [], sp = getStatusPerwakilan(p), K = kalendar();
+    function buka(sasaran, nama, st) {
+      var w = st.tetingkap;
+      if (st.layak) {
+        langkah.push('Anda layak hadir ' + nama + (st.lencana ? ' sebagai ' + st.lencana : '') + '. ' +
+          (w ? (w.status === 'dibuka' ? 'Dibuka sekarang (' + w.label.toLowerCase() + ').' : w.status === 'belum_tiba' ? 'Dibuka pada ' + w.label.toLowerCase() + ', ' + w.jarak + ' bulan lagi.' : 'Musim tahun ini sudah tamat.') : ''));
+      } else { langkah.push('Anda belum layak hadir ' + nama + '. ' + st.sebab); }
+    }
+    if (peringkat === 'cawangan') { buka('bahagian', 'Mesyuarat Bahagian', sp.bahagian); }
+    else if (peringkat === 'bahagian') { buka('pau', 'Perhimpunan Agung (PAU)', sp.pau); }
+    else { langkah.push('Perhimpunan Agung tahun ' + p.tahun + ' selesai. Teruskan ke bulan seterusnya untuk memulakan kitaran baharu.'); }
+    if (K) {
+      var tk = K.getTakwim(p);
+      langkah.push('Tekan "Teruskan ke Bulan ' + tk.bulanSeterusnya + '" untuk menyambung permainan; AP dan Dana akan diperbaharui.');
+    }
+    return langkah;
+  }
+
+  function nilaiSumber(p) { return { ip: p.ip, myr: p.myr, ap: p.ap, reputasi: p.reputasi }; }
+  function beza(a, b) { return { ip: b.ip - a.ip, myr: b.myr - a.myr, ap: b.ap - a.ap, reputasi: b.reputasi - a.reputasi }; }
+
+  /** Ringkasan tersimpan bagi peringkat yang sudah selesai (dengan langkah dikira semula). */
+  function getRingkasan(peringkat, profil) {
+    var p = profil || S.loadPlayer();
+    if (!p || !PERINGKAT[peringkat]) { return null; }
+    var m = keadaanMesyuarat(p)[peringkat];
+    if (!m || m.status !== 'selesai' || !m.ringkasan) { return null; }
+    var r = salin(m.ringkasan);
+    r.peringkat = peringkat; r.nama = PERINGKAT[peringkat].nama; r.tahun = p.tahun;
+    r.perwakilanStatus = getStatusPerwakilan(p);
+    r.langkah = langkahSeterusnya(p, peringkat);
+    r.baki = nilaiSumber(p);
+    return r;
+  }
+
   /* ------------------------------------------------------------------------
      5. API
      ------------------------------------------------------------------------ */
@@ -301,7 +375,7 @@
     if (st.status === 'sedang') { return gagal('sedang', PERINGKAT[peringkat].nama + ' sedang berjalan.'); }
     if (st.status !== 'boleh_mula') { return gagal(st.status, st.sebab); }
 
-    ms[peringkat] = { status: 'sedang', mula: new Date().toISOString(), agenda: janaAgenda(p, peringkat), ringkasan: null };
+    ms[peringkat] = { status: 'sedang', mula: new Date().toISOString(), bulanMula: p.bulan, asas: nilaiSumber(p), agenda: janaAgenda(p, peringkat), ringkasan: null };
     var r = S.applyEffects({}, {
       kiraTindakan: false, patch: { mesyuarat: ms },
       log: { tindakan: 'mula_mesyuarat', nama: PERINGKAT[peringkat].nama + ' ' + p.tahun, peringkat: peringkat }
@@ -371,13 +445,14 @@
     if (!m || m.status !== 'sedang') { return gagal('belum_mula', PERINGKAT[peringkat].nama + ' tidak sedang berjalan.'); }
 
     // 1. Pemilihan dijalankan dahulu kerana ia mengubah profil (jawatan, perwakilan).
-    var pemilihan = [];
+    var pemilihan = [], sebelumPemilihan = nilaiSumber(p);
     if (E && pemilihanAktif(p) && PERINGKAT[peringkat].perwakilan) {
       pemilihan = E.jalankanPemilihanPeringkat(peringkat, { rng: opts.rng });
     }
 
     // 2. Muat semula profil dan putuskan baki usul.
     p = S.loadPlayer();
+    var kesanPemilihan = beza(sebelumPemilihan, nilaiSumber(p));
     ms = keadaanMesyuarat(p); m = ms[peringkat];
     var rng = opts.rng || Math.random, hadir = bilHadir(p, peringkat), tanpaPenyertaan = [];
     m.agenda.forEach(function (a) {
@@ -399,8 +474,32 @@
       ditolak: usulList.filter(function (a) { return !a.keputusan.lulus; }).length,
       disertai: usulList.filter(function (a) { return a.pilihan; }).length,
       tanpaPenyertaan: tanpaPenyertaan.length,
-      pemilihan: pemilihan.filter(function (x) { return x.ok; }).map(function (x) { return { kod: x.keputusan.kod, menang: x.keputusan.menang, kedudukan: x.keputusan.kedudukan }; })
+      pemilihan: pemilihan.filter(function (x) { return x.ok; }).map(function (x) {
+        var k = x.keputusan;
+        return { kod: k.kod, jawatan: k.jawatan, menang: k.menang, kedudukan: k.kedudukan, jumlahCalon: k.jumlahCalon, kerusi: k.kerusi, undi: k.undi, ip: x.perubahan ? x.perubahan.ip : 0 };
+      }),
+      bulanTutup: p.bulan,
+      usul: usulList.map(function (a) {
+        var k = a.keputusan, pl = a.pilihan;
+        return { tajuk: a.tajuk, lulus: k.lulus, undiSokong: k.undiSokong, undiBantah: k.undiBantah, hadir: k.hadir,
+                 pilihan: pl ? { peranan: pl.peranan, pendirian: pl.pendirian } : null, padan: !!k.padan, ip: k.ip || 0, reputasi: k.reputasi || 0 };
+      }),
+      tidakDidaftar: (E && pemilihanAktif(p) ? E.senaraiPertandingan(p) : []).filter(function (c) {
+        return c.peringkat === peringkat && c.jenis !== undefined && !c.didaftar && !c.selesai && c.kod !== 'pertahan_jawatan';
+      }).map(function (c) { return c.jawatan; }),
+      peristiwa: []
     };
+    var apUsul = 0;
+    usulList.forEach(function (a) { if (a.pilihan) { apUsul += CONFIG.KOS_AP[a.pilihan.peranan] || 0; } });
+    ringkasan.perubahan = {
+      ip: ringkasan.usul.reduce(function (n, u) { return n + u.ip; }, 0) + kesanPemilihan.ip,
+      reputasi: ringkasan.usul.reduce(function (n, u) { return n + u.reputasi; }, 0) + kesanPemilihan.reputasi,
+      ap: -apUsul + kesanPemilihan.ap,
+      myr: kesanPemilihan.myr
+    };
+    ringkasan.perubahanUsulIP = ringkasan.usul.reduce(function (n, u) { return n + u.ip; }, 0);
+    ringkasan.perubahanPemilihanIP = kesanPemilihan.ip;
+    pemilihan.forEach(function (x) { if (x.ok) { x.peristiwa.forEach(function (e) { ringkasan.peristiwa.push(e.mesej); }); } });
     m.status = 'selesai'; m.tamat = new Date().toISOString(); m.ringkasan = ringkasan;
 
     var r = S.applyEffects({}, {
@@ -413,7 +512,8 @@
     pemilihan.forEach(function (x) { if (x.ok) { x.peristiwa.forEach(function (e) { peristiwa.push(e); }); } });
     var mesej = PERINGKAT[peringkat].nama + ' ditutup. ' + ringkasan.lulus + ' usul lulus, ' + ringkasan.ditolak + ' ditolak.';
     pemilihan.forEach(function (x) { if (x.ok) { mesej += ' ' + x.mesej; } else { mesej += ' ' + x.ralat; } });
-    return { ok: true, mesej: mesej, ringkasan: ringkasan, pemilihan: pemilihan, peristiwa: peristiwa, profil: r.profil };
+    var penuh = getRingkasan(peringkat, r.profil);
+    return { ok: true, mesej: mesej, ringkasan: penuh || ringkasan, pemilihan: pemilihan, peristiwa: peristiwa, profil: r.profil };
   }
 
   return {
@@ -422,6 +522,8 @@
     KOLAM: KOLAM,
     senaraiPeranan: senaraiPeranan,
     getKeadaanMesyuarat: getKeadaanMesyuarat,
+    getStatusPerwakilan: getStatusPerwakilan,
+    getRingkasan: getRingkasan,
     mulaMesyuarat: mulaMesyuarat,
     pilihPeranan: pilihPeranan,
     tutupMesyuarat: tutupMesyuarat

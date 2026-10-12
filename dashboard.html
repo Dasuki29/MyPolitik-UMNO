@@ -21,6 +21,21 @@
     .acara__pil li.is-off { opacity: .55; }
     .acara__pil small { display: block; opacity: .8; }
     .acara__kesan { font-weight: 700; }
+    .ring { display: grid; gap: 10px; }
+    .ring h3 { margin: 6px 0 2px; font-size: .95rem; }
+    .ring__usul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    .ring__usul li { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 6px 10px; font-size: .86rem; }
+    .ring__usul small { display: block; opacity: .8; }
+    .ring__tag { display: inline-block; font-weight: 700; font-size: .72rem; padding: 1px 8px; border-radius: 999px; margin-right: 6px; }
+    .ring__tag--ya { background: rgba(47,158,107,.2); color: #2F9E6B; }
+    .ring__tag--tidak { background: rgba(200,60,60,.18); color: #D65A5A; }
+    .ring__sumber { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .ring__sumber div { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 6px 8px; text-align: center; font-size: .78rem; }
+    .ring__sumber b { display: block; font-size: 1.05rem; }
+    .ring__naik { color: #2F9E6B; } .ring__turun { color: #D65A5A; }
+    .ring__langkah { margin: 0; padding-left: 18px; font-size: .86rem; }
+    .perw { display: grid; gap: 6px; }
+    @media (max-width: 480px) { .ring__sumber { grid-template-columns: repeat(2, 1fr); } }
     .takwim { display: grid; gap: var(--space-2); }
     .takwim__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
     .takwim__head b { color: var(--white); font-size: 1rem; }
@@ -134,6 +149,7 @@
           <h1 class="profile-card__name" id="p-nama">Pemain</h1>
           <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
             <span class="badge-office badge-office--ahli" id="p-jawatan">Ahli Biasa</span>
+            <span class="badge-office badge-office--bahagian" id="p-perwakilan" hidden></span>
             <span class="year-pill" id="p-tahun" data-fasa="">2026</span>
           </div>
           <ul class="dash-loc" aria-label="Lokasi">
