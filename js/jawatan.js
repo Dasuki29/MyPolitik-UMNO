@@ -43,22 +43,22 @@
 
   // Cawangan
   tambah({ kod: 'ajk_cawangan',   jawatan: 'AJK Cawangan',   peringkat: 'cawangan', pangkat: 1, kerusi: 7, ipMin: 50 });
-  tambah({ kod: 'ketua_cawangan', jawatan: 'Ketua Cawangan', peringkat: 'cawangan', pangkat: 3, ipMin: 65, kesukaran: 6 });
+  tambah({ kod: 'ketua_cawangan', jawatan: 'Ketua Cawangan', peringkat: 'cawangan', pangkat: 3, ipMin: 95, pangkatMin: 1, kesukaran: 8 });
   // Bahagian
-  tambah({ kod: 'ajk_bahagian',        jawatan: 'AJK Bahagian',        peringkat: 'bahagian', pangkat: 4, kerusi: 15, ipMin: 70, pangkatMin: 1, perluBahagian: true, kesukaran: 4, keahlian: 36, fasal: 'Fasal 15.5' });
-  tambah({ kod: 'naib_ketua_bahagian', jawatan: 'Naib Ketua Bahagian', peringkat: 'bahagian', pangkat: 6, ipMin: 80, pangkatMin: 3, perluBahagian: true, kesukaran: 10, keahlian: 36, fasal: 'Fasal 15.5' });
-  tambah({ kod: 'ketua_bahagian',      jawatan: 'Ketua Bahagian',      peringkat: 'bahagian', pangkat: 7, ipMin: 85, pangkatMin: 3, perluBahagian: true, kesukaran: 14, keahlian: 36, fasal: 'Fasal 15.5' });
+  tambah({ kod: 'ajk_bahagian',        jawatan: 'AJK Bahagian',        peringkat: 'bahagian', pangkat: 4, kerusi: 15, ipMin: 140, pangkatMin: 1, perluBahagian: true, kesukaran: 6, keahlian: 36, fasal: 'Fasal 15.5' });
+  tambah({ kod: 'naib_ketua_bahagian', jawatan: 'Naib Ketua Bahagian', peringkat: 'bahagian', pangkat: 6, ipMin: 185, pangkatMin: 4, perluBahagian: true, kesukaran: 14, keahlian: 36, fasal: 'Fasal 15.5' });
+  tambah({ kod: 'ketua_bahagian',      jawatan: 'Ketua Bahagian',      peringkat: 'bahagian', pangkat: 7, ipMin: 220, pangkatMin: 4, perluBahagian: true, kesukaran: 20, keahlian: 36, fasal: 'Fasal 15.5' });
   // Pusat (bulan 8, tahun pemilihan)
-  tambah({ kod: 'ahli_mkt',          jawatan: 'Ahli MKT',         peringkat: 'pusat', pangkat: 8,  kerusi: 25, ipMin: 80, pangkatMin: 4, perluPAU: true, kesukaran: 8, penggal: true });
-  tambah({ kod: 'naib_presiden',     jawatan: 'Naib Presiden',    peringkat: 'pusat', pangkat: 10, kerusi: 3,  ipMin: 90, pangkatMin: 6, perluPAU: true, kesukaran: 16, penggal: true });
-  tambah({ kod: 'timbalan_presiden', jawatan: 'Timbalan Presiden', peringkat: 'pusat', pangkat: 11, ipMin: 94, pangkatMin: 7, perluPAU: true, kesukaran: 20, penggal: true });
-  tambah({ kod: 'presiden',          jawatan: 'Presiden',         peringkat: 'pusat', pangkat: 12, ipMin: 98, pangkatMin: 7, perluPAU: true, kesukaran: 24, penggal: true });
+  tambah({ kod: 'ahli_mkt',          jawatan: 'Ahli MKT',         peringkat: 'pusat', pangkat: 8,  kerusi: 25, ipMin: 250, pangkatMin: 7, perluPAU: true, kesukaran: 14, penggal: true });
+  tambah({ kod: 'naib_presiden',     jawatan: 'Naib Presiden',    peringkat: 'pusat', pangkat: 10, kerusi: 3,  ipMin: 300, pangkatMin: 8, perluPAU: true, kesukaran: 24, penggal: true });
+  tambah({ kod: 'timbalan_presiden', jawatan: 'Timbalan Presiden', peringkat: 'pusat', pangkat: 11, ipMin: 350, pangkatMin: 8, perluPAU: true, kesukaran: 30, penggal: true });
+  tambah({ kod: 'presiden',          jawatan: 'Presiden',         peringkat: 'pusat', pangkat: 12, ipMin: 420, pangkatMin: 10, perluPAU: true, kesukaran: 36, penggal: true });
   // Sayap (satu set bagi setiap sayap, hanya sayap pemain dipaparkan)
   SAYAP.forEach(function (w) {
     var N = NAMA_SAYAP[w];
-    tambah({ kod: 'sayap_cawangan_' + w, jawatan: 'Ketua ' + N + ' Cawangan', peringkat: 'cawangan', kumpulan: 'sayap', sayap: w, pangkat: 2, ipMin: 50, kesukaran: 2 });
-    tambah({ kod: 'sayap_bahagian_' + w, jawatan: 'Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 5, ipMin: 75, pangkatMin: 2, perluBahagian: true, kesukaran: 8, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
-    tambah({ kod: 'sayap_pusat_' + w,    jawatan: 'Ketua ' + N,             peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 9, ipMin: 88, pangkatMin: 5, perluPAU: true, kesukaran: 14, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    tambah({ kod: 'sayap_cawangan_' + w, jawatan: 'Ketua ' + N + ' Cawangan', peringkat: 'cawangan', kumpulan: 'sayap', sayap: w, pangkat: 2, ipMin: 50, kesukaran: 3 });
+    tambah({ kod: 'sayap_bahagian_' + w, jawatan: 'Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 5, ipMin: 160, pangkatMin: 2, perluBahagian: true, kesukaran: 12, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    tambah({ kod: 'sayap_pusat_' + w,    jawatan: 'Ketua ' + N,             peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 9, ipMin: 280, pangkatMin: 5, perluPAU: true, kesukaran: 22, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
   });
 
   function cariDef(kod) { for (var i = 0; i < KATALOG.length; i++) { if (KATALOG[i].kod === kod) { return KATALOG[i]; } } return null; }
@@ -87,7 +87,8 @@
   }
 
   function pegang(p, kod) { return getJawatan(p).some(function (j) { return j.kod === kod; }); }
-  function pangkatTertinggi(p) { return getJawatan(p).reduce(function (m, j) { return Math.max(m, j.pangkat || 0); }, 0); }
+  /** kumpulan (pilihan): 'utama' hanya mengira jawatan utama, supaya jawatan sayap tidak melangkau tangga jawatan utama (v3.8). */
+  function pangkatTertinggi(p, kumpulan) { return getJawatan(p).reduce(function (m, j) { return (kumpulan && j.kumpulan !== kumpulan) ? m : Math.max(m, j.pangkat || 0); }, 0); }
   function jawatanTertinggi(p) {
     var t = null;
     getJawatan(p).forEach(function (j) { if (!t || (j.pangkat || 0) > (t.pangkat || 0)) { t = j; } });
@@ -167,7 +168,7 @@
     if (d.perluPAU && !(perwakilanSah(p, 'bahagian').layak)) {
       return { terbuka: false, sebab: 'Perlu Perwakilan Bahagian ke PAU tahun ' + p.tahun + ' (atau Ketua Bahagian/pemegang jawatan Pusat).' };
     }
-    if (d.pangkatMin && pangkatTertinggi(p) < d.pangkatMin) {
+    if (d.pangkatMin && pangkatTertinggi(p, d.kumpulan === 'utama' ? 'utama' : null) < d.pangkatMin) {
       var perlu = null;
       KATALOG.forEach(function (x) { if (x.pangkat === d.pangkatMin && !perlu && x.kumpulan === 'utama') { perlu = x.jawatan; } });
       if (!perlu) { KATALOG.forEach(function (x) { if (x.pangkat === d.pangkatMin && !perlu) { perlu = x.jawatan; } }); }
