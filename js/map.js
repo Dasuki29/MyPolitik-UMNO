@@ -11,7 +11,7 @@
    daripada folder data/ melalui js/geo.js (negeri, parlimen, DUN, dan Daerah Mengundi Selangor).
    Warna setiap poligon mengikut pengaruh pemain (atau kekuatan parti / saiz pemilih, atau fungsi
    warna sendiri melalui opts.warna). Klik poligon = panel butiran; tuding = tooltip.
-   Jika geo.js / data/ tidak tersedia, peta jatuh balik kepada peta jubin (cartogram) lama.
+   Tiada peta jubin: jika js/geo.js atau data/ gagal dimuat, paparan ralat dengan butang "Cuba Lagi" ditunjukkan.
    Peta SVG kustom (PDM) masih disokong melalui loadCustomPDMMap().
 
    14 negeri = 13 negeri + Wilayah Persekutuan (KL, Putrajaya, Labuan digabung).
@@ -450,28 +450,19 @@
     '.mpm-stage{min-height:200px}',
     '.mpm-status{padding:28px 12px;text-align:center;color:var(--mpm-mut)}',
     '.mpm-nota{margin:0 0 10px;font-size:.78rem;color:var(--mpm-mut)}',
-    /* jubin negeri */
-    '.mpm-negeri{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(58px,auto);gap:6px}',
-    '.mpm-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:44px;padding:6px 4px;border:2px solid transparent;border-radius:10px;color:#fff;font-family:inherit;text-align:center;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}',
-    '.mpm-tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.45)}',
-    '.mpm-tile[data-level="4"]{color:#2B2100}',
-    '.mpm-tile[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 0 2px var(--mpm-gold)}',
-    '.mpm-tile.is-rumah::after{content:"\\2605";position:absolute;top:2px;right:5px;font-size:.7rem;color:var(--mpm-gold)}',
-    '.mpm-tile[data-level="4"].is-rumah::after{color:#7a1020}',
-    '.mpm-tile.is-kosong{background:transparent!important;border:1px dashed var(--mpm-bd);color:var(--mpm-mut);cursor:default}',
-    '.mpm-tile.is-kosong:hover{transform:none;box-shadow:none}',
-    '.mpm-t-nama{font-weight:700;font-size:.85rem;line-height:1.15}',
-    '.mpm-t-nama .s{display:none}',
-    '.mpm-t-nilai{font-size:.78rem;font-weight:600;opacity:.95}',
-    '.mpm-label{grid-column:span 7;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mpm-mut);margin:4px 0 -2px}',
-    /* grid bahagian / cawangan */
+    /* senarai cawangan / bahagian (bukan peta jubin) */
     '.mpm-sek{margin:0 0 16px}',
     '.mpm-sek h3{margin:0 0 8px;font-size:.95rem;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}',
     '.mpm-sek h3 small{font-weight:500;color:var(--mpm-mut);font-size:.75rem}',
-    '.mpm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:5px}',
-    '.mpm-grid .mpm-tile{min-height:46px;padding:4px 2px}',
-    '.mpm-grid .mpm-t-nama{font-size:.78rem}',
-    '.mpm-grid .mpm-t-nilai{font-size:.72rem}',
+    '.mpm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 12px}',
+    '.mpm-baris{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 64px 38px;align-items:center;gap:8px;width:100%;padding:6px 8px;border:1px solid transparent;border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:.8rem;text-align:left;cursor:pointer}',
+    '.mpm-baris:hover{background:rgba(255,255,255,.06)}',
+    '.mpm-baris[aria-pressed="true"]{border-color:var(--mpm-gold);background:rgba(255,255,255,.07)}',
+    '.mpm-b-nama{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}',
+    '.mpm-b-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}',
+    '.mpm-b-bar i{display:block;height:100%;border-radius:inherit}',
+    '.mpm-b-nilai{text-align:right;font-weight:700;font-size:.78rem}',
+    '.mpm-baris.is-rumah .mpm-b-nama::after{content:" \\2605";color:var(--mpm-gold)}',
     /* svg kustom */
     '.mpm-svgwrap{border:1px solid var(--mpm-bd);border-radius:10px;background:var(--mpm-bg2);padding:8px;overflow:auto}',
     '.mpm-svg{width:100%;height:auto;display:block;max-height:70vh}',
@@ -533,8 +524,8 @@
     '.mpm-msg{margin-top:10px;padding:8px 10px;border-radius:10px;font-size:.84rem;background:var(--mpm-bg2);border-left:3px solid var(--mpm-gold)}',
     '.mpm-msg.ralat{border-left-color:#FF4D5E}',
     '.mpm-msg:empty{display:none}',
-    '@media (min-width:900px){.mpm-body{grid-template-columns:minmax(0,1fr) 340px;align-items:start}.mpm-panel{position:sticky;top:12px}.mpm-negeri{grid-auto-rows:minmax(74px,auto)}.mpm-t-nama{font-size:.95rem}}',
-    '@media (max-width:560px){.mpm-t-nama .f{display:none}.mpm-t-nama .s{display:inline}.mpm-negeri{gap:4px}.mpm-main,.mpm-panel{padding:10px}}',
+    '@media (min-width:900px){.mpm-body{grid-template-columns:minmax(0,1fr) 340px;align-items:start}.mpm-panel{position:sticky;top:12px}}',
+    '@media (max-width:560px){.mpm-main,.mpm-panel{padding:10px}.mpm-grid{grid-template-columns:1fr}}',
     '@media (prefers-reduced-motion:reduce){.mpm *{transition:none!important}}'
   ].join('\n');
 
@@ -563,7 +554,7 @@
 
     var inst = {
       el: el, opts: opts, model: null, profil: null, svg: {},
-      state: { mode: opts.mode || 'negeri', metrik: 'sokongan', negeriTapis: '', pdmNegeri: '', pdmBahagian: '', pdmPaparan: 'grid', dipilih: null, rantau: 'semua', dunDipilih: '' }
+      state: { mode: opts.mode || 'negeri', metrik: 'sokongan', negeriTapis: '', pdmNegeri: '', pdmBahagian: '', pdmPaparan: 'peta', dipilih: null, rantau: 'semua', dunDipilih: '' }
     };
     el.classList.add('mpm');
     el.innerHTML =
@@ -600,7 +591,9 @@
     /* ----- data sempadan (poligon) daripada data/ melalui js/geo.js ----- */
     var geoSedia = false, peta = null, lapSemasa = [], zumFn = null, tarikh = 0;
     if (G && typeof root.fetch === 'function') {
-      try { await G.muat(['negeri', 'parlimen']); geoSedia = true; } catch (eg) { inst.geoRalat = eg && eg.message ? eg.message : String(eg); }
+      for (var cuba = 0; cuba < 2 && !geoSedia; cuba++) {                       // cuba sekali lagi jika rangkaian tersekat
+        try { await G.muat(['negeri', 'parlimen']); geoSedia = true; } catch (eg) { inst.geoRalat = eg && eg.message ? eg.message : String(eg); }
+      }
     }
     inst.geoSedia = geoSedia;
     if (geoSedia) { st.pdmPaparan = 'peta'; }
@@ -677,7 +670,6 @@
         }).join('') : '') + '</select></label>';
         var pp = [];
         if (geoSedia) { pp.push(['peta', 'Peta']); }
-        pp.push(['grid', 'Grid']);
         if (adaSvg(st.pdmBahagian)) { pp.push(['svg', 'Peta SVG']); }
         if (pp.length > 1) {
           h += '<div class="mpm-seg" role="group" aria-label="Jenis paparan PDM">' + pp.map(function (x) {
@@ -700,36 +692,21 @@
       }).join('') + (rumah0.cawangan ? '<span>★ Kawasan anda</span>' : '');
     }
 
-    function jubin(nod, kelas, dalam, extra) {
-      var t = tahapNod(nod), rm = M.rumah && (M.rumah[nod.tahap] === nod);
+    /** Satu baris senarai (menggantikan jubin): nama, bar dan peratus. */
+    function jubin(nod) {
+      var t = tahapNod(nod), rm = M.rumah && (M.rumah[nod.tahap] === nod), n = nilaiMetrik(nod);
       var pilih = st.dipilih && st.dipilih.tahap === nod.tahap && st.dipilih.id === nod.id;
-      return '<button type="button" class="mpm-tile ' + kelas + (rm ? ' is-rumah' : '') + '" data-act="pilih" data-tahap="' + nod.tahap +
-        '" data-id="' + esc(nod.id) + '" data-level="' + t.indeks + '" style="background:' + t.warna + (extra || '') + '" aria-pressed="' + !!pilih +
-        '" aria-label="' + esc(nod.nama + ': ' + nilaiMetrik(nod) + '%, ' + t.label + (rm ? ', kawasan anda' : '')) + '" title="' + esc(nod.nama + ' (' + nilaiMetrik(nod) + '%)') + '">' + dalam + '</button>';
+      var nama = (nod.tahap === 'bahagian' ? 'P.' + nod.kod + ' ' : nod.tahap === 'cawangan' ? nod.kod + ' ' : '') + (nod.nama || '');
+      return '<button type="button" class="mpm-baris' + (rm ? ' is-rumah' : '') + '" data-act="pilih" data-tahap="' + nod.tahap + '" data-id="' + esc(nod.id) +
+        '" data-level="' + t.indeks + '" aria-pressed="' + !!pilih + '" aria-label="' + esc(nod.nama + ': ' + n + '%, ' + t.label + (rm ? ', kawasan anda' : '')) +
+        '" title="' + esc(nod.nama + ' (' + n + '%)') + '"><span class="mpm-b-nama">' + esc(nama) + '</span><span class="mpm-b-bar"><i style="width:' + clamp(n, 0, 100) + '%;background:' + t.warna +
+        '"></i></span><span class="mpm-b-nilai">' + n + '%</span></button>';
     }
 
-    function stageNegeri() {
-      var h = '<p class="mpm-nota">Peta jubin: kedudukan negeri dilukis mengikut geografi, saiz dilaraskan sama.</p><div class="mpm-negeri">';
-      M.negeri.filter(function (n) { return n.pos; }).forEach(function (n) {
-        var pos = 'grid-column:' + (n.pos[0] + 1) + ';grid-row:' + (n.pos[1] + 1) + ';';
-        if (!n.adaData) {
-          h += '<div class="mpm-tile is-kosong" style="' + pos + '" title="Tiada data"><span class="mpm-t-nama"><span class="f">' + esc(n.nama) + '</span><span class="s">' + n.pendek + '</span></span><span class="mpm-t-nilai">tiada data</span></div>';
-        } else {
-          h += jubin(n, 'mpm-tile--negeri', '<span class="mpm-t-nama"><span class="f">' + esc(n.nama) + '</span><span class="s">' + n.pendek + '</span></span><span class="mpm-t-nilai">' + nilaiMetrik(n) + '%</span>', ';' + pos);
-        }
-      });
-      return h + '</div>';
-    }
-
-    function stageBahagian() {
-      var senarai = M.negeri.filter(function (n) { return n.bahagian.length && (!st.negeriTapis || n.id === st.negeriTapis); });
-      if (!senarai.length) { return '<div class="mpm-status">Tiada data bahagian.</div>'; }
-      return senarai.map(function (n) {
-        return '<section class="mpm-sek"><h3>' + esc(n.nama) + ' <small>' + n.bahagian.length + ' bahagian · ' + nilaiMetrik(n) + '%</small></h3><div class="mpm-grid">' +
-          n.bahagian.map(function (b) {
-            return jubin(b, '', '<span class="mpm-t-nama">P.' + esc(b.kod) + '</span><span class="mpm-t-nilai">' + nilaiMetrik(b) + '%</span>');
-          }).join('') + '</div></section>';
-      }).join('');
+    /** Peta poligon tidak dapat dimuatkan: tiada peta jubin sebagai ganti. */
+    function stageRalat() {
+      return '<div class="mpm-status" role="alert"><strong>Peta sempadan tidak dapat dimuatkan.</strong><br>' + esc(inst.geoRalat || 'Fail dalam folder data/ tidak ditemui.') +
+        '<br><button type="button" class="btn btn--gold btn--sm" data-act="ulang-peta" style="margin-top:10px">Cuba Lagi</button></div>';
     }
 
     function stagePdm() {
@@ -743,11 +720,11 @@
         return '<p class="mpm-nota">P.' + esc(b.kod) + ' ' + esc(b.nama) + ' — peta SVG kustom. <span data-svgstat></span></p><div class="mpm-svgwrap" data-svgwrap><div class="mpm-status" role="status">Memuatkan peta SVG...</div></div>';
       }
       if (!b.cawangan.length) { return '<div class="mpm-status">Tiada cawangan dalam bahagian ini.</div>'; }
-      return '<p class="mpm-nota">P.' + esc(b.kod) + ' ' + esc(b.nama) + ' — ' + fmt(b.cawangan.length) + ' cawangan. Muatkan SVG kustom dengan <code>loadCustomPDMMap()</code>.</p>' +
+      return '<p class="mpm-nota">P.' + esc(b.kod) + ' ' + esc(b.nama) + ' — ' + fmt(b.cawangan.length) + ' cawangan (sempadan DUN tidak tersedia, senarai dipaparkan).</p>' +
         b.dun.filter(function (d) { return d.cawangan.length; }).map(function (d) {
           return '<section class="mpm-sek"><h3>' + esc(d.nama) + ' <small>' + d.cawangan.length + ' cawangan</small></h3><div class="mpm-grid">' +
             d.cawangan.map(function (c) {
-              return jubin(c, '', '<span class="mpm-t-nama">' + esc(c.kod) + '</span><span class="mpm-t-nilai">' + nilaiMetrik(c) + '%</span>');
+              return jubin(c);
             }).join('') + '</div></section>';
         }).join('');
     }
@@ -1017,7 +994,7 @@
       return duns.map(function (d) {
         return '<section class="mpm-sek"><h3>' + esc(d.nama) + ' <small>' + d.cawangan.length + ' cawangan</small></h3><div class="mpm-grid">' +
           d.cawangan.map(function (c) {
-            return jubin(c, '', '<span class="mpm-t-nama">' + esc(c.kod) + '</span><span class="mpm-t-nilai">' + nilaiMetrik(c) + '%</span>');
+            return jubin(c);
           }).join('') + '</div></section>';
       }).join('');
     }
@@ -1040,7 +1017,7 @@
 
     function renderStage() {
       var aktifId = doc.activeElement && doc.activeElement.getAttribute ? doc.activeElement.getAttribute('data-id') : null;
-      $stage.innerHTML = geoSedia && (st.mode === 'negeri' || st.mode === 'bahagian') ? stagePoligon() : (st.mode === 'negeri' ? stageNegeri() : st.mode === 'bahagian' ? stageBahagian() : stagePdm());
+      $stage.innerHTML = st.mode === 'pdm' ? (geoSedia || adaSvg(st.pdmBahagian) ? stagePdm() : stageRalat()) : (geoSedia ? stagePoligon() : stageRalat());
       if ($stage.querySelector('[data-kanvas]')) { isiKanvas().catch(function (e) { $stage.innerHTML = '<div class="mpm-status">Peta tidak dapat dilukis: ' + esc(e && e.message ? e.message : e) + '</div>'; }); }
       if (st.mode === 'pdm' && st.pdmPaparan === 'svg') { isiSvg(); }
       if (aktifId) { var f = $stage.querySelector('[data-id="' + (root.CSS && root.CSS.escape ? root.CSS.escape(aktifId) : aktifId) + '"]'); if (f) { f.focus({ preventScroll: true }); } }
@@ -1052,7 +1029,7 @@
         t.classList.toggle('is-pilih', on);
         if (on && t.parentNode && t.parentNode.lastChild !== t) { t.parentNode.appendChild(t); }
       });
-      Array.prototype.forEach.call($stage.querySelectorAll('.mpm-tile[data-id]'), function (t) {
+      Array.prototype.forEach.call($stage.querySelectorAll('.mpm-baris[data-id]'), function (t) {
         t.setAttribute('aria-pressed', String(!!st.dipilih && t.getAttribute('data-id') === st.dipilih.id && t.getAttribute('data-tahap') === st.dipilih.tahap));
       });
       warnaSvg();
