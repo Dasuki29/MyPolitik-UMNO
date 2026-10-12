@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /* ==========================================================================
-   MyPolitik: UMNO — tools/build-geo.js
+   Nusa Politik — tools/build-geo.js
    Skrip PENGIMPORT sekali jalan (offline, Node 16+, tiada pakej luar).
 
    Membaca fail mentah dalam data-sumber/ (GeoJSON sempadan + CSV banci DOSM)
-   dan menghasilkan fail ringan untuk pelayar dalam assets/geo/:
+   dan menghasilkan fail ringan untuk pelayar dalam data/:
 
      negeri.json     16 kawasan   (sempadan negeri / wilayah persekutuan)
      parlimen.json   222 kawasan  (= Bahagian dalam permainan)
@@ -16,7 +16,7 @@
    dan menghasilkan dm-<kodNegeri>.json (cth. dm-10.json untuk Selangor). Fail ini mengandungi
    BILANGAN PEMILIH SEBENAR (bukan anggaran). Tambah negeri lain dengan menambah satu baris.
 
-   Selepas itu commit assets/geo/*.json. Fail mentah tidak perlu dihantar ke GitHub Pages.
+   Selepas itu commit data/*.json. Fail mentah tidak perlu dihantar ke GitHub Pages.
 
    Sempadan dipermudahkan (Douglas-Peucker) dan diunjurkan ke koordinat integer
    (1000 unit = 1 darjah). Laluan disimpan sebagai SVG path relatif ("M x y l dx dy ... z").
@@ -35,7 +35,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SUMBER = path.join(__dirname, '..', 'data-sumber');
-const KELUAR = path.join(__dirname, '..', 'assets', 'geo');
+const KELUAR = path.join(__dirname, '..', 'data');
 
 /* ---- Tetapan ---- */
 const UNIT_PER_DARJAH = 1000;

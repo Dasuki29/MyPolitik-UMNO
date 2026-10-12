@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/data.js
+   Nusa Politik — js/data.js
    1. Ambil data Parlimen / DUN / Lokaliti daripada Google Sheets (Published CSV)
       dengan async/await. Ada cache terakhir dan data contoh jika tiada internet.
    2. Jana ahli cawangan (Lokaliti) secara automatik, minimum 50 orang,

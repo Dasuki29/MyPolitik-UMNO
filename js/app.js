@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/app.js
+   Nusa Politik — js/app.js
    Borang pendaftaran di index.html:
    - muat data Google Sheets (js/data.js)
    - dropdown 4 peringkat: Negeri > Bahagian (Parlimen) > DUN > Cawangan (Lokaliti)
@@ -257,7 +257,8 @@
     var demografik = D.tentukanDemografi(v.jantina, v.umur);
     if (!demografik) { setError('umur', 'Umur dan jantina tidak sah.'); el.umur.focus(); return; }
 
-    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan, avatar: avatarTerpilih() });
+    var ahliEl = document.getElementById('s-ahli');
+    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan, avatar: avatarTerpilih(), tahunAhli: ahliEl ? ahliEl.value : 0 });
     var hasil = S.savePlayer(profil);
     if (!hasil.ok) { el.formError.textContent = hasil.ralat; return; }
 
@@ -307,7 +308,7 @@
   if (!document.getElementById('btn-tahun')) { return; }
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
-      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
+      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -378,7 +379,7 @@
 
   /** Paparkan peristiwa penting (jawatan, cabaran) sebagai modal, selebihnya toast. */
   async function urusPeristiwa(senarai) {
-    var penting = { jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
+    var penting = { disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
                     fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan' };
@@ -448,7 +449,7 @@
     var seterusnya = E ? E.tahunPemilihanSeterusnya(p.tahun) : p.tahun;
     $('r-tahun-sub').textContent = (tk ? 'Bulan ' + tk.bulan + ' (' + tk.namaBulan + ') · ' : '') + (pem ? 'Pertandingan & kempen dibuka' : 'Perwakilan tahunan dibuka · jawatan ' + seterusnya);
     renderTakwim(p, tk);
-    document.title = p.nama + ' | MyPolitik: UMNO';
+    document.title = p.nama + ' | Nusa Politik';
   }
 
   /* ---------- Takwim bulanan ---------- */
@@ -508,6 +509,7 @@
     if (!mod) { return '<div class="card"><p class="empty">Modul tindakan tidak dimuatkan.</p></div>'; }
     var senarai = mod.senaraiTindakan(p), h = '';
     var tkb = K ? K.getTakwim(p) : null;
+    h += bannerDisiplin(p);
     if (tkb && tkb.bonusAkarUmbi) {
       h += '<div class="banner banner--gold"><strong>Musim Akar Umbi (bulan 1-3)</strong>Setiap tindakan memberi bonus +' + Math.round(tkb.bonusAkarUmbi * 100) + '% IP dan kesetiaan. Manfaatkan sebelum musim mesyuarat bermula pada bulan 4.</div>';
     }
@@ -553,6 +555,41 @@
   }
 
   /** Kad "Jawatan & Mandat": semua jawatan dipegang (berbilang peringkat) dan mandat perwakilan tahun ini. */
+  /** Banner status disiplin: siasatan, gantung, larangan, pecat (Fasal 20). */
+  function bannerDisiplin(p) {
+    if (!ET) { return ''; }
+    var r = ET.ringkasan(p), h = '';
+    if (r.status === 'dipecat') {
+      h += '<div class="banner banner--warn" role="alert"><strong>Keahlian anda dipecat</strong>' + esc(r.hukuman ? r.hukuman.perkara : '') + '. Semua jawatan hilang dan hak keahlian ditarik (Fasal 20.10d). ' +
+        (r.rayuan && r.rayuan.boleh ? '<button type="button" class="btn btn--gold btn--sm" data-act="rayu" style="margin-top:8px">Hantar Rayuan Pemecatan</button>' : esc(r.rayuan ? r.rayuan.sebab : '')) + '</div>';
+    } else if (r.status === 'digantung') {
+      h += '<div class="banner banner--warn" role="alert"><strong>Hak keahlian digantung</strong>Anda tidak boleh bertanding, berkempen atau menyertai mesyuarat sehingga bulan ' + esc(r.hukuman ? r.hukuman.tamatBulan + '/' + r.hukuman.tamatTahun : '') + ' (Fasal 20.10b). Anda masih boleh berkhidmat kepada masyarakat untuk membina Modal Sosial.</div>';
+    } else if (r.status === 'dilarang') {
+      h += '<div class="banner banner--warn" role="alert"><strong>Dilarang bertanding jawatan</strong>Sehingga bulan ' + esc(r.hukuman ? r.hukuman.tamatBulan + '/' + r.hukuman.tamatTahun : '') + ' (Fasal 20.10c). Anda masih boleh menjadi perwakilan dan berkhidmat.</div>';
+    }
+    if (r.siasatan) {
+      h += '<div class="banner banner--warn" role="alert"><strong>Dalam siasatan Jawatankuasa Disiplin</strong>' + esc(r.siasatan.perkara) + '. ' +
+        (r.siasatan.fasa === 'aduan' ? 'Aduan telah diterima; pendengaran bulan depan (Fasal 20.5).' : 'Pendengaran sedang dijalankan; keputusan bulan depan.') + '</div>';
+    }
+    return h;
+  }
+
+  function kadEtika(p) {
+    if (!ET) { return ''; }
+    var r = ET.ringkasan(p), cfg = ET.CONFIG;
+    function bar(nilai, kelas, label) { return '<div class="kv"><span>' + label + '</span><b>' + nilai + '%</b></div><div class="meter meter--' + kelas + '" role="progressbar" aria-valuenow="' + nilai + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + nilai + '%"></i></div>'; }
+    var h = '<section class="card etika"><h2 class="card__title" style="margin:0 0 4px">Tataetika &amp; Tempoh Keahlian</h2>';
+    h += '<p class="note">Kempen bersih membina <b>Modal Sosial</b> (kekuatan undi +' + r.bonusUndi + ') dan menurunkan risiko dilapor. Politik wang, fitnah dan ugutan melanggar Tataetika Ahli UMNO dan boleh dihukum Lembaga Disiplin (Fasal 20.10): amaran, gantung, dilarang bertanding atau dipecat.</p>';
+    h += bar(r.modal, 'baik', 'Modal Sosial') + bar(r.risiko, r.risiko >= 45 ? 'bahaya' : r.risiko >= 20 ? 'amaran' : 'baik', 'Risiko Disiplin (' + r.labelRisiko + ')');
+    h += '<div class="kv"><span>Tempoh keahlian</span><b class="' + (r.cukup3Tahun ? 'text-gold' : '') + '">' + Math.floor(r.bulanKeahlian / 12) + ' tahun ' + (r.bulanKeahlian % 12) + ' bulan' + (r.cukup3Tahun ? '' : ' (perlu 3 tahun untuk Bahagian, Fasal 15.5)') + '</b></div>';
+    h += '<div class="kv"><span>Rekod disiplin</span><b>' + r.salah + ' hukuman' + (r.amaran ? ' · ' + r.amaran + ' amaran' : '') + '</b></div>';
+    if (r.rekod && r.rekod.length) {
+      h += '<details class="note" style="margin-top:6px"><summary>Sejarah disiplin</summary><ul style="margin:6px 0 0;padding-left:18px">' +
+        r.rekod.slice(0, 6).map(function (x) { return '<li>' + esc(x.bulan + '/' + x.tahun + ': ' + x.mesej) + '</li>'; }).join('') + '</ul></details>';
+    }
+    return h + '</section>';
+  }
+
   function kadJawatan(p) {
     if (!J) { return ''; }
     var senarai = J.ringkas(p), pc = J.perwakilanSah(p, 'cawangan'), pb = J.perwakilanSah(p, 'bahagian');
@@ -602,7 +639,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += kadJawatan(p);
+    h += bannerDisiplin(p) + kadEtika(p) + kadJawatan(p);
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
@@ -627,8 +664,11 @@
     st.kempen.forEach(function (k) {
       var boleh = k.boleh && (!k.perluKod || !!state.kodSimulasi);
       var sebab = !k.boleh ? k.sebab : (k.perluKod && !state.kodSimulasi ? 'Daftar bertanding dahulu.' : '');
-      h += '<button type="button" class="choice" data-act="kempen" data-id="' + esc(k.id) + '" data-fk="k:' + esc(k.id) + '"' + (boleh ? '' : ' disabled') + '>' +
-        '<span class="choice__title">' + esc(k.nama) + '</span><span class="choice__desc">' + esc(k.penerangan) + '</span>' +
+      var tag = k.tahap === 'bersih' ? '<span class="badge badge--bersih">Bersih · +' + k.modalSosial + ' Modal Sosial</span>'
+        : k.tahap === 'kotor' ? '<span class="badge badge--kotor">Risiko disiplin ~' + k.peluangLapor + '%</span>'
+        : k.tahap === 'kelabu' ? '<span class="badge badge--kelabu">Zon kelabu ~' + k.peluangLapor + '%</span>' : '';
+      h += '<button type="button" class="choice choice--' + esc(k.tahap || 'neutral') + '" data-act="kempen" data-id="' + esc(k.id) + '" data-fk="k:' + esc(k.id) + '"' + (boleh ? '' : ' disabled') + '>' +
+        '<span class="choice__title">' + esc(k.nama) + ' ' + tag + '</span><span class="choice__desc">' + esc(k.penerangan) + '</span>' +
         '<span class="choice__fx">' + fx(k.ringkas) + (k.maksKali ? '<span class="badge">' + k.kali + '/' + k.maksKali + ' kali</span>' : '') + '</span>' +
         (sebab ? '<span class="choice__desc" style="color:var(--danger)">' + esc(sebab) + '</span>' : '') + '</button>';
     });
@@ -890,6 +930,7 @@
     if (r.tahunBaharu) { state.kodSimulasi = ''; }
     render();
     toast(r.mesej, 'ok');
+    if (ET) { var dis = ET.prosesBulan(); r.peristiwa = (r.peristiwa || []).concat(dis.peristiwa || []); if (dis.berubah) { render(); } }
     var pBaru = S.loadPlayer();
     if (I && pemegang(pBaru)) {                                    // semakan kesetiaan bulanan
       var a = I.semakAmaranKesetiaan();
@@ -942,7 +983,13 @@
     }
     else if (act === 'kempen') {
       var r = E.jalankanKempen(t.getAttribute('data-id'), { kod: state.kodSimulasi || undefined });
-      state.mesej.kempen = r.ok ? esc(r.mesej) : ''; render(); lapor(r);
+      state.mesej.kempen = r.ok ? esc(r.mesej) : ''; render();
+      if (r.ok && r.dilapor) { r.peristiwa = [{ jenis: 'disiplin', mesej: r.mesej }]; r.mesej = null; toast('Aduan disiplin dibuat terhadap anda.', 'ralat'); }
+      lapor(r, r.dilapor);
+    }
+    else if (act === 'rayu') {
+      var ry = ET.rayuPemecatan(); render();
+      if (!ry.ok) { toast(ry.ralat, 'ralat'); } else { modal({ tajuk: 'Rayuan Diterima', isi: '<p>' + esc(ry.mesej) + '</p>' }); }
     }
     else if (act === 'mula') { var m = M.mulaMesyuarat(lvl); if (!m.ok) { toast(m.ralat, 'ralat'); } else { toast('Mesyuarat dimulakan.', 'ok'); } render(); }
     else if (act === 'peranan') {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/avatar.js
+   Nusa Politik — js/avatar.js
    Avatar watak (SVG asli, dilukis dengan kod): Pemuda, Puteri, Wanita, Veteran.
      MyPolitikAvatar.LIST                        senarai { kod, label, penerangan }
      MyPolitikAvatar.svg('pemuda', {saiz:96})    penanda SVG (string)

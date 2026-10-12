@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/events.js
+   Nusa Politik — js/events.js
    Sistem Acara Rawak (Random Event Pop-Up).
 
    Cetusan
@@ -30,6 +30,8 @@
   root.MyPolitikEvents = api;
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (S, root) {
   'use strict';
+
+  function etika() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikEtika) { return g.MyPolitikEtika; } try { return typeof require === 'function' ? require('./etika.js') : null; } catch (e) { return null; } }
 
   var KEY = 'myPolitik_events';
 
@@ -210,6 +212,70 @@
             { peluang: 0.4, kesan: { ip: -6, reputasi: -2 }, mesej: 'Anda tersilap kata dan ayat itu dipotong untuk tajuk berita.' } ], kesan: {} },
         { id: 'c', label: 'Tolak temu bual', huraian: 'Tiada komen.', kesan: {}, mesej: 'Wartawan mencari tokoh lain.' }
       ]
+    },
+
+    /* --- Tataetika & Disiplin (Perlembagaan Fasal 20; Tataetika Ahli UMNO 2025) --- */
+    {
+      id: 'tawaran_wang_politik', kategori: 'politik', ikon: '💰', tajuk: 'Tawaran Wang Politik',
+      huraian: 'Seorang taukeh yang rapat dengan Bahagian {bahagian} menghulurkan sampul tebal berisi RM 5,000 "untuk membantu kempen anda", dengan syarat anda memberi laluan kepada projeknya kelak. Tiada siapa lain melihat.',
+      syarat: function (p) { return p.jawatan !== 'Ahli Biasa' || p.ip >= 40; },
+      berat: function (p) { return (p.tahun - 2026) % 3 === 0 && p.bulan >= 3 && p.bulan <= 8 ? 2.5 : 0.5; },
+      pilihan: [
+        { id: 'a', label: 'Terima sampul itu', huraian: 'Dana segera, tetapi ini rasuah politik.', kesan: { myr: 5000, kesetiaan: { ajk: 4 } },
+          etika: { modal: -12, risiko: 30, lapor: { peluang: 25, berat: 3, perkara: 'Menerima wang bagi mendapatkan sokongan dan kontrak (Tataetika Perkara 5.1.3, 6.1)', fasal: 'Fasal 20.13' } },
+          mesej: 'Anda menyimpan sampul itu. Wang masuk, tetapi anda kini berhutang budi, dan ramai yang boleh bersuara kelak.' },
+        { id: 'b', label: 'Tolak dan laporkan kepada Setiausaha Bahagian', huraian: 'Jujur dan selamat. Dikenang oleh akar umbi.', kesan: { ap: -1, ip: 6, reputasi: 4 },
+          etika: { modal: 8, risiko: -10 }, mesej: 'Anda menolak dan melaporkan dengan jelas. Berita integriti anda tersebar dengan baik.' },
+        { id: 'c', label: 'Tolak dengan sopan', huraian: 'Tiada kos.', kesan: {}, etika: { modal: 3 }, mesej: 'Taukeh itu beredar kecewa. Nama anda kekal bersih.' }
+      ]
+    },
+    {
+      id: 'aduan_tataetika_palsu', kategori: 'politik', ikon: '📨', tajuk: 'Fitnah: Dituduh Beri Wang Undi',
+      huraian: 'Lawan anda menyebar mesej bahawa anda "membeli undi". Tuduhan itu tidak benar, tetapi sudah dikongsi dalam kumpulan WhatsApp Bahagian.',
+      syarat: function (p) { return p.ip >= 30; },
+      berat: function (p) { return (p.tahun - 2026) % 3 === 0 ? 1.5 : 0.4; },
+      pilihan: [
+        { id: 'a', label: 'Kemukakan penafian rasmi kepada JK Disiplin (AP)', huraian: 'Ikut saluran parti (Fasal 20.5).', kesan: { ap: -2, reputasi: 3 }, etika: { modal: 4, risiko: -8 },
+          mesej: 'Jawatankuasa Disiplin menerima penafian anda dan memberi peringatan kepada penyebar fitnah.' },
+        { id: 'b', label: 'Balas di media sosial', huraian: 'Memuaskan hati, tetapi anda pun melanggar Tataetika.', kesan: { ip: 4, reputasi: -3 },
+          etika: { modal: -4, risiko: 12, lapor: { peluang: 14, berat: 1, perkara: 'Membalas fitnah di media sosial secara terbuka (Tataetika Perkara 5.3)', fasal: 'Tataetika 5.3' } },
+          mesej: 'Balasan anda viral. Sokongan padu, namun ada yang mengadu kepada parti.' },
+        { id: 'c', label: 'Abaikan', huraian: 'Biar masa menjawab.', kesan: { ip: -3 }, etika: { modal: -2 }, mesej: 'Desas-desus terus berlegar dan sebahagian ahli mula ragu.' }
+      ]
+    },
+    {
+      id: 'kenduri_kahwin_kempen', kategori: 'politik', ikon: '🍛', tajuk: 'Kenduri Kahwin Anak Ketua Cawangan',
+      huraian: 'Anda dijemput ke kenduri kahwin di Cawangan {cawangan}. Ramai perwakilan hadir. Ada yang mengajak anda "bercakap sedikit" kepada para tetamu.',
+      berat: function (p) { return (p.tahun - 2026) % 3 === 0 ? 1.5 : 0.6; },
+      pilihan: [
+        { id: 'a', label: 'Hadir, bersalam, tidak berucap', huraian: 'Tunjuk muka sebagai jiran.', kesan: { ip: 4, kesetiaan: { akarUmbi: 3 } }, etika: { modal: 3 },
+          mesej: 'Anda dihormati kerana hadir tanpa berkempen.' },
+        { id: 'b', label: 'Berucap meraih undi', huraian: 'Cepat dikenali, tetapi melanggar Tataetika Perkara 5.6.', kesan: { ip: 10, kesetiaan: { akarUmbi: 6, ajk: 3 } },
+          etika: { modal: -3, risiko: 10, lapor: { peluang: 10, berat: 1, perkara: 'Berucap meraih undi di majlis kenduri (Tataetika Perkara 5.6)', fasal: 'Tataetika 5.6' } },
+          mesej: 'Ucapan anda disambut. Seorang tetamu merakam sebahagiannya.' },
+        { id: 'c', label: 'Tidak hadir', huraian: 'Hantar salam sahaja.', kesan: { ip: -2, kesetiaan: { akarUmbi: -2 } }, mesej: 'Ada yang berkecil hati.' }
+      ]
+    },
+    {
+      id: 'program_integriti', kategori: 'politik', ikon: '🎓', tajuk: 'Jemputan Program Integriti Ahli',
+      huraian: 'Badan Perhubungan Negeri menganjurkan program Tataetika Ahli dan integriti di {dun}. Anda diminta mewakili Cawangan {cawangan}.',
+      berat: 0.8,
+      pilihan: [
+        { id: 'a', label: 'Hadir dan jadi panel (AP)', huraian: 'Bina imej bersih.', kesan: { ap: -2, ip: 6, reputasi: 3 }, etika: { modal: 8, risiko: -12 }, mesej: 'Anda dikenali sebagai ahli yang berprinsip. Risiko dilapor merosot.' },
+        { id: 'b', label: 'Hantar wakil', huraian: 'Kos kecil.', kesan: { ap: -1, ip: 2 }, etika: { modal: 2 }, mesej: 'Cawangan hadir, tetapi anda tidak kelihatan.' },
+        { id: 'c', label: 'Abaikan', huraian: 'Tiada kos.', kesan: {}, mesej: 'Jemputan tidak dibalas.' }
+      ]
+    },
+    {
+      id: 'pendengaran_disiplin', kategori: 'politik', ikon: '⚖️', tajuk: 'Pendengaran Jawatankuasa Disiplin',
+      huraian: 'Anda dipanggil Jawatankuasa Disiplin berhubung aduan terhadap anda. Keputusan akan dibuat bulan depan (Fasal 20.4 dan 20.5). Bagaimana anda mahu bertindak?',
+      syarat: function (p) { return !!(p.etika && p.etika.siasatan && p.etika.siasatan.fasa === 'pendengaran' && !p.etika.siasatan.dijawab); },
+      berat: function (p) { return p.etika && p.etika.siasatan && p.etika.siasatan.fasa === 'pendengaran' && !p.etika.siasatan.dijawab ? 1000 : 0; },
+      pilihan: [
+        { id: 'a', label: 'Kemukakan pembelaan bertulis dan saksi (AP)', huraian: 'Peluang terbaik mengurangkan hukuman.', kesan: { ap: -2 }, pendengaran: 'pembelaan', mesej: 'Pembelaan anda dikemukakan dengan teratur. Jawatankuasa mencatatnya.' },
+        { id: 'b', label: 'Akui kesilapan dan mohon maaf', huraian: 'Sikap jujur sedikit meringankan.', kesan: { reputasi: 2 }, pendengaran: 'akur', mesej: 'Anda mengakui dan memohon maaf. Jawatankuasa mengambil kira keikhlasan anda.' },
+        { id: 'c', label: 'Ugut bawa ke mahkamah awam', huraian: 'Fasal 20.7: membawa perkara parti ke mahkamah sebelum mematuhi peraturan parti menggugurkan keahlian.', kesan: {}, pendengaran: 'mahkamah', mesej: 'Anda mengancam mahkamah. Jawatankuasa mencatat bahawa anda telah melanggar Fasal 20.7.' }
+      ]
     }
   ];
 
@@ -301,6 +367,8 @@
     var rng = opts.rng || Math.random, d = muatUntuk(p);
     if (d.tertunggak) { return papar(d.tertunggak, p); }          // satu acara pada satu masa
 
+    var wajib = !opts.paksa ? ACARA.filter(function (x) { return beratAcara(x, p) >= 1000; })[0] : null;   // cth. pendengaran disiplin
+    if (wajib) { opts.paksa = wajib.id; }
     var kunciBulan = p.tahun + '-' + p.bulan;
     if (opts.pencetus === 'aktiviti' && (d.kiraBulan[kunciBulan] || 0) >= CONFIG.MAKS_AKTIVITI_SEBULAN) { return null; }
     if (!opts.paksa && !opts.abaikanPeluang) {
@@ -363,11 +431,15 @@
       mesej = pilihanHasil.mesej || mesej;
     }
 
+    var Et = etika(), eo = Et && c.etika ? Et.selepasAcara(p, c.etika, { rng: rng }) : null;
     var res = S.applyEffects(kesan, {
       kiraTindakan: false,
+      patch: eo ? { etika: eo.etika } : undefined,
       log: { tindakan: 'acara:' + t.id, acara: t.tajuk, pilihan: c.label }
     });
     if (!res.ok) { return { ok: false, kod: res.kod, ralat: res.ralat }; }   // cth AP/Dana tidak cukup: acara kekal menunggu
+    if (Et && c.pendengaran) { Et.responsPendengaran(c.pendengaran); }
+    if (eo && eo.mesej) { mesej += eo.mesej; }
 
     d.tertunggak = null; simpan(d);
     return {

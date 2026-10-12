@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — style.css
+   Nusa Politik — style.css
    Tema: Merah UMNO + Emas + Putih, Dark Mode UI
    Pendekatan: mobile-first (asas = skrin kecil). Peningkatan skrin besar
    berada dalam responsive.css.
@@ -931,3 +931,45 @@ option { background: var(--bg-elev-2); color: var(--text); }
 .mini-legend b { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .mini-legend span { color: var(--white); font-weight: 600; margin-right: 4px; }
 .career-ladder li { position: relative; }
+
+/* ---- v3.5: logo header lebih seimbang ---- */
+.brand { gap: 10px; }
+.brand__img { width: 40px; height: 40px; padding: 3px; border-radius: 12px; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.brand > span { font-weight: 800; letter-spacing: .01em; }
+@media (max-width: 480px) { .brand__img { width: 34px; height: 34px; } }
+
+/* ---- v3.5: kad Lagu Rasmi & Pemain Audio (Spotify) ---- */
+.lagu { position: relative; overflow: hidden; }
+.lagu__kepala { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
+.lagu__ikon { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(30,215,96,.14); color: #1ED760; }
+.lagu__ikon svg { width: 18px; height: 18px; }
+.lagu__tajuk { flex: 1; min-width: 0; margin: 0; font: 700 .95rem var(--font-body, inherit); color: var(--white, #fff); line-height: 1.25; }
+.lagu__tajuk small { display: block; font-weight: 500; font-size: .74rem; color: var(--text-muted, #A3A9B8); }
+.lagu__tog { flex: none; font-size: .8rem; color: var(--gold, #F5B800); transition: transform .2s; }
+.lagu.is-buka .lagu__tog { transform: rotate(180deg); }
+.lagu__badan { margin-top: 12px; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,.25); min-height: 152px; }
+.lagu__badan[hidden] { display: none; }
+.lagu__badan iframe { display: block; width: 100%; height: 152px; border: 0; border-radius: 12px; color-scheme: normal; }
+.lagu__nota { margin: 10px 2px 0; font-size: .72rem; line-height: 1.45; color: var(--text-muted, #A3A9B8); }
+/* Dashboard: panel terapung bawah header */
+.lagu-btn { display: inline-flex; align-items: center; gap: 6px; }
+.lagu-btn svg { width: 14px; height: 14px; color: #1ED760; }
+.lagu-pop { position: fixed; z-index: 60; top: 64px; right: 16px; width: min(380px, calc(100vw - 32px)); box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+.lagu-pop[hidden] { display: none; }
+@media (max-width: 600px) { .lagu-btn span { display: none; } .lagu-pop { top: 58px; right: 16px; left: 16px; width: auto; } }
+/* v3.5: lambang pada hero perlu latar cerah supaya merah logo jelas */
+.hero__emblem { background: rgba(255,255,255,.95) !important; box-shadow: 0 6px 18px rgba(0,0,0,.35) !important; }
+.lagu__kepala[hidden]{display:none}.lagu-pop .lagu__badan{margin-top:0}
+
+/* ---- v3.6: Tataetika & Disiplin ---- */
+.etika .meter { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; margin: 2px 0 10px; }
+.etika .meter > i { display: block; height: 100%; border-radius: inherit; background: var(--gold, #F5B800); transition: width .3s; }
+.etika .meter--baik > i { background: #34C27A; }
+.etika .meter--amaran > i { background: #F5B800; }
+.etika .meter--bahaya > i { background: #E5484D; }
+.badge--bersih { background: rgba(52,194,122,.16); color: #4FD28F; }
+.badge--kelabu { background: rgba(245,184,0,.15); color: #F5B800; }
+.badge--kotor { background: rgba(229,72,77,.16); color: #FF6B70; }
+.choice--bersih { border-left: 3px solid #34C27A; }
+.choice--kelabu { border-left: 3px solid #F5B800; }
+.choice--kotor { border-left: 3px solid #E5484D; }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>MyPolitik: UMNO | Daftar Pemain</title>
+  <title>Nusa Politik | Daftar Pemain</title>
   <meta name="description" content="Daftar sebagai ahli cawangan UMNO dan mulakan perjalanan politik anda.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
   <!-- INLINE-CSS:START -->
 <style id="inline-css">
 /* ==========================================================================
-   MyPolitik: UMNO — style.css
+   Nusa Politik — style.css
    Tema: Merah UMNO + Emas + Putih, Dark Mode UI
    Pendekatan: mobile-first (asas = skrin kecil). Peningkatan skrin besar
    berada dalam responsive.css.
@@ -945,8 +945,50 @@ option { background: var(--bg-elev-2); color: var(--text); }
 .mini-legend span { color: var(--white); font-weight: 600; margin-right: 4px; }
 .career-ladder li { position: relative; }
 
+/* ---- v3.5: logo header lebih seimbang ---- */
+.brand { gap: 10px; }
+.brand__img { width: 40px; height: 40px; padding: 3px; border-radius: 12px; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.brand > span { font-weight: 800; letter-spacing: .01em; }
+@media (max-width: 480px) { .brand__img { width: 34px; height: 34px; } }
+
+/* ---- v3.5: kad Lagu Rasmi & Pemain Audio (Spotify) ---- */
+.lagu { position: relative; overflow: hidden; }
+.lagu__kepala { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
+.lagu__ikon { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(30,215,96,.14); color: #1ED760; }
+.lagu__ikon svg { width: 18px; height: 18px; }
+.lagu__tajuk { flex: 1; min-width: 0; margin: 0; font: 700 .95rem var(--font-body, inherit); color: var(--white, #fff); line-height: 1.25; }
+.lagu__tajuk small { display: block; font-weight: 500; font-size: .74rem; color: var(--text-muted, #A3A9B8); }
+.lagu__tog { flex: none; font-size: .8rem; color: var(--gold, #F5B800); transition: transform .2s; }
+.lagu.is-buka .lagu__tog { transform: rotate(180deg); }
+.lagu__badan { margin-top: 12px; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,.25); min-height: 152px; }
+.lagu__badan[hidden] { display: none; }
+.lagu__badan iframe { display: block; width: 100%; height: 152px; border: 0; border-radius: 12px; color-scheme: normal; }
+.lagu__nota { margin: 10px 2px 0; font-size: .72rem; line-height: 1.45; color: var(--text-muted, #A3A9B8); }
+/* Dashboard: panel terapung bawah header */
+.lagu-btn { display: inline-flex; align-items: center; gap: 6px; }
+.lagu-btn svg { width: 14px; height: 14px; color: #1ED760; }
+.lagu-pop { position: fixed; z-index: 60; top: 64px; right: 16px; width: min(380px, calc(100vw - 32px)); box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+.lagu-pop[hidden] { display: none; }
+@media (max-width: 600px) { .lagu-btn span { display: none; } .lagu-pop { top: 58px; right: 16px; left: 16px; width: auto; } }
+/* v3.5: lambang pada hero perlu latar cerah supaya merah logo jelas */
+.hero__emblem { background: rgba(255,255,255,.95) !important; box-shadow: 0 6px 18px rgba(0,0,0,.35) !important; }
+.lagu__kepala[hidden]{display:none}.lagu-pop .lagu__badan{margin-top:0}
+
+/* ---- v3.6: Tataetika & Disiplin ---- */
+.etika .meter { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; margin: 2px 0 10px; }
+.etika .meter > i { display: block; height: 100%; border-radius: inherit; background: var(--gold, #F5B800); transition: width .3s; }
+.etika .meter--baik > i { background: #34C27A; }
+.etika .meter--amaran > i { background: #F5B800; }
+.etika .meter--bahaya > i { background: #E5484D; }
+.badge--bersih { background: rgba(52,194,122,.16); color: #4FD28F; }
+.badge--kelabu { background: rgba(245,184,0,.15); color: #F5B800; }
+.badge--kotor { background: rgba(229,72,77,.16); color: #FF6B70; }
+.choice--bersih { border-left: 3px solid #34C27A; }
+.choice--kelabu { border-left: 3px solid #F5B800; }
+.choice--kotor { border-left: 3px solid #E5484D; }
+
 /* ==========================================================================
-   MyPolitik: UMNO — responsive.css
+   Nusa Politik — responsive.css
    Mobile-first: style.css sudah direka untuk telefon. Fail ini
    (a) memperkemas pengalaman telefon (sentuhan, safe-area, bottom sheet)
    (b) menambah susun atur lebih luas dengan min-width.
@@ -1105,10 +1147,10 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 </head>
 <body>
   <header class="app-header">
-    <a class="brand" href="index.html" aria-label="MyPolitik UMNO, laman utama">
-      <img class="brand__img" src="assets/img/logo-umno.png" alt="" width="34" height="34"
-           onerror="this.onerror=null;this.src='assets/img/logo-placeholder.svg'">
-      <span>MyPolitik <span class="brand__sub">UMNO</span></span>
+    <a class="brand" href="index.html" aria-label="Nusa Politik UMNO, laman utama">
+      <img class="brand__img" src="assets/images/logo.png" alt="" width="34" height="34"
+           onerror="this.onerror=null;this.src='assets/images/logo-placeholder.svg'">
+      <span>Nusa Politik <span class="brand__sub">UMNO</span></span>
     </a>
   </header>
   <div class="flagbar" aria-hidden="true"></div>
@@ -1119,8 +1161,8 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
         <div class="hero__copy">
           <div class="hero__top">
             <div class="hero__emblem">
-              <img src="assets/img/logo-umno.png" alt="Logo" width="50" height="50"
-                   onerror="this.onerror=null;this.src='assets/img/logo-placeholder.svg'">
+              <img src="assets/images/logo.png" alt="Logo" width="50" height="50"
+                   onerror="this.onerror=null;this.src='assets/images/logo-placeholder.svg'">
             </div>
             <span class="hero__eyebrow">Simulasi Politik &middot; Tahun 2026</span>
           </div>
@@ -1130,6 +1172,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
             <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>12</b> bulan setahun</span>
             <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 13l9 5 9-5"/></svg><b>3</b> peringkat parti</span>
             <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>Pemilihan <b>sebenar</b></span>
+            <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 21V9l8-6 8 6v12M9 21v-6h6v6"/></svg>PAU di <b>WTC KL</b> &middot; Menara Dato&rsquo; Onn</span>
           </div>
         </div>
         <div class="hero__art" aria-hidden="true">
@@ -1237,6 +1280,18 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
                 <input class="input" id="f-umur" name="umur" type="number" inputmode="numeric" min="18" max="100" placeholder="18 hingga 100" aria-describedby="e-umur" required>
                 <p class="field__error" id="e-umur" role="alert"></p>
               </div>
+              <div class="field" style="grid-column:1/-1">
+                <label for="s-ahli">Menjadi ahli UMNO sejak</label>
+                <select class="select" id="s-ahli" name="tahunAhli" aria-describedby="h-ahli">
+                  <option value="0" selected>Ahli baharu (2026)</option>
+                  <option value="1">1 tahun lalu</option>
+                  <option value="2">2 tahun lalu</option>
+                  <option value="3">3 tahun lalu</option>
+                  <option value="5">5 tahun lalu</option>
+                  <option value="10">10 tahun lalu atau lebih</option>
+                </select>
+                <p class="field__hint" id="h-ahli" style="margin:6px 0 0;font-size:.78rem;color:var(--text-muted)">Calon AJK Bahagian perlu ahli sekurang-kurangnya <b>3 tahun</b> (Fasal 15.5). Ahli baharu layak bertanding di Bahagian pada 2029. Tempoh dihadkan mengikut umur anda.</p>
+              </div>
             </div>
           </fieldset>
 
@@ -1299,6 +1354,15 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
         </form>
 
         <aside class="dashboard-layout__side stack" aria-label="Keadaan permulaan">
+          <section class="card lagu lagu--index" id="kad-lagu" aria-labelledby="lagu-tajuk">
+          <button type="button" class="lagu__kepala" id="lagu-tog" aria-expanded="false" aria-controls="lagu-badan">
+            <span class="lagu__ikon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="lagu__tajuk" id="lagu-tajuk">Lagu Rasmi &amp; Pemain Audio<small>Dengar lagu tema sambil bermain</small></span>
+            <span class="lagu__tog" aria-hidden="true">&#9662;</span>
+          </button>
+          <div class="lagu__badan" id="lagu-badan" data-spotify="6DXCRlgStdHtqYWOxHRWSH" hidden></div>
+          <p class="lagu__nota">Dimainkan melalui Spotify (perlu internet; log masuk Spotify untuk lagu penuh). Senyapkan audio permainan jika bunyi bertindih.</p>
+        </section>
           <section class="stats-panel">
             <h2 class="stats-panel__title">Permulaan anda</h2>
             <div class="preview-avatar" id="preview-avatar" aria-live="polite"></div>
@@ -1323,7 +1387,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
               <li style="--c:#4DA3FF"><b></b><span>B4&ndash;6</span>Mesyuarat &amp; pemilihan Cawangan</li>
               <li style="--c:#F2B705"><b></b><span>B7</span>Mesyuarat &amp; pemilihan Bahagian</li>
               <li style="--c:#E8344F"><b></b><span>B8</span>Perhimpunan Agung (PAU) &amp; Pusat</li>
-              <li style="--c:#A78BFA"><b></b><span>B9&ndash;12</span>Akar umbi &amp; pasca-PAU</li>
+              <li style="--c:#A78BFA"><b></b><span>B9&ndash;12</span>Pasca-PAU &amp; khidmat masyarakat</li>
             </ul>
           </section>
           <section class="stats-panel">
@@ -1341,7 +1405,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
     </div>
   </main>
 
-  <footer class="app-footer">MyPolitik: UMNO. Permainan simulasi, bukan laman rasmi parti.</footer>
+  <footer class="app-footer">Nusa Politik. Permainan simulasi, bukan laman rasmi parti.</footer>
 
   <script>
     /* Sambungan Google Sheets (dicuba mengikut urutan):
@@ -1350,7 +1414,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
          3. salinan tersimpan dalam pelayar, kemudian data contoh.
        musicUrl: laluan fail muzik anda (cth. 'assets/audio/lagu-latar.mp3'). Kosong = gubahan mars asli dijana pelayar. */
     window.MYPOLITIK_CONFIG = {
-      appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzclOJJpv1khUQ5nnRE_hiDmNbL94QbVgdtjWZ70JR3fSpx4tXrV9JPbVZymkokJLeP/exec',
+      appsScriptUrl: '',
       musicUrl: '',
       sheetCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlY24kc_-2p4OtffqnoFRcTiQOGvjd2u-o_QuHkSzWVrYCEQbFTY2jJ8JSdBugsqwP0zS1q897ZS75/pub?output=csv',
       dashboardUrl: 'dashboard.html'
@@ -1360,6 +1424,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
   <script src="js/save.js"></script>
   <script src="js/avatar.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/lagu.js"></script>
   <script src="js/app.js"></script>
   <script>
     /* Penunjuk langkah borang (hiasan sahaja; tidak menjejaskan pengesahan dalam app.js) */

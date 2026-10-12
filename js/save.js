@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/save.js
+   Nusa Politik — js/save.js
    Simpan dan muat profil pemain dalam localStorage (kunci 'myPolitik_player').
    Tiada kebergantungan lain. Semua akses storan dibalut try/catch kerana
    localStorage boleh dilarang (mod peribadi, tetapan pelayar).
@@ -94,6 +94,25 @@
     p.perwakilan.bahagian = parseInt(p.perwakilan.bahagian, 10) || 0;
     p.bilTindakan = Math.max(0, parseInt(p.bilTindakan, 10) || 0);
     p.amaranAktif = !!p.amaranAktif;
+    // v3.6: tempoh keahlian (Fasal 15.5 dsb.), rekod penggal (Fasal 9.5) dan tataetika/disiplin (Fasal 20)
+    var tahunKini = parseInt(p.tahun, 10) || DEFAULTS.tahun;
+    if (!p.keahlian || typeof p.keahlian !== 'object') {
+      p.keahlian = { sejakTahun: tahunKini - 3, sejakBulan: 1, lama: true };   // profil lama: dianggap sudah matang
+    }
+    p.keahlian.sejakTahun = parseInt(p.keahlian.sejakTahun, 10) || tahunKini;
+    p.keahlian.sejakBulan = clamp(parseInt(p.keahlian.sejakBulan, 10) || 1, 1, 12);
+    p.penggalSelesai = !!p.penggalSelesai;
+    var e = p.etika && typeof p.etika === 'object' ? p.etika : {};
+    p.etika = {
+      modal: clamp(Math.round(Number(e.modal)), 0, 100) || (isFinite(Number(e.modal)) ? 0 : 10),
+      risiko: clamp(Math.round(Number(e.risiko)) || 0, 0, 100),
+      salah: Math.max(0, parseInt(e.salah, 10) || 0),
+      amaran: Math.max(0, parseInt(e.amaran, 10) || 0),
+      status: ['baik', 'digantung', 'dilarang', 'dipecat'].indexOf(e.status) >= 0 ? e.status : 'baik',
+      hukuman: e.hukuman || null,
+      siasatan: e.siasatan || null,
+      rekod: Array.isArray(e.rekod) ? e.rekod.slice(0, 20) : []
+    };
     return p;
   }
 
@@ -105,6 +124,12 @@
    *   cawangan: objek cawangan daripada data.js (id, nama, dunNama, bahagianNama, negeri, jumlahAhli, ...)
    * }
    */
+  /** Bilangan tahun sudah menjadi ahli (0 = ahli baharu). Dihadkan mengikut umur (ahli sekurang-kurangnya 18 tahun). */
+  function tahunAhli(n, umur) {
+    var t = Math.max(0, parseInt(n, 10) || 0), u = parseInt(umur, 10) || 0;
+    return u ? Math.min(t, Math.max(0, u - 18)) : t;
+  }
+
   function buildPlayerProfile(input) {
     var c = input.cawangan, d = input.demografik;
     var idPenuh = String(c.idSheet || c.id);      // ID seperti dalam Google Sheets
@@ -131,6 +156,7 @@
       tahun: DEFAULTS.tahun,
       bulan: DEFAULTS.bulan,
       kesetiaan: salin(KESETIAAN_LALAI),
+      keahlian: { sejakTahun: DEFAULTS.tahun - tahunAhli(input.tahunAhli, d.umur), sejakBulan: 1 },
       dicipta: new Date().toISOString()
     });
   }

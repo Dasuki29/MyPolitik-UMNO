@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/audio.js
+   Nusa Politik — js/audio.js
    Pemutar muzik latar belakang (pada semua halaman).
 
    Sumber muzik:

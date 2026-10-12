@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/tutorial.js
+   Nusa Politik — js/tutorial.js
    Mod Tutorial untuk pemain baharu.
 
    1. Tutorial interaktif pertama kali (Quick Onboarding)
@@ -141,14 +141,15 @@
           : 'Anda dalam kategori <b>' + esc(sy.nama) + '</b>. Kategori ini tiada pertandingan Ketua Sayap, tetapi anda masih boleh bertanding AJK Cawangan dan Perwakilan.')
       : 'Pemuda, Puteri dan Wanita mempunyai Ketua Sayap Cawangan masing-masing. Kategori anda ditentukan oleh jantina dan umur semasa pendaftaran.';
     return [
-      { id: 'mula', tajuk: 'Selamat datang ke MyPolitik: UMNO', isi: 'Anda bermula sebagai <b>Ahli Biasa</b> di cawangan anda. Matlamat: bina pengaruh, menang pemilihan, dan naik hingga ke Perhimpunan Agung. Tutorial ringkas ini mengambil kira-kira dua minit.' },
+      { id: 'mula', tajuk: 'Selamat datang ke Nusa Politik', isi: 'Anda bermula sebagai <b>Ahli Biasa</b> di cawangan anda. Matlamat: bina pengaruh, menang pemilihan, dan naik hingga ke Perhimpunan Agung. Tutorial ringkas ini mengambil kira-kira dua minit.' },
       { id: 'ip', sasaran: '#r-ip', bekas: '.stat', tajuk: 'Pengaruh (IP)', isi: 'IP ialah kekuatan politik anda. IP menentukan kelayakan bertanding (AJK dan Sayap perlu <b>50 IP</b>) dan menjadi faktor utama kemenangan dalam pemilihan.', petua: 'Cara paling mudah menambah IP: Ziarah Kasih (+10 IP).' },
       { id: 'myr', sasaran: '#r-myr', bekas: '.stat', tajuk: 'Dana (MYR)', isi: 'Dana digunakan untuk kempen, jamuan dan menyumbang kepada program. Dana <b>terkumpul</b> dan <b>tidak</b> ditetapkan semula; setiap bulan anda menerima elaun (RM 600 asas, ditambah elaun jawatan).' },
       { id: 'ap', sasaran: '#r-ap', bekas: '.stat', tajuk: 'Mata Tindakan (AP)', isi: 'Setiap tindakan menggunakan AP. AP <b>ditetapkan semula kepada 5</b> pada permulaan setiap bulan, jadi AP yang tidak digunakan tidak dibawa ke bulan berikutnya.', petua: 'Gunakan AP anda sebelum menekan Teruskan ke Bulan Seterusnya.' },
-      { id: 'bulan', sasaran: '.takwim', tajuk: 'Masa Bulanan', isi: 'Permainan bergerak <b>bulan demi bulan</b> (Bulan 1–12). <b>Bulan 1–3</b>: kerja akar umbi, bonus +25% IP. <b>Bulan 4–6</b>: Mesyuarat dan Pemilihan Cawangan &amp; Sayap. <b>Bulan 7</b>: Mesyuarat dan Pemilihan Bahagian &amp; Sayap. <b>Bulan 8</b>: Perhimpunan Agung (PAU) dan Pemilihan Pusat. <b>Bulan 9–12</b>: Akar umbi dan pasca-PAU.' },
+      { id: 'bulan', sasaran: '.takwim', tajuk: 'Masa Bulanan', isi: 'Permainan bergerak <b>bulan demi bulan</b> (Bulan 1–12). <b>Bulan 1–3</b>: kerja akar umbi, bonus +25% IP. <b>Bulan 4–6</b>: Mesyuarat dan Pemilihan Cawangan &amp; Sayap. <b>Bulan 7</b>: Mesyuarat dan Pemilihan Bahagian &amp; Sayap. <b>Bulan 8</b>: Perhimpunan Agung (PAU) dan Pemilihan Pusat. <b>Bulan 9–12</b>: Pasca-PAU dan khidmat masyarakat.' },
       { id: 'lanjut', sasaran: '#btn-tahun', tajuk: 'Teruskan ke Bulan Seterusnya', isi: 'Tekan butang ini bila anda selesai dengan bulan semasa. Anda akan melihat pratonton: AP diset semula dan elaun masuk. Anda tidak boleh kembali ke bulan sebelumnya.' },
       { id: 'tindakan', sasaran: '#tab-tindakan', tajuk: 'Cuba: Tab Tindakan', isi: 'Di sinilah anda melakukan kerja akar umbi. <b>Tekan tab ini sekarang</b> untuk meneruskan.', klik: true, tunggu: 'Menunggu anda menekan tab ⚡ Tindakan Pemain…' },
       { id: 'sayap', sasaran: '#tab-pemilihan', tajuk: 'Peranan Sayap & Pemilihan', isi: sayapTeks + ' <b>Tekan tab ini</b> untuk meneruskan.', klik: true, tunggu: 'Menunggu anda menekan tab 🗳️ Pemilihan…' },
+      { id: 'etika', tajuk: 'Tataetika & Disiplin', isi: 'Kempen <b>bersih</b> (Ziarah Kasih, Khidmat Masyarakat) membina <b>Modal Sosial</b> yang menambah kekuatan undi dan melindungi anda. Politik wang, fitnah dan janji jawatan memberi mata kempen pantas, tetapi boleh diadu kepada <b>Jawatankuasa Disiplin</b> dan dihukum: amaran, gantung, dilarang bertanding atau dipecat (Fasal 20). Calon AJK Bahagian juga perlu ahli sekurang-kurangnya <b>3 tahun</b> (Fasal 15.5), dan calon MKT perlu satu penggal AJK Bahagian/MKT (Fasal 9.5).' },
       { id: 'bantuan', sasaran: '.tut-fab', tajuk: 'Perlukan bantuan?', isi: 'Butang <b>(?)</b> ini sentiasa ada. Ia menjelaskan mekanik bulanan, peranan sayap, strategi pemilihan dan acara rawak. Anda juga boleh mengulang tutorial ini dari sana. Semoga berjaya!' }
     ];
   }

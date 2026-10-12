@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/calendar.js
+   Nusa Politik — js/calendar.js
    Sistem masa BULANAN (Bulan 1 hingga 12) dan Takwim Aktiviti UMNO.
 
    Takwim (v3.0):
@@ -56,7 +56,7 @@
 
     /* Fasa takwim (bulan mula-tamat, termasuk). */
     FASA: [
-      { kod: 'akar_umbi', mula: 1, tamat: 3, tajuk: 'Awal Tahun', ringkas: 'Akar Umbi & Bina Pengaruh',
+      { kod: 'akar_umbi', mula: 1, tamat: 3, tajuk: 'Awal Tahun', ringkas: 'Khidmat Akar Umbi & Pendaftaran Ahli',
         fokus: ['Ziarah dan gotong-royong', 'Bina pengaruh dan kesetiaan akar umbi', 'Kumpul isu tempatan'] },
       { kod: 'cawangan', mula: 4, tamat: 6, tajuk: 'Musim Cawangan', ringkas: 'Musim Mesyuarat & Pemilihan Cawangan (Cawangan & Sayap)',
         fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Pemilihan jawatan Cawangan dan Sayap Cawangan', 'Pemilihan Perwakilan ke Bahagian'] },
@@ -64,7 +64,7 @@
         fokus: ['Mesyuarat Bahagian', 'Pemilihan jawatan Bahagian dan Sayap Bahagian', 'Pemilihan Perwakilan ke PAU'] },
       { kod: 'pau', mula: 8, tamat: 8, tajuk: 'Perhimpunan Agung', ringkas: 'Perhimpunan Agung UMNO (PAU) & Pemilihan Pusat',
         fokus: ['Perhimpunan Agung UMNO', 'Pemilihan Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap (tahun pemilihan)'] },
-      { kod: 'pasca_pau', mula: 9, tamat: 12, tajuk: 'Akhir Tahun', ringkas: 'Akar Umbi & Pasca-PAU',
+      { kod: 'pasca_pau', mula: 9, tamat: 12, tajuk: 'Akhir Tahun', ringkas: 'Pasca-PAU & Khidmat Masyarakat',
         fokus: ['Pulih dan bina semula sokongan', 'Laksana tanggungjawab jawatan', 'Bersedia untuk kitaran seterusnya'] }
     ],
 
@@ -190,7 +190,7 @@
     if (bulan === 1) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 1 (' + nb + ' ' + tahun + '): ' + f.tajuk + '. ' + f.ringkas + '. Bonus +' + Math.round(CONFIG.BONUS_AKAR_UMBI * 100) + '% IP dan kesetiaan bagi tindakan sehingga bulan 3. Mandat perwakilan tahun lalu telah tamat; bertanding semula di Cawangan (bulan 4-6).' }); }
     else if (bulan === 4) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 4 (' + nb + '): Musim Mesyuarat & Pemilihan Cawangan dan Sayap dibuka (bulan 4-6).' }); }
     else if (bulan === 7) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 7 (' + nb + '): Mesyuarat & Pemilihan Bahagian dan Sayap dibuka. Hanya bulan ini.' }); }
-    else if (bulan === 8) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 8 (' + nb + '): Perhimpunan Agung UMNO (PAU) dan Pemilihan Pusat. Hanya bulan ini.' }); }
+    else if (bulan === 8) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 8 (' + nb + '): Perhimpunan Agung UMNO (PAU) dan Pemilihan Pusat di WTC Kuala Lumpur (Menara Dato\' Onn). Hanya bulan ini.' }); }
     else if (bulan === 9) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 9 (' + nb + '): Pasca-PAU. Kembali ke akar umbi dan laksana tanggungjawab jawatan anda.' }); }
     Object.keys(CONFIG.TETINGKAP).forEach(function (k) {
       var t = CONFIG.TETINGKAP[k];

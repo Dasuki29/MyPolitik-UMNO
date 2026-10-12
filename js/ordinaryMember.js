@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/ordinaryMember.js
+   Nusa Politik — js/ordinaryMember.js
    Modul Ahli Biasa Cawangan (jawatan pemain = 'Ahli Biasa').
 
    1. Tindakan Akar Umbi
@@ -42,18 +42,26 @@
     {
       id: 'ziarah_kasih', nama: 'Ziarah Kasih',
       penerangan: 'Menziarahi ahli yang uzur dan keluarga yang ditimpa musibah.',
-      kesan: { ip: 10, ap: -1 }
+      kesan: { ip: 10, ap: -1 },
+      etika: { modal: 4 }
     },
     {
       id: 'gotong_royong', nama: 'Hadir Gotong-Royong',
       penerangan: 'Turun bersama ahli membersihkan kawasan dan membantu kerja cawangan.',
-      kesan: { ap: -1, kesetiaan: { ketuaCawangan: 15 } }
+      kesan: { ap: -1, kesetiaan: { ketuaCawangan: 15 } },
+      etika: { modal: 3 }
     },
     {
       id: 'sembang_warung', nama: 'Sembang Warung',
       penerangan: 'Berbual dengan orang kampung di warung untuk mendengar isu setempat.',
       kesan: { ap: -1, kesetiaan: { akarUmbi: 5 } },
       denganIsu: true
+    },
+    {
+      id: 'khidmat_komuniti', nama: 'Khidmat Masyarakat',
+      penerangan: 'Klinik bergerak, kelas tuisyen percuma atau bantuan banjir. Membina Modal Sosial jangka panjang.',
+      kesan: { ap: -2, myr: -150, ip: 8, reputasi: 1, kesetiaan: { akarUmbi: 6 } },
+      etika: { modal: 6 }
     },
     {
       id: 'kerja_sampingan', nama: 'Kerja Sampingan / Perniagaan',
@@ -77,6 +85,7 @@
   /* ------------------------------------------------------------------------
      2. PEMBANTU
      ------------------------------------------------------------------------ */
+  function etikaModul() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikEtika) { return g.MyPolitikEtika; } try { return typeof require === 'function' ? require('./etika.js') : null; } catch (e) { return null; } }
   function adalahAhliBiasa(p) { return !!p && p.jawatan === CONFIG.JAWATAN; }
 
   function cariTindakan(id) {
@@ -90,6 +99,8 @@
   function semakBoleh(def, p) {
     if (!p) { return { boleh: false, sebab: 'Tiada profil pemain.' }; }
     if (!adalahAhliBiasa(p)) { return { boleh: false, sebab: 'Tindakan ini untuk Ahli Biasa sahaja.' }; }
+    var Et = etikaModul();
+    if (Et) { var hak = Et.semakHak(p, 'tindakan'); if (!hak.boleh) { return { boleh: false, sebab: hak.sebab }; } }
     if (p.ap + (def.kesan.ap || 0) < 0) { return { boleh: false, sebab: 'AP tidak mencukupi (perlu ' + Math.abs(def.kesan.ap) + ').' }; }
     if (p.myr + (def.kesan.myr || 0) < 0) { return { boleh: false, sebab: 'Wang tidak mencukupi.' }; }
     return { boleh: true, sebab: '' };
@@ -121,7 +132,8 @@
         id: d.id, nama: d.nama, penerangan: d.penerangan,
         kos: { ap: Math.abs(Math.min(0, d.kesan.ap || 0)), myr: Math.abs(Math.min(0, d.kesan.myr || 0)) },
         kesan: salin(d.kesan),
-        ringkas: S.ringkasPerubahan({ ip: d.kesan.ip || 0, myr: d.kesan.myr || 0, ap: d.kesan.ap || 0, kesetiaan: d.kesan.kesetiaan || {} })
+        ringkas: S.ringkasPerubahan({ ip: d.kesan.ip || 0, myr: d.kesan.myr || 0, ap: d.kesan.ap || 0, reputasi: d.kesan.reputasi || 0, kesetiaan: d.kesan.kesetiaan || {} })
+          + (d.etika && d.etika.modal ? ', +' + d.etika.modal + ' Modal Sosial' : '')
           + (d.denganIsu ? ', isu tempatan' : ''),
         boleh: s.boleh, sebab: s.sebab
       };
@@ -146,7 +158,9 @@
     var kesan = K ? K.skalaKesan(p, def.kesan) : salin(def.kesan), isu = null;      // bonus bulan 1-3 (akar umbi)
     if (def.denganIsu) { isu = pilihIsu(p, opts.rng || Math.random); kesan.isu = isu; }
 
-    var r = S.applyEffects(kesan, { log: { tindakan: def.id, nama: def.nama, peringkat: 'ahli', isu: isu ? isu.tajuk : undefined } });
+    var Et = etikaModul(), opsEfek = { log: { tindakan: def.id, nama: def.nama, peringkat: 'ahli', isu: isu ? isu.tajuk : undefined } };
+    if (Et && def.etika) { opsEfek.patch = { etika: Et.selepasTindakanBersih(p, def.etika) }; }
+    var r = S.applyEffects(kesan, opsEfek);
     if (!r.ok) { return r; }
 
     var peristiwa = [];

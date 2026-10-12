@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/incumbent.js
+   Nusa Politik — js/incumbent.js
    Modul Pemegang Jawatan (jawatan pemain bukan 'Ahli Biasa').
 
    1. Tindakan Pentadbiran dan Kepimpinan
@@ -46,12 +46,14 @@
     {
       id: 'anjur_mesyuarat_ajk', nama: 'Anjur Mesyuarat AJK',
       penerangan: 'Memanggil mesyuarat jawatankuasa untuk menyelaraskan kerja dan mengeratkan hubungan.',
-      kesan: { myr: -300, ap: -1, kesetiaan: { ajk: 10 } }
+      kesan: { myr: -300, ap: -1, kesetiaan: { ajk: 10 } },
+      etika: { modal: 2 }
     },
     {
       id: 'agih_peruntukan', nama: 'Agih Peruntukan Kebajikan',
       penerangan: 'Mengagihkan bantuan kepada keluarga yang memerlukan di kawasan anda.',
-      kesan: { myr: -1000, ap: -1, kesetiaan: { akarUmbi: 15 } }
+      kesan: { myr: -1000, ap: -1, kesetiaan: { akarUmbi: 15 } },
+      etika: { modal: 4 }
     },
     {
       id: 'lobi_perwakilan', nama: 'Lobi Perwakilan',
@@ -129,8 +131,10 @@
     if (!s.boleh) { return { ok: false, kod: 'tidak_boleh', ralat: s.sebab }; }
 
     var K = typeof globalThis !== 'undefined' ? globalThis.MyPolitikCalendar : null;
+    var Et = typeof globalThis !== 'undefined' ? globalThis.MyPolitikEtika : null;
     var r = S.applyEffects(K ? K.skalaKesan(p, def.kesan) : salin(def.kesan), {      // bonus bulan 1-3 (akar umbi)
-      log: { tindakan: def.id, nama: def.nama, peringkat: peringkatJawatan(p.jawatan) }
+      log: { tindakan: def.id, nama: def.nama, peringkat: peringkatJawatan(p.jawatan) },
+      patch: Et && def.etika ? { etika: Et.selepasTindakanBersih(p, def.etika) } : undefined
     });
     if (!r.ok) { return r; }
 

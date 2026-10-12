@@ -1,12 +1,12 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/geo.js
+   Nusa Politik — js/geo.js
    Penyesuai (adapter) data peta sempadan dan demografi.
 
    Modul ini HANYA pembekal data visual dan statistik. Ia tidak menyentuh
    mesyuarat, hierarki jawatan, AP, dana atau pemilihan. Tiada modul lain
    perlu diubah; sambungkan apabila anda mahu.
 
-   Fail data (dijana oleh tools/build-geo.js): assets/geo/
+   Fail data (dijana oleh tools/build-geo.js): data/
      negeri.json, parlimen.json, dun.json, demografi.json, meta.json
 
    1. LOADER        await MyPolitikGeo.muat(['negeri','parlimen','dun'])
@@ -35,7 +35,7 @@
   'use strict';
 
   var CONFIG = {
-    BASE: 'assets/geo/',
+    BASE: 'data/',
     ALIAS: {}                                   // cth { JUMLAH_PEMILIH: 'JUMLAH_PEMILIH_ANGGARAN' }
   };
   var KREDIT = 'Data sempadan dan banci 2020: Jabatan Perangkaan Malaysia (DOSM), Open Data License. Bukan produk rasmi; jumlah pemilih peringkat negeri/parlimen/DUN ialah anggaran.';
@@ -360,11 +360,74 @@
     return api2;
   }
 
+  /* ------------------------------------------------------------------------
+     GEOJSON TULEN -> fitur dalaman (v3.1)
+     Membolehkan peta membaca fail GeoJSON asal (lon/lat) yang diletakkan dalam data/,
+     cth. data/electoral_0_parlimen.geojson, tanpa melalui tools/build-geo.js.
+     Medan dikenali (DOSM / kempen-222): code_state, state, code_parlimen, parlimen,
+     code_dun, dun, code_state_dun. Gunakan opts.id / opts.nama / opts.negeri untuk fail lain.
+     ------------------------------------------------------------------------ */
+  var KOS_LAT = Math.cos(4 * Math.PI / 180);
+  function unjurLL(lon, lat) { return [(lon - 99.5) * 1000 * KOS_LAT, (7.5 - lat) * 1000]; }
+  function buangKod(teks) { return String(teks == null ? '' : teks).replace(/^[PN]\.\d+\s*/, ''); }
+  function gelangKeLaluan(r, toleransi, bb) {
+    var pts = [], i, p, l;
+    for (i = 0; i < r.length; i++) {
+      p = unjurLL(r[i][0], r[i][1]); p = [Math.round(p[0]), Math.round(p[1])]; l = pts[pts.length - 1];
+      if (!l || Math.abs(p[0] - l[0]) + Math.abs(p[1] - l[1]) >= toleransi) { pts.push(p); }
+    }
+    if (pts.length > 1 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1]) { pts.pop(); }
+    if (pts.length < 3) { return ''; }
+    var d = 'M' + pts[0][0] + ' ' + pts[0][1] + 'l', rel = [];
+    for (i = 0; i < pts.length; i++) {
+      bb[0] = Math.min(bb[0], pts[i][0]); bb[1] = Math.min(bb[1], pts[i][1]); bb[2] = Math.max(bb[2], pts[i][0]); bb[3] = Math.max(bb[3], pts[i][1]);
+      if (i) { rel.push((pts[i][0] - pts[i - 1][0]) + ' ' + (pts[i][1] - pts[i - 1][1])); }
+    }
+    return d + rel.join(' ') + 'z';
+  }
+  /** FeatureCollection -> { peringkat, bil, fitur:[{id,nama,negeri,parlimen?,noDun?,bbox,d}] } */
+  function daripadaGeoJSON(fc, peringkat, opts) {
+    opts = opts || {};
+    if (!fc || fc.type !== 'FeatureCollection' || !Array.isArray(fc.features)) { throw new Error('Bukan FeatureCollection GeoJSON yang sah.'); }
+    var tol = opts.toleransi == null ? { negeri: 3, parlimen: 2, dun: 1.5, dm: 1 }[peringkat] || 2 : opts.toleransi;
+    var fitur = [];
+    fc.features.forEach(function (f, n) {
+      var g = f.geometry, pr = f.properties || {};
+      if (!g || (g.type !== 'Polygon' && g.type !== 'MultiPolygon')) { return; }
+      var polis = g.type === 'Polygon' ? [g.coordinates] : g.coordinates, bb = [Infinity, Infinity, -Infinity, -Infinity], d = '';
+      polis.forEach(function (p) { p.forEach(function (r) { d += gelangKeLaluan(r, tol, bb); }); });
+      if (!d) { return; }
+      var id, nama, neg = pr.code_state != null ? String(pr.code_state) : '', o;
+      if (peringkat === 'negeri') { id = pr.code_state != null ? String(pr.code_state) : String(n); nama = pr.state; }
+      else if (peringkat === 'parlimen') { id = pr.code_parlimen; nama = buangKod(pr.parlimen); }
+      else { id = pr.code_state_dun || (neg + '_' + pr.code_dun); nama = buangKod(pr.dun); }
+      if (opts.id) { id = opts.id(pr, f); } if (opts.nama) { nama = opts.nama(pr, f); } if (opts.negeri) { neg = String(opts.negeri(pr, f)); }
+      o = { id: String(id), nama: nama || String(id), negeri: neg, bbox: bb, d: d };
+      if (peringkat !== 'negeri' && pr.code_parlimen) { o.parlimen = pr.code_parlimen; }
+      if (peringkat === 'dun' && pr.code_dun) { o.noDun = pr.code_dun; }
+      fitur.push(o);
+    });
+    return { peringkat: peringkat, bil: fitur.length, fitur: fitur };
+  }
+  /** Muat fail GeoJSON tulen dan gantikan lapisan peringkat itu. Pulang Promise<api>. */
+  function muatGeoJSON(peringkat, url, opts) {
+    if (PERINGKAT.indexOf(peringkat) < 0) { return Promise.reject(new Error('Peringkat tidak sah: ' + peringkat)); }
+    return root.fetch(url).then(function (r) {
+      if (!r.ok) { throw new Error('Gagal memuat ' + url + ' (' + r.status + ')'); }
+      return r.json();
+    }).then(function (fc) {
+      var j = daripadaGeoJSON(fc, peringkat, opts);
+      data.fitur[peringkat] = j.fitur; data.indeks[peringkat] = {}; j.fitur.forEach(function (f) { data.indeks[peringkat][f.id] = f; });
+      return api;
+    });
+  }
+
   var api = {
     CONFIG: CONFIG, KREDIT: KREDIT, PERINGKAT: PERINGKAT,
     muat: muat, muatDM: muatDM, suntik: suntik, suntikDM: suntikDM, getFitur: getFitur, getMeta: getMeta,
     getDemografi: getDemografi, kunciDariCawangan: kunciDariCawangan, perkaya: perkaya,
-    toPolygons: toPolygons, pusat: pusat, mount: mount
+    toPolygons: toPolygons, pusat: pusat, mount: mount,
+    daripadaGeoJSON: daripadaGeoJSON, muatGeoJSON: muatGeoJSON
   };
   return api;
 });

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/jawatan.js   (v3.0)
+   Nusa Politik — js/jawatan.js   (v3.0)
    Katalog jawatan, pegangan berbilang peringkat dan mandat perwakilan tahunan.
 
    1. Pegangan berbilang (multi-holding)
@@ -26,6 +26,8 @@
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (S) {
   'use strict';
 
+  function etika() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikEtika) { return g.MyPolitikEtika; } try { return typeof require === 'function' ? require('./etika.js') : null; } catch (e) { return null; } }
+
   var BIASA = 'Ahli Biasa';
   var SAYAP = ['pemuda', 'puteri', 'wanita'];
   var NAMA_SAYAP = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita' };
@@ -43,20 +45,20 @@
   tambah({ kod: 'ajk_cawangan',   jawatan: 'AJK Cawangan',   peringkat: 'cawangan', pangkat: 1, kerusi: 7, ipMin: 50 });
   tambah({ kod: 'ketua_cawangan', jawatan: 'Ketua Cawangan', peringkat: 'cawangan', pangkat: 3, ipMin: 65, kesukaran: 6 });
   // Bahagian
-  tambah({ kod: 'ajk_bahagian',        jawatan: 'AJK Bahagian',        peringkat: 'bahagian', pangkat: 4, kerusi: 15, ipMin: 70, pangkatMin: 1, perluBahagian: true, kesukaran: 4 });
-  tambah({ kod: 'naib_ketua_bahagian', jawatan: 'Naib Ketua Bahagian', peringkat: 'bahagian', pangkat: 6, ipMin: 80, pangkatMin: 3, perluBahagian: true, kesukaran: 10 });
-  tambah({ kod: 'ketua_bahagian',      jawatan: 'Ketua Bahagian',      peringkat: 'bahagian', pangkat: 7, ipMin: 85, pangkatMin: 3, perluBahagian: true, kesukaran: 14 });
+  tambah({ kod: 'ajk_bahagian',        jawatan: 'AJK Bahagian',        peringkat: 'bahagian', pangkat: 4, kerusi: 15, ipMin: 70, pangkatMin: 1, perluBahagian: true, kesukaran: 4, keahlian: 36, fasal: 'Fasal 15.5' });
+  tambah({ kod: 'naib_ketua_bahagian', jawatan: 'Naib Ketua Bahagian', peringkat: 'bahagian', pangkat: 6, ipMin: 80, pangkatMin: 3, perluBahagian: true, kesukaran: 10, keahlian: 36, fasal: 'Fasal 15.5' });
+  tambah({ kod: 'ketua_bahagian',      jawatan: 'Ketua Bahagian',      peringkat: 'bahagian', pangkat: 7, ipMin: 85, pangkatMin: 3, perluBahagian: true, kesukaran: 14, keahlian: 36, fasal: 'Fasal 15.5' });
   // Pusat (bulan 8, tahun pemilihan)
-  tambah({ kod: 'ahli_mkt',          jawatan: 'Ahli MKT',         peringkat: 'pusat', pangkat: 8,  kerusi: 25, ipMin: 80, pangkatMin: 4, perluPAU: true, kesukaran: 8 });
-  tambah({ kod: 'naib_presiden',     jawatan: 'Naib Presiden',    peringkat: 'pusat', pangkat: 10, kerusi: 3,  ipMin: 90, pangkatMin: 6, perluPAU: true, kesukaran: 16 });
-  tambah({ kod: 'timbalan_presiden', jawatan: 'Timbalan Presiden', peringkat: 'pusat', pangkat: 11, ipMin: 94, pangkatMin: 7, perluPAU: true, kesukaran: 20 });
-  tambah({ kod: 'presiden',          jawatan: 'Presiden',         peringkat: 'pusat', pangkat: 12, ipMin: 98, pangkatMin: 7, perluPAU: true, kesukaran: 24 });
+  tambah({ kod: 'ahli_mkt',          jawatan: 'Ahli MKT',         peringkat: 'pusat', pangkat: 8,  kerusi: 25, ipMin: 80, pangkatMin: 4, perluPAU: true, kesukaran: 8, penggal: true });
+  tambah({ kod: 'naib_presiden',     jawatan: 'Naib Presiden',    peringkat: 'pusat', pangkat: 10, kerusi: 3,  ipMin: 90, pangkatMin: 6, perluPAU: true, kesukaran: 16, penggal: true });
+  tambah({ kod: 'timbalan_presiden', jawatan: 'Timbalan Presiden', peringkat: 'pusat', pangkat: 11, ipMin: 94, pangkatMin: 7, perluPAU: true, kesukaran: 20, penggal: true });
+  tambah({ kod: 'presiden',          jawatan: 'Presiden',         peringkat: 'pusat', pangkat: 12, ipMin: 98, pangkatMin: 7, perluPAU: true, kesukaran: 24, penggal: true });
   // Sayap (satu set bagi setiap sayap, hanya sayap pemain dipaparkan)
   SAYAP.forEach(function (w) {
     var N = NAMA_SAYAP[w];
     tambah({ kod: 'sayap_cawangan_' + w, jawatan: 'Ketua ' + N + ' Cawangan', peringkat: 'cawangan', kumpulan: 'sayap', sayap: w, pangkat: 2, ipMin: 50, kesukaran: 2 });
-    tambah({ kod: 'sayap_bahagian_' + w, jawatan: 'Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 5, ipMin: 75, pangkatMin: 2, perluBahagian: true, kesukaran: 8 });
-    tambah({ kod: 'sayap_pusat_' + w,    jawatan: 'Ketua ' + N,             peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 9, ipMin: 88, pangkatMin: 5, perluPAU: true, kesukaran: 14 });
+    tambah({ kod: 'sayap_bahagian_' + w, jawatan: 'Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 5, ipMin: 75, pangkatMin: 2, perluBahagian: true, kesukaran: 8, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    tambah({ kod: 'sayap_pusat_' + w,    jawatan: 'Ketua ' + N,             peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 9, ipMin: 88, pangkatMin: 5, perluPAU: true, kesukaran: 14, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
   });
 
   function cariDef(kod) { for (var i = 0; i < KATALOG.length; i++) { if (KATALOG[i].kod === kod) { return KATALOG[i]; } } return null; }
@@ -142,9 +144,22 @@
   }
 
   function semakKelayakan(p, d) {
+    var Et = etika();
+    if (Et) {
+      var hak = Et.semakHak(p, 'jawatan');
+      if (!hak.boleh) { return { terbuka: false, sebab: hak.sebab }; }
+    }
     var pertahan = pegang(p, d.kod);
     if (pertahan) { return { terbuka: true, sebab: '', pertahan: true }; }
     if (d.kumpulan === 'sayap' && d.sayap !== sayapPemain(p)) { return { terbuka: false, sebab: 'Hanya untuk sayap ' + NAMA_SAYAP[d.sayap] + '.' }; }
+    if (Et && d.keahlian) {                                    // Fasal 15.5: ahli sekurang-kurangnya 3 tahun
+      var kh = Et.semakKeahlian(p, d.keahlian, d.fasal);
+      if (!kh.sah) { return { terbuka: false, sebab: kh.sebab, tunggu: kh.baki }; }
+    }
+    if (Et && d.penggal) {                                     // Fasal 9.5: satu penggal AJK Bahagian/MKT
+      var pg = Et.semakPenggal(p, { getJawatan: getJawatan });
+      if (!pg.sah) { return { terbuka: false, sebab: pg.sebab }; }
+    }
     if (p.ip < d.ipMin) { return { terbuka: false, sebab: 'Perlukan ' + d.ipMin + ' IP (anda ada ' + p.ip + ').' }; }
     if (d.perluBahagian && !(perwakilanSah(p, 'cawangan').layak)) {
       return { terbuka: false, sebab: 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu (atau pegang jawatan Bahagian/Pusat).' };
@@ -168,6 +183,11 @@
   function terapkan(p, d, menang) {
     var senarai = getJawatan(p);
     var tadiPegang = pegang(p, d.kod);
+    var penggal = !!p.penggalSelesai;                                  // Fasal 9.5: simpan rekod satu penggal walaupun jawatan hilang
+    senarai.forEach(function (j) {
+      var buang = menang ? (j.peringkat === d.peringkat && j.kumpulan === d.kumpulan) || j.kod === d.kod : (!menang && j.kod === d.kod);
+      if (buang && (j.peringkat === 'bahagian' || j.peringkat === 'pusat') && j.tahun && (p.tahun - j.tahun) >= 3) { penggal = true; }
+    });
     if (menang) {
       senarai = senarai.filter(function (j) { return !(j.peringkat === d.peringkat && j.kumpulan === d.kumpulan) && j.kod !== d.kod; });
       senarai.push({ kod: d.kod, jawatan: d.jawatan, peringkat: d.peringkat, kumpulan: d.kumpulan, sayap: d.sayap, pangkat: d.pangkat, tahun: p.tahun });
@@ -177,6 +197,7 @@
     senarai.sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); });
     var tertinggi = senarai.length ? senarai[0].jawatan : BIASA;
     var patch = { jawatanList: senarai, jawatan: tertinggi };
+    if (penggal) { patch.penggalSelesai = true; }
     if (!senarai.length) { patch.cabaran = null; patch.amaranAktif = false; }
     return patch;
   }

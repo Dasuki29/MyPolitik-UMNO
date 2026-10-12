@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MyPolitik: UMNO — js/meeting.js
+   Nusa Politik — js/meeting.js
    Simulasi Mesyuarat Tahunan dan Usul.
 
    Tiga peringkat dalam satu tahun, mengikut urutan:
@@ -376,6 +376,8 @@
     if (!PERINGKAT[peringkat]) { return gagal('tidak_dikenali', 'Peringkat tidak dikenali: ' + peringkat); }
     var p = S.loadPlayer();
     if (!p) { return gagal('tiada_profil', 'Tiada profil pemain.'); }
+    var Et = typeof globalThis !== 'undefined' ? globalThis.MyPolitikEtika : null;     // hak keahlian (Fasal 20.10)
+    if (Et) { var hak = Et.semakHak(p, 'perwakilan'); if (!hak.boleh) { return gagal('hak_dicabut', hak.sebab); } }
     var ms = keadaanMesyuarat(p), st = statusPeringkat(p, ms, peringkat);
     if (st.status === 'selesai') { return gagal('selesai', PERINGKAT[peringkat].nama + ' tahun ' + p.tahun + ' sudah selesai.'); }
     if (st.status === 'sedang') { return gagal('sedang', PERINGKAT[peringkat].nama + ' sedang berjalan.'); }
