@@ -190,6 +190,12 @@
       e.keputusan = st.keputusan[e.kod] || null;
       e.selesai = !!e.keputusan;
       if (e.terbuka && e.selesai) { e.terbuka = false; e.sebab = 'Pertandingan ini sudah selesai.'; }
+      var w = tetingkapPeringkat(p, e.peringkat);
+      e.tetingkap = w;                                         // { mula, tamat, label, status } atau null
+      e.bolehUndi = !!(buka && w ? w.status === 'dibuka' : buka) && e.didaftar && !e.selesai;
+      if (w && buka && !e.selesai && w.status === 'tamat' && !e.didaftar) {
+        e.terbuka = false; e.sebab = 'Pendaftaran ditutup. Musim ' + w.nama + ' (' + w.label + ') sudah tamat.';
+      }
       senarai.push(e);
     }
 
@@ -220,6 +226,13 @@
       sebab: !buka ? tutupTahun(p) : (layakBahagian ? '' : 'Menangi kerusi Perwakilan Cawangan atau pegang jawatan dahulu.')
     });
     return senarai;
+  }
+
+  /* ---- Takwim bulanan (js/calendar.js, pilihan) ---- */
+  function kalendar() { var g = typeof globalThis !== 'undefined' ? globalThis : null; return g && g.MyPolitikCalendar ? g.MyPolitikCalendar : null; }
+  function tetingkapPeringkat(p, peringkat) {
+    var K = kalendar();
+    return K ? K.getTetingkap(peringkat === 'pusat' ? 'pau' : peringkat, p.bulan) : null;
   }
 
   function cariPertandingan(p, kod) {
@@ -475,6 +488,11 @@
     var st = getKeadaanPemilihan(p), d = st.daftar[kod];
     if (!d) { return gagal('belum_daftar', 'Anda belum mendaftar bertanding untuk kod ' + kod + '.'); }
     if (st.keputusan[kod]) { return gagal('sudah_selesai', 'Pertandingan ' + d.jawatan + ' sudah selesai.'); }
+    var win = tetingkapPeringkat(p, d.peringkat);
+    if (win && win.status !== 'dibuka') {
+      return gagal('luar_musim', 'Pengundian ' + d.jawatan + ' hanya dijalankan pada ' + win.label.toLowerCase() + ' (' + win.nama + '). ' +
+        (win.status === 'belum_tiba' ? 'Sekarang bulan ' + p.bulan + ', teruskan ke bulan seterusnya.' : 'Musim ini sudah tamat.'));
+    }
 
     var rng = opts.rng || Math.random, b = bina(p, st, d, opts), h = undi(b.calon, b.kerusi, b.pemilih, rng);
     var sendiri = h.jadual.filter(function (j) { return j.pemain; })[0], menang = sendiri.menang;
@@ -556,7 +574,7 @@
     var st = getKitaran(baru).kitaran === getKitaran(lama).kitaran ? getKeadaanPemilihan(p) : keadaanBaharu(baru);
     var kesan = opts.pulihAP === false ? {} : { ap: S.DEFAULTS.ap - p.ap };
     var r = S.applyEffects(kesan, {
-      kiraTindakan: false, patch: { tahun: baru, pemilihan: st },
+      kiraTindakan: false, patch: { tahun: baru, bulan: 1, pemilihan: st },
       log: { tindakan: 'tahun_baharu', nama: 'Tahun ' + baru + ' bermula', peringkat: 'tahun' }
     });
     if (!r.ok) { return r; }

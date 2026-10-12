@@ -143,13 +143,24 @@
     return ok2 ? { ok: true } : { ok: false, sebab: 'Hanya Perwakilan Bahagian yang terpilih, Ketua Bahagian dan pemegang jawatan pusat boleh hadir PAU.' };
   }
 
+  /* ---- Takwim bulanan (js/calendar.js, pilihan) ---- */
+  function kalendar() { var g = typeof globalThis !== 'undefined' ? globalThis : null; return g && g.MyPolitikCalendar ? g.MyPolitikCalendar : null; }
+  function tetingkap(p, peringkat) { var K = kalendar(); return K ? K.getTetingkap(peringkat, p.bulan) : null; }
+
   function statusPeringkat(p, ms, peringkat) {
     var s = ms[peringkat];
     if (s && s.status === 'selesai') { return { status: 'selesai', sebab: '' }; }
     if (s && s.status === 'sedang') { return { status: 'sedang', sebab: '' }; }
+    var w = tetingkap(p, peringkat);
+    if (w && w.status === 'belum_tiba') {
+      return { status: 'belum_tiba', sebab: PERINGKAT[peringkat].nama + ' dibuka pada ' + w.label.toLowerCase() + '. Sekarang bulan ' + p.bulan + '.' };
+    }
+    if (w && w.status === 'tamat') {
+      return { status: 'terlepas', sebab: 'Musim ' + PERINGKAT[peringkat].nama + ' (' + w.label.toLowerCase() + ') tahun ' + p.tahun + ' sudah tamat.' };
+    }
     var h = bolehHadir(p, peringkat);
     if (!h.ok) { return { status: 'tidak_layak', sebab: h.sebab }; }
-    for (var i = 0; i < URUTAN.indexOf(peringkat); i++) {
+    for (var i = 0; !w && i < URUTAN.indexOf(peringkat); i++) {            // tanpa takwim: urutan peringkat dikuatkuasakan
       var sebelum = URUTAN[i], ss = ms[sebelum];
       if (bolehHadir(p, sebelum).ok && !(ss && ss.status === 'selesai')) {
         return { status: 'terkunci', sebab: 'Selesaikan ' + PERINGKAT[sebelum].nama + ' dahulu.' };
@@ -272,7 +283,7 @@
         var st = statusPeringkat(p, ms, k), m = ms[k], agenda = m ? m.agenda : null;
         return {
           kod: k, nama: PERINGKAT[k].nama, jenisUsul: PERINGKAT[k].jenisUsul,
-          status: st.status, sebab: st.sebab,
+          status: st.status, sebab: st.sebab, tetingkap: tetingkap(p, k),
           bilUsul: agenda ? agenda.filter(function (a) { return a.jenis !== 'pemilihan'; }).length : null,
           bilSelesai: agenda ? agenda.filter(function (a) { return a.jenis !== 'pemilihan' && a.status === 'selesai'; }).length : null,
           agenda: agenda, ringkasan: m && m.ringkasan ? m.ringkasan : null

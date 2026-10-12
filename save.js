@@ -42,7 +42,7 @@
   });
 
   // Nilai permulaan setiap pemain baharu.
-  var DEFAULTS = Object.freeze({ jawatan: 'Ahli Biasa', ip: 10, myr: 1000, ap: 5, tahun: 2026, reputasi: 50 });
+  var DEFAULTS = Object.freeze({ jawatan: 'Ahli Biasa', ip: 10, myr: 1000, ap: 5, tahun: 2026, bulan: 1, reputasi: 50 });
 
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function salin(o) { return JSON.parse(JSON.stringify(o)); }
@@ -71,6 +71,8 @@
     if (!sah(p)) { return p; }
     if (!avatarSah(p.avatar)) { p.avatar = avatarSah(p.demografik && p.demografik.kategoriKod) ? p.demografik.kategoriKod : 'pemuda'; }
     p.versi = VERSI;
+    var bln = parseInt(p.bulan, 10);                 // Bulan 1 hingga 12 (sistem masa bulanan)
+    p.bulan = isFinite(bln) ? Math.max(1, Math.min(12, bln)) : DEFAULTS.bulan;
     p.ip = Math.max(0, Math.round(Number(p.ip) || 0));
     p.ap = Math.max(0, Math.round(Number(p.ap) || 0));
     p.myr = Math.max(0, Math.round(Number(p.myr) || 0));
@@ -122,6 +124,7 @@
       myr: DEFAULTS.myr,
       ap: DEFAULTS.ap,
       tahun: DEFAULTS.tahun,
+      bulan: DEFAULTS.bulan,
       kesetiaan: salin(KESETIAAN_LALAI),
       dicipta: new Date().toISOString()
     });
@@ -221,7 +224,7 @@
     });
 
     if (opts.log) {
-      var entri = { masa: new Date().toISOString(), tahun: p.tahun, perubahan: perubahan };
+      var entri = { masa: new Date().toISOString(), tahun: p.tahun, bulan: p.bulan, perubahan: perubahan };
       for (var l in opts.log) { entri[l] = opts.log[l]; }
       p.log.unshift(entri);
       p.log = p.log.slice(0, MAKS_LOG);

@@ -128,7 +128,8 @@
     var s = semakBoleh(def, p);
     if (!s.boleh) { return { ok: false, kod: 'tidak_boleh', ralat: s.sebab }; }
 
-    var r = S.applyEffects(salin(def.kesan), {
+    var K = typeof globalThis !== 'undefined' ? globalThis.MyPolitikCalendar : null;
+    var r = S.applyEffects(K ? K.skalaKesan(p, def.kesan) : salin(def.kesan), {      // bonus bulan 1-3 (akar umbi)
       log: { tindakan: def.id, nama: def.nama, peringkat: peringkatJawatan(p.jawatan) }
     });
     if (!r.ok) { return r; }
