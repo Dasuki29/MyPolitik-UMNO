@@ -10,6 +10,7 @@
      negeri.json, parlimen.json, dun.json, demografi.json, meta.json
 
    1. LOADER        await MyPolitikGeo.muat(['negeri','parlimen','dun'])
+                    await MyPolitikGeo.muatDM('10')        // Daerah Mengundi (= Lokaliti/Cawangan), pemilih SEBENAR; Selangor = '10'
    2. DEMOGRAFI     MyPolitikGeo.getDemografi('parlimen', 'P.097')   // objek bernama permainan
                     MyPolitikGeo.kunciDariCawangan(profil | cawangan) // { negeri, parlimen, dun }
                     MyPolitikGeo.perkaya(data)                        // lampirkan .geo (tak boleh dikira/disimpan)
@@ -20,8 +21,9 @@
      NAMA_KAWASAN, KOD_KAWASAN, JUMLAH_PEMILIH (ANGGARAN), JUMLAH_PENDUDUK,
      LUAS_KM2, PERATUS_BUMI, PERATUS_CINA, PERATUS_INDIA, PERATUS_LAIN,
      PENDAPATAN_MEDIAN, KADAR_KEMISKINAN, TAHAP_KESUKARAN (1-5, heuristik)
-   Fail yang diberi tiada Daerah Mengundi (DM); tahap terkecil ialah DUN.
-   Jika permainan anda mahu NAMA_DM, petakan: alias: { NAMA_DM: 'NAMA_KAWASAN' }.
+   Peringkat 'dm' (hanya negeri yang fail dm-<kod>.json ada, kini Selangor) memberi NAMA_DM dan
+   JUMLAH_PEMILIH sebenar (ANGGARAN=false). Peringkat lain: JUMLAH_PEMILIH ialah anggaran (ANGGARAN=true).
+   Kunci DM sepadan dengan ID Sheet: '097/013/001' -> '097/13/01'.
 
    Kredit data (wajib dipaparkan, lihat Open Data License DOSM): KREDIT.
    ========================================================================== */
@@ -36,7 +38,7 @@
     BASE: 'assets/geo/',
     ALIAS: {}                                   // cth { JUMLAH_PEMILIH: 'JUMLAH_PEMILIH_ANGGARAN' }
   };
-  var KREDIT = 'Data sempadan dan banci 2020: Jabatan Perangkaan Malaysia (DOSM), Open Data License. Bukan produk rasmi; jumlah pemilih ialah anggaran.';
+  var KREDIT = 'Data sempadan dan banci 2020: Jabatan Perangkaan Malaysia (DOSM), Open Data License. Bukan produk rasmi; jumlah pemilih peringkat negeri/parlimen/DUN ialah anggaran.';
   var PERINGKAT = ['negeri', 'parlimen', 'dun'];
   var SVGNS = 'http://www.w3.org/2000/svg';
 
@@ -54,7 +56,7 @@
     }
     return cache[nama];
   }
-  var data = { meta: null, demografi: null, fitur: {}, indeks: {} };
+  var data = { meta: null, demografi: null, fitur: {}, indeks: {}, dmNegeri: {} };
 
   /** Muat peringkat yang diminta (dan meta + demografi). Pulang Promise. */
   function muat(peringkat) {
@@ -62,7 +64,8 @@
     senarai.forEach(function (p) { if (PERINGKAT.indexOf(p) < 0) { throw new Error('Peringkat tidak sah: ' + p); } });
     var tugas = [ambil('meta'), ambil('demografi')].concat(senarai.map(ambil));
     return Promise.all(tugas).then(function (h) {
-      data.meta = h[0]; data.demografi = h[1];
+      var dmLama = data.demografi && data.demografi.dm;
+      data.meta = h[0]; data.demografi = h[1]; if (dmLama) { data.demografi.dm = dmLama; }
       senarai.forEach(function (p, i) {
         var j = h[2 + i]; data.fitur[p] = j.fitur;
         var ix = {}; j.fitur.forEach(function (f) { ix[f.id] = f; }); data.indeks[p] = ix;
@@ -72,10 +75,24 @@
   }
   /** Untuk ujian Node / pemuat tersuai: suntik data yang sudah dibaca. */
   function suntik(o) {
-    data.meta = o.meta; data.demografi = o.demografi;
+    data.meta = o.meta; data.demografi = o.demografi; if (o.dm) { suntikDM(o.dm); }
     PERINGKAT.forEach(function (p) {
       if (o[p]) { data.fitur[p] = o[p].fitur; var ix = {}; o[p].fitur.forEach(function (f) { ix[f.id] = f; }); data.indeks[p] = ix; }
     });
+    return api;
+  }
+  /** Muat Daerah Mengundi satu negeri (cth. '10' = Selangor). Perlu muat() dahulu atau serentak. */
+  function muatDM(kodNegeri) {
+    kodNegeri = String(kodNegeri);
+    return Promise.all([ambil('meta'), ambil('demografi'), ambil('dm-' + kodNegeri)]).then(function (h) {
+      data.meta = h[0]; data.demografi = data.demografi || h[1]; suntikDM(h[2]); return api;
+    });
+  }
+  function suntikDM(j) {
+    data.fitur.dm = (data.fitur.dm || []).filter(function (f) { return f.negeri !== j.negeri; }).concat(j.fitur);
+    data.indeks.dm = {}; data.fitur.dm.forEach(function (f) { data.indeks.dm[f.id] = f; });
+    data.demografi = data.demografi || {}; data.demografi.dm = Object.assign(data.demografi.dm || {}, j.demografi);
+    data.dmNegeri[j.negeri] = true;
     return api;
   }
   function getFitur(p) { return data.fitur[p] || []; }
@@ -105,6 +122,10 @@
     var o = { PERINGKAT: peringkat };
     Object.keys(PETA_MEDAN).forEach(function (k) { o[k] = d[PETA_MEDAN[k]] == null ? null : d[PETA_MEDAN[k]]; });
     o.ANGGARAN = true;                                  // JUMLAH_PEMILIH ialah anggaran, bukan daftar pemilih sebenar
+    if (peringkat === 'dm') {                           // Daerah Mengundi: data sebenar
+      o.ANGGARAN = false; o.NAMA_DM = d.nama; o.NAMA_DUN = d.namaDun; o.NAMA_PARLIMEN = d.namaParlimen;
+      o.KOD_DUN = d.dun; o.KOD_PARLIMEN = d.parlimen;
+    }
     return gunaAlias(o, alias);
   }
 
@@ -114,7 +135,7 @@
    * Padankan cawangan/profil permainan dengan kunci geo.
    * Menerima profil pemain (profil.kod.parlimen/.dun), objek cawangan (id '097/013/001')
    * atau teks ID ('009/097/013/001' atau '097/013/001').
-   * Pulang { negeri:'10', parlimen:'P.097', dun:'10_N.13' } (medan null jika tidak ditemui).
+   * Pulang { negeri:'10', parlimen:'P.097', dun:'10_N.13', dm:'097/13/01' } (medan null jika tidak ditemui; dm hanya jika dimuatDM).
    */
   function kunciDariCawangan(x) {
     var par = null, dn = null;
@@ -123,19 +144,25 @@
       var id = typeof x === 'string' ? x : (x && (x.idSheet || x.id)) || '', b = String(id).split('/');
       if (b.length >= 3) { par = b[b.length - 3]; dn = b[b.length - 2]; }
     }
-    if (par == null) { return { negeri: null, parlimen: null, dun: null }; }
+    var lok = null;
+    if (par != null && x && x.kod && x.kod.lokaliti != null) { lok = x.kod.lokaliti; }
+    else if (par != null && typeof x !== 'object') { var bb = String(x).split('/'); lok = bb[bb.length - 1]; }
+    else if (par != null && x && (x.idSheet || x.id)) { var b2 = String(x.idSheet || x.id).split('/'); lok = b2[b2.length - 1]; }
+    if (par == null) { return { negeri: null, parlimen: null, dun: null, dm: null }; }
     var kodP = 'P.' + tiga(par), dP = data.demografi && data.demografi.parlimen[kodP];
     var neg = dP ? dP.negeri : (data.meta && data.meta.negeriDariParlimen ? data.meta.negeriDariParlimen[kodP] : null);
     var kodD = neg && dn != null ? neg + '_N.' + dua(dn) : null;
     if (kodD && data.demografi && !data.demografi.dun[kodD]) { kodD = null; }      // cth. Wilayah Persekutuan tiada DUN
-    return { negeri: neg || null, parlimen: dP ? kodP : null, dun: kodD };
+    var kodM = lok != null ? tiga(par) + '/' + dua(dn) + '/' + dua(lok) : null;
+    if (kodM && !(data.demografi && data.demografi.dm && data.demografi.dm[kodM])) { kodM = null; }   // null jika DM negeri itu belum dimuat
+    return { negeri: neg || null, parlimen: dP ? kodP : null, dun: kodD, dm: kodM };
   }
 
   /**
    * Lampirkan data geo pada data parti (hasil MyPolitikData.loadPartyData) TANPA mengubah
    * medan sedia ada: sifat `geo` ditambah sebagai bukan-enumerable, jadi JSON.stringify,
    * Object.keys dan penyimpanan tidak terkesan. Pulang data yang sama.
-   *   negeri.geo, bahagian.geo (parlimen), dun.geo
+   *   negeri.geo, bahagian.geo (parlimen), dun.geo, cawangan.geo (DM, jika dimuatDM)
    */
   function perkaya(partyData, alias) {
     if (!partyData || !data.demografi) { return partyData; }
@@ -146,6 +173,10 @@
       (b.dun || []).forEach(function (d) {
         var kodD = dP ? dP.negeri + '_N.' + dua(d.kod) : null;
         lekat(d, kodD ? getDemografi('dun', kodD, alias) : null);
+        (d.cawangan || []).forEach(function (c) {          // Cawangan = Daerah Mengundi (jika dimuatDM)
+          var km = tiga(b.kod || b.id) + '/' + dua(d.kod) + '/' + dua(c.kod);
+          lekat(c, data.demografi.dm && data.demografi.dm[km] ? getDemografi('dm', km, alias) : null);
+        });
       });
     });
     (partyData.negeri || []).forEach(function (n) {
@@ -247,6 +278,7 @@
     }
     function legenda() {
       if (opts.latar) { return; }
+      if (st.peringkat === 'dm' && st.warna === 'pemilih') { leg.innerHTML = 'Rendah <i style="background:' + campur(.1) + '"></i><i style="background:' + campur(.4) + '"></i><i style="background:' + campur(.7) + '"></i><i style="background:' + campur(1) + '"></i> Tinggi (pemilih sebenar)'; return; }
       if (st.warna === 'kesukaran') { leg.innerHTML = 'Tahap kesukaran: ' + [1, 2, 3, 4, 5].map(function (n) { return '<i style="background:' + KESUKARAN_WARNA[n] + '"></i>' + n; }).join(' '); }
       else if (typeof st.warna === 'function' || st.warna === 'tiada') { leg.innerHTML = ''; }
       else { leg.innerHTML = 'Rendah <i style="background:' + campur(.1) + '"></i><i style="background:' + campur(.4) + '"></i><i style="background:' + campur(.7) + '"></i><i style="background:' + campur(1) + '"></i> Tinggi (' + ({ pemilih: 'anggaran pemilih', bumi: '% Bumiputera', kepadatan: 'kepadatan penduduk' }[st.warna] || st.warna) + ')'; }
@@ -261,7 +293,7 @@
       else {
         tip.innerHTML = '';
         var t = d.createElement('b'); t.textContent = f.nama; tip.appendChild(t);
-        [['Pemilih (anggaran)', dm.JUMLAH_PEMILIH], ['Penduduk', dm.JUMLAH_PENDUDUK], ['Bumiputera', dm.PERATUS_BUMI == null ? null : dm.PERATUS_BUMI + '%'], ['Kesukaran', dm.TAHAP_KESUKARAN == null ? null : dm.TAHAP_KESUKARAN + '/5']].forEach(function (r) {
+        [[dm.ANGGARAN === false ? 'Pemilih' : 'Pemilih (anggaran)', dm.JUMLAH_PEMILIH], ['DUN', dm.NAMA_DUN], ['Penduduk', dm.JUMLAH_PENDUDUK], ['Bumiputera', dm.PERATUS_BUMI == null ? null : dm.PERATUS_BUMI + '%'], ['Kesukaran', dm.TAHAP_KESUKARAN == null ? null : dm.TAHAP_KESUKARAN + '/5']].forEach(function (r) {
           if (r[1] == null) { return; } var ln = d.createElement('div'); ln.textContent = r[0] + ': ' + (typeof r[1] === 'number' ? r[1].toLocaleString('ms-MY') : r[1]); tip.appendChild(ln);
         });
       }
@@ -279,7 +311,7 @@
       fs.forEach(function (f) {
         var dm = getDemografi(p, f.id, opts.alias), el = d.createElementNS(SVGNS, 'path');
         el.setAttribute('d', f.d); el.setAttribute('fill', wf(f, data.demografi[p][f.id] || null)); el.setAttribute('data-kod', f.id);
-        if (fokus && ((p === 'negeri' && f.id === fokus.negeri) || (p === 'parlimen' && f.id === fokus.parlimen) || (p === 'dun' && f.id === fokus.dun))) { el.setAttribute('class', 'is-fokus'); }
+        if (fokus && ((p === 'negeri' && f.id === fokus.negeri) || (p === 'parlimen' && f.id === fokus.parlimen) || (p === 'dun' && f.id === fokus.dun) || (p === 'dm' && f.id === fokus.dm))) { el.setAttribute('class', 'is-fokus'); }
         if (st.pilih === f.id) { el.setAttribute('class', (el.getAttribute('class') || '') + ' is-pilih'); }
         if (!opts.latar) {
           el.setAttribute('tabindex', fs.length <= 120 ? '0' : '-1'); el.setAttribute('role', 'button'); el.setAttribute('aria-label', f.nama);
@@ -304,14 +336,19 @@
         nilai.forEach(function (n) { var o = d.createElement('option'); o.value = n[0]; o.textContent = n[1]; if (n[0] === semasa) { o.selected = true; } s.appendChild(o); });
         s.addEventListener('change', function () { fn(s.value); }); bar.appendChild(s);
       }
-      pilihan('Peringkat', [['negeri', 'Negeri'], ['parlimen', 'Parlimen / Bahagian'], ['dun', 'DUN']].filter(function (x) { return data.fitur[x[0]]; }), st.peringkat, function (v) { api2.setPeringkat(v); });
+      pilihan('Peringkat', [['negeri', 'Negeri'], ['parlimen', 'Parlimen / Bahagian'], ['dun', 'DUN'], ['dm', 'Daerah Mengundi / Cawangan']].filter(function (x) { return data.fitur[x[0]]; }), st.peringkat, function (v) { api2.setPeringkat(v); });
       pilihan('Negeri', [['', 'Semua negeri']].concat((data.fitur.negeri || []).map(function (f) { return [f.id, f.nama]; })), st.negeri || '', function (v) { api2.zumKe(v || null); });
-      pilihan('Warna', [['pemilih', 'Anggaran pemilih'], ['kesukaran', 'Tahap kesukaran'], ['bumi', '% Bumiputera'], ['kepadatan', 'Kepadatan penduduk']], typeof st.warna === 'string' ? st.warna : 'pemilih', function (v) { api2.setWarna(v); });
+      pilihan('Warna', (st.peringkat === 'dm' ? [['pemilih', 'Pemilih'], ['kesukaran', 'Tahap kesukaran']] : [['pemilih', 'Anggaran pemilih'], ['kesukaran', 'Tahap kesukaran'], ['bumi', '% Bumiputera'], ['kepadatan', 'Kepadatan penduduk']]), typeof st.warna === 'string' ? st.warna : 'pemilih', function (v) { api2.setWarna(v); });
     }
 
     var api2 = {
       svg: svg,
-      setPeringkat: function (p) { if (!data.fitur[p]) { return false; } st.peringkat = p; if (p === 'dun' && !st.negeri && fokus) { st.negeri = fokus.negeri; } st.pilih = null; lukis(); bukaBar(); return true; },
+      setPeringkat: function (p) {
+        if (!data.fitur[p]) { return false; }
+        st.peringkat = p; if ((p === 'dun' || p === 'dm') && !st.negeri && fokus) { st.negeri = fokus.negeri; }
+        if (p === 'dm' && (!st.negeri || !data.dmNegeri[st.negeri])) { st.negeri = Object.keys(data.dmNegeri)[0] || null; }
+        if (p === 'dm' && st.warna !== 'kesukaran' && typeof st.warna === 'string') { st.warna = 'pemilih'; }
+        st.pilih = null; lukis(); bukaBar(); return true; },
       setWarna: function (w) { st.warna = w; lukis(); },
       zumKe: function (negeri) { st.negeri = negeri; if (!negeri && st.peringkat === 'dun') { st.peringkat = 'parlimen'; } lukis(); bukaBar(); },
       pilih: function (kod) { st.pilih = kod; lukis(); },
@@ -325,7 +362,7 @@
 
   var api = {
     CONFIG: CONFIG, KREDIT: KREDIT, PERINGKAT: PERINGKAT,
-    muat: muat, suntik: suntik, getFitur: getFitur, getMeta: getMeta,
+    muat: muat, muatDM: muatDM, suntik: suntik, suntikDM: suntikDM, getFitur: getFitur, getMeta: getMeta,
     getDemografi: getDemografi, kunciDariCawangan: kunciDariCawangan, perkaya: perkaya,
     toPolygons: toPolygons, pusat: pusat, mount: mount
   };
