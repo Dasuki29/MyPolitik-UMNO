@@ -44,6 +44,9 @@
   // Nilai permulaan setiap pemain baharu.
   var DEFAULTS = Object.freeze({ jawatan: 'Ahli Biasa', ip: 10, myr: 1000, ap: 5, tahun: 2026, bulan: 1, reputasi: 50 });
 
+  // v3.8: Pengaruh (IP) makin sukar ditambah apabila makin tinggi. Gandaan = 1 - IP/k, tidak kurang daripada lantai.
+  var REDAMAN_IP = Object.freeze({ k: 300, lantai: 0.10 });
+
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function salin(o) { return JSON.parse(JSON.stringify(o)); }
 
@@ -241,7 +244,9 @@
     }
 
     p.ap = ap; p.myr = myr;
-    p.ip = Math.max(0, p.ip + (kesan.ip || 0));
+    var tambahIp = kesan.ip || 0;
+    if (tambahIp > 0) { tambahIp = Math.max(1, Math.round(tambahIp * clamp(1 - p.ip / REDAMAN_IP.k, REDAMAN_IP.lantai, 1))); }   // v3.8
+    p.ip = Math.max(0, p.ip + tambahIp);
     p.reputasi = clamp(p.reputasi + (kesan.reputasi || 0), 0, 100);
     for (var j in kes) { p.kesetiaan[j] = clamp(p.kesetiaan[j] + kes[j], 0, 100); }
     if (kesan.isu) { p.isu.unshift(kesan.isu); p.isu = p.isu.slice(0, MAKS_ISU); }
