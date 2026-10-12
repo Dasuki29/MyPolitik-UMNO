@@ -308,7 +308,7 @@
   if (!document.getElementById('btn-tahun')) { return; }
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
-      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
+      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -608,6 +608,32 @@
     return h;
   }
 
+  /* v3.9: Gaya Kepimpinan (daripada cara bermain) */
+  function kadWatak(p) {
+    if (!WK) { return ''; }
+    var w = WK.tentukan(p);
+    return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Gaya Kepimpinan Anda</h2>' +
+      '<p style="margin:0 0 6px"><span class="badge badge--gold">' + esc(w.nama) + '</span></p>' +
+      '<p class="note">' + esc(w.huraian) + '</p>' +
+      (w.sebab.length ? '<p class="note">' + w.sebab.map(esc).join(' ') + '</p>' : '') +
+      '<p class="note">Gaya ini dikira daripada pilihan anda dalam permainan dan boleh berubah.</p></section>';
+  }
+
+  /* v3.9: Laluan Karier Sebenar (maklumat neutral, bersumber, tidak mempengaruhi permainan) */
+  function kadLaluan() {
+    if (!WK) { return ''; }
+    var h = '<section class="card"><details><summary class="card__title" style="cursor:pointer">Laluan Karier Sebenar: Presiden UMNO</summary>';
+    h += '<p class="note" style="margin-top:8px">Tangga jawatan dalam permainan: ' + WK.TANGGA.map(function (t) { return esc(t.jawatan); }).join(' &rarr; ') + '.</p>';
+    h += '<ul style="margin:6px 0 0;padding-left:18px">' + WK.LALUAN_TOKOH.map(function (t) {
+      var src = t.sumber.map(function (k) { var s = WK.SUMBER[k]; return s ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.nama) + '</a>' : ''; }).join(', ');
+      return '<li style="margin-bottom:6px"><b>' + esc(t.nama) + '</b> &middot; Presiden ' + esc(t.tempoh) +
+        (t.sebelum.length ? '<br>Jawatan parti sebelum itu: ' + t.sebelum.map(esc).join(', ') : '') +
+        (t.nota ? '<br><i>' + esc(t.nota) + '</i>' : '') + '<br><small>Sumber: ' + src + '</small></li>';
+    }).join('') + '</ul>';
+    h += '<p class="note" style="margin-top:8px">' + esc(WK.NOTA_UMUM) + '</p></details></section>';
+    return h;
+  }
+
   function barisPertandingan(e) {
     var a = state.anggaran[e.kod], kep = e.keputusan, h = '';
     h += '<div class="item"><div class="item__head"><div><div class="item__title">' + esc(e.jawatan) + (e.pertahan ? ' <span class="badge badge--gold">Pertahan</span>' : '') + (e.kumpulan === 'sayap' ? ' <span class="badge">Sayap</span>' : '') + '</div>' +
@@ -639,7 +665,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += bannerDisiplin(p) + kadEtika(p) + kadJawatan(p);
+    h += bannerDisiplin(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
