@@ -307,7 +307,7 @@
   if (!document.getElementById('btn-tahun')) { return; }
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
-      I = W.MyPolitikIncumbent, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents;
+      I = W.MyPolitikIncumbent, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -872,7 +872,7 @@
       butang: [{ label: 'Batal', nilai: false }, { label: 'Padam & Mula Semula', nilai: true, kelas: 'btn--danger' }]
     });
     if (!ya) { return; }
-    S.clearPlayer(); if (EV) { EV.reset(); }
+    S.clearPlayer(); if (EV) { EV.reset(); } if (TUT) { TUT.reset(); }
     W.location.assign(INDEX_URL);
   }
 
@@ -948,6 +948,7 @@
     render();
     if (state.tab === 'peta') { muatPeta(); }
     S.subscribe(jadualRender);
+    if (TUT) { TUT.init({ profil: p }); }                           // butang (?) + tutorial kali pertama
     if (EV && EV.getTertunggak()) { tunjukAcara(EV.getTertunggak()); }          // acara yang belum dijawab sebelum muat semula                                      // kemas kini masa nyata (juga antara tab pelayar)
   }
   mula();
