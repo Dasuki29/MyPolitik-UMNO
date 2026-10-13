@@ -72,7 +72,7 @@
        Pemuda  lelaki 18-40        Puteri  perempuan 18-35
        Wanita  perempuan 36-59     Biasa   lelaki 41-59
        Veteran lelaki atau perempuan 60 tahun ke atas.
-     Kategori pemain bertukar mengikut umur pada AGM (lihat hayat.js, kategoriMengikutUmur). */
+     Kategori pemain bertukar mengikut umur apabila masuk tahun baharu (lihat hayat.js). */
   var DEMOGRAFI = {
     pemuda:  { label: 'Pemuda',  berat: 0.26, minBil: 3, profil: [{ jantina: 'L', umur: [18, 40], w: 1 }] },
     puteri:  { label: 'Puteri',  berat: 0.14, minBil: 3, profil: [{ jantina: 'P', umur: [18, 35], w: 1 }] },

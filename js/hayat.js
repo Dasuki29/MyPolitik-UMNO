@@ -153,11 +153,14 @@
   }
 
   /* ------------------------------------------------------------------------
-     5. PERALIHAN KATEGORI MENGIKUT UMUR (v5.1) — dilaksanakan pada AGM (Bulan 8)
+     5. PERALIHAN KATEGORI MENGIKUT UMUR (v5.1, dipinda)
+     Dilaksanakan pada tahun baharu, sebaik umur bertambah (dipanggil oleh Calendar.majuBulan).
      Pemuda -> Biasa -> Veteran (lelaki); Puteri -> Wanita -> Veteran (perempuan).
-     Avatar/sayap hanya mengikut jika avatar semasa masih sama dengan kategori lama
+     Hanya KATEGORI (dan avatar) berubah. Jawatan yang dipegang TIDAK gugur: ia dipegang
+     sehingga pemilihan seterusnya, tetapi pemain tidak lagi layak bertanding jawatan sayap
+     kategori lama (dan tidak layak mempertahankannya apabila pemilihan tiba).
+     Avatar hanya mengikut jika avatar semasa masih sama dengan kategori lama
      (pilihan avatar yang sengaja ditukar semasa pendaftaran dihormati).
-     Jawatan sayap dilucutkan dan pendaftaran pertandingan sayap dibatalkan apabila sayap berubah.
      ------------------------------------------------------------------------ */
   var NAMA_KATEGORI = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita', biasa: 'Biasa', veteran: 'Veteran' };
 
@@ -175,26 +178,21 @@
     if (!baru || baru === lama) { return kosong; }
 
     var patch = { demografik: Object.assign({}, p.demografik, { kategoriKod: baru, kategori: NAMA_KATEGORI[baru] }) };
-    var ikutAvatar = !p.avatar || p.avatar === lama, mesej = 'Pada AGM tahun ini, kategori keahlian anda bertukar daripada ' + NAMA_KATEGORI[lama] + ' kepada ' + NAMA_KATEGORI[baru] + ' (usia ' + umurSemasa(p) + ' tahun).';
+    var ikutAvatar = !p.avatar || p.avatar === lama;
+    var mesej = 'Memasuki tahun ' + p.tahun + ', umur anda ' + umurSemasa(p) + ' tahun, jadi kategori keahlian anda bertukar daripada ' + NAMA_KATEGORI[lama] + ' kepada ' + NAMA_KATEGORI[baru] + '.';
     var extra = '';
     if (ikutAvatar) {
       patch.avatar = baru;
-      var senarai = (Array.isArray(p.jawatanList) ? p.jawatanList : []), kekal = senarai.filter(function (j) { return j.kumpulan !== 'sayap'; });
-      var hilang = senarai.length - kekal.length;
-      if (hilang > 0) {
-        kekal.sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); });
-        patch.jawatanList = kekal; patch.jawatan = kekal.length ? kekal[0].jawatan : 'Ahli Biasa';
-        extra += ' ' + hilang + ' jawatan sayap ' + (NAMA_KATEGORI[lama]) + ' anda dilepaskan kerana anda tidak lagi layak.';
-        if (!kekal.length) { patch.cabaran = null; patch.amaranAktif = false; }
-      }
+      var punyaSayap = (Array.isArray(p.jawatanList) ? p.jawatanList : []).some(function (j) { return j.kumpulan === 'sayap'; });
+      if (punyaSayap) { extra += ' Jawatan sayap yang anda pegang kekal sehingga pemilihan seterusnya, tetapi anda tidak lagi layak mempertahankannya.'; }
       if (p.pemilihan && p.pemilihan.daftar) {
         var pm = JSON.parse(JSON.stringify(p.pemilihan)), batal = 0;
         Object.keys(pm.daftar).forEach(function (k) {
           if (/^sayap_/.test(k) && !(pm.keputusan && pm.keputusan[k])) { delete pm.daftar[k]; batal++; }
         });
-        if (batal) { patch.pemilihan = pm; extra += ' Pendaftaran pertandingan sayap dibatalkan.'; }
+        if (batal) { patch.pemilihan = pm; extra += ' Pendaftaran pertandingan sayap yang belum selesai dibatalkan.'; }
       }
-      extra += (baru === 'biasa' || baru === 'veteran') ? ' Kategori ini tidak mempunyai jawatan sayap.' : ' Anda kini layak bertanding jawatan sayap ' + NAMA_KATEGORI[baru] + '.';
+      extra += (baru === 'biasa' || baru === 'veteran') ? ' Kategori ini tiada jawatan sayap.' : ' Anda kini layak bertanding jawatan sayap ' + NAMA_KATEGORI[baru] + '.';
     } else {
       extra = ' Avatar pilihan anda dikekalkan.';
     }
