@@ -288,6 +288,9 @@
     }
     if (!r.ok) { return r; }
 
+    var STR = muat('MyPolitikStres', 'stress.js');                                              // v5.6: stress dan kesihatan bulanan
+    if (STR) { peristiwa = peristiwa.concat(STR.prosesBulan().peristiwa || []); }
+
     var HY = tahunBaharu ? muat('MyPolitikHayat', 'hayat.js') : null;                       // v5.0: umur +1 dan semakan kesihatan
     if (HY) {
       var ht = HY.prosesTahunBaharu();

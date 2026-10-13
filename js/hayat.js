@@ -33,6 +33,7 @@
   function J() { return root.MyPolitikJawatan || (typeof require === 'function' ? tryReq('./jawatan.js') : null); }
   function W() { return root.MyPolitikWatak || (typeof require === 'function' ? tryReq('./watak.js') : null); }
   function Dt() { return root.MyPolitikData || (typeof require === 'function' ? tryReq('./data.js') : null); }
+  function St() { return root.MyPolitikStres || (typeof require === 'function' ? tryReq('./stress.js') : null); }
   function Et() { return root.MyPolitikEtika || (typeof require === 'function' ? tryReq('./etika.js') : null); }
   function tryReq(f) { try { return require(f); } catch (e) { return null; } }
 
@@ -58,8 +59,8 @@
 
   /** Ringkasan untuk UI: { umur, risiko (0-1), peratus, label, tamat }. */
   function ringkasan(p) {
-    var u = umurSemasa(p), r = risikoTahunan(u);
-    return { umur: u, risiko: r, peratus: Math.round(r * 1000) / 10, label: labelRisiko(r), nampakRisiko: u !== null && u >= CONFIG.UMUR_RISIKO_MULA, tamat: (p && p.tamat) || null };
+    var u = umurSemasa(p), st = St(), tb = st && st.risikoTambahan ? st.risikoTambahan(p) : 0, r = Math.min(0.95, risikoTahunan(u) + tb);   // v5.6: kesihatan lemah menambah risiko
+    return { umur: u, risiko: r, peratus: Math.round(r * 1000) / 10, label: labelRisiko(r), nampakRisiko: u !== null && (u >= CONFIG.UMUR_RISIKO_MULA || tb > 0), tamat: (p && p.tamat) || null };
   }
 
   function sudahTamat(p) { return !!(p && p.tamat); }
@@ -91,10 +92,35 @@
     return pangkat >= 10 ? 'Tokoh Pusat' : pangkat >= 7 ? 'Pemimpin Bahagian' : pangkat >= 3 ? 'Pemimpin Cawangan' : pangkat >= 1 ? 'Pegawai Cawangan' : 'Ahli Akar Umbi';
   }
 
-  var TAJUK_SEBAB = { meninggal: 'Tamat Hayat', bersara_kesihatan: 'Bersara Paksa (Kesihatan)', had_umur: 'Mencapai Usia 100 Tahun' };
+  /* ------------------------------------------------------------------------
+     3b. GELARAN POLITIK (v5.2) — dianugerahkan automatik berdasarkan prestasi
+     ctx: { umur, tahunBerkhidmat, pangkat, jawatan, akarUmbi, reputasi, modal, salah, status, myr }
+     Pulang senarai { kod, nama, ikon, huraian } mengikut keutamaan (maksimum 4, sekurang-kurangnya 1).
+     ------------------------------------------------------------------------ */
+  var GELARAN = [
+    { kod: 'presiden', ikon: '\uD83C\uDFDB\uFE0F', nama: 'Presiden Parti', huraian: 'Mencapai kerusi tertinggi parti.', semak: function (c) { return /^Presiden$/i.test(c.jawatan || ''); } },
+    { kod: 'tokoh_pusat', ikon: '\u2B50', nama: 'Tokoh Pusat', huraian: 'Pernah memimpin di peringkat Pusat.', semak: function (c) { return c.pangkat >= 10; } },
+    { kod: 'pemimpin_bahagian', ikon: '\uD83D\uDDFA\uFE0F', nama: 'Pemimpin Bahagian', huraian: 'Disegani di peringkat Bahagian.', semak: function (c) { return c.pangkat >= 7 && c.pangkat < 10; } },
+    { kod: 'tokoh_veteran', ikon: '\uD83C\uDF96\uFE0F', nama: 'Tokoh Veteran', huraian: 'Berkhidmat lama hingga usia lanjut.', semak: function (c) { return c.umur >= 65 && c.tahunBerkhidmat >= 10; } },
+    { kod: 'akar_umbi', ikon: '\uD83C\uDF31', nama: 'Pemimpin Akar Umbi', huraian: 'Sokongan akar umbi kekal kukuh.', semak: function (c) { return c.akarUmbi >= 70; } },
+    { kod: 'berintegriti', ikon: '\uD83E\uDD1D', nama: 'Pemimpin Berintegriti', huraian: 'Kerjaya bersih tanpa rekod disiplin.', semak: function (c) { return c.salah === 0 && c.modal >= 60 && c.status === 'baik'; } },
+    { kod: 'kontroversial', ikon: '\uD83D\uDD25', nama: 'Politikus Kontroversial', huraian: 'Kerjaya diwarnai tindakan disiplin dan kontroversi.', semak: function (c) { return c.salah >= 2 || c.status === 'dipecat' || c.status === 'dilarang' || c.status === 'digantung'; } },
+    { kod: 'penyatu', ikon: '\uD83D\uDD4A\uFE0F', nama: 'Penyatu Parti', huraian: 'Reputasi parti yang tinggi.', semak: function (c) { return c.reputasi >= 80; } },
+    { kod: 'gigih', ikon: '\uD83D\uDCAA', nama: 'Pejuang Gigih', huraian: 'Berkhidmat 15 tahun atau lebih.', semak: function (c) { return c.tahunBerkhidmat >= 15; } }
+  ];
+  var GELARAN_LALAI = { kod: 'ahli_setia', ikon: '\uD83D\uDEA9', nama: 'Ahli Setia', huraian: 'Berkhidmat dengan setia kepada parti.' };
+
+  function anugerahGelaran(ctx) {
+    var senarai = GELARAN.filter(function (g) { return g.semak(ctx); }).slice(0, 4).map(function (g) { return { kod: g.kod, ikon: g.ikon, nama: g.nama, huraian: g.huraian }; });
+    return senarai.length ? senarai : [GELARAN_LALAI];
+  }
+
+  var TAJUK_SEBAB = { meninggal: 'Tamat Hayat', bersara_kesihatan: 'Bersara Paksa (Kesihatan)', had_umur: 'Mencapai Usia 100 Tahun', bersara_sukarela: 'Bersara Secara Sukarela', kesihatan_merosot: 'Kesihatan Merosot (Tekanan Kerja)' };
 
   function mesejSebab(sebab, umur) {
     if (sebab === 'meninggal') { return 'Anda telah meninggal dunia pada usia ' + umur + ' tahun. Al-Fatihah. Perjalanan politik anda berakhir di sini.'; }
+    if (sebab === 'kesihatan_merosot') { return 'Tekanan kerja bertahun-tahun meruntuhkan kesihatan anda. Atas nasihat doktor, anda bersara sepenuhnya daripada politik pada usia ' + umur + ' tahun.'; }
+    if (sebab === 'bersara_sukarela') { return 'Anda memutuskan untuk bersara daripada politik pada usia ' + umur + ' tahun. Terima kasih atas khidmat anda kepada parti.'; }
     if (sebab === 'bersara_kesihatan') { return 'Atas nasihat doktor, anda bersara sepenuhnya daripada politik pada usia ' + umur + ' tahun kerana masalah kesihatan.'; }
     return 'Anda mencapai usia ' + umur + ' tahun, had umur permainan ini. Perjalanan politik anda ditutup dengan penuh kehormatan.';
   }
@@ -106,7 +132,12 @@
     var w = null, et = null, ET = Et(), WK = W();
     try { w = WK && WK.tentukan ? WK.tentukan(p) : null; } catch (e) { w = null; }
     try { et = ET && ET.ringkasan ? ET.ringkasan(p) : null; } catch (e) { et = null; }
+    var akarUmbi = p.kesetiaan && isFinite(Number(p.kesetiaan.akarUmbi)) ? Number(p.kesetiaan.akarUmbi) : 0;
+    var statusDisiplin = et ? et.status : 'baik', salah = et ? et.salah : 0, modal = et ? et.modal : 50;
+    var gelarList = anugerahGelaran({ umur: umur, tahunBerkhidmat: Math.max(0, p.tahun - CONFIG.TAHUN_MULA), pangkat: top.pangkat || 0, jawatan: top.jawatan,
+      akarUmbi: akarUmbi, reputasi: p.reputasi || 0, modal: modal, salah: salah, status: statusDisiplin, myr: p.myr || 0 });
     return {
+      kesetiaanAkarUmbi: akarUmbi, statusDisiplin: statusDisiplin, gelarList: gelarList,
       sebab: sebab, tajuk: TAJUK_SEBAB[sebab] || 'Penamat Kerjaya', mesej: mesejSebab(sebab, umur),
       umur: umur, tahun: p.tahun, bulan: p.bulan, tahunMula: CONFIG.TAHUN_MULA,
       tahunBerkhidmat: Math.max(0, p.tahun - CONFIG.TAHUN_MULA),
@@ -130,7 +161,7 @@
     kemaskiniJawatanTertinggi(); p = s.loadPlayer();
     var umur = umurSemasa(p);
     if (umur === null) { return { peristiwa: peristiwa, tamat: null }; }
-    var q = risikoTahunan(umur), rng = opts.rng || s.rngBerbenih(p.id + '|' + p.tahun + '|hayat'), sebab = null;
+    var stt = St(), q = Math.min(0.95, risikoTahunan(umur) + (stt && stt.risikoTambahan ? stt.risikoTambahan(p) : 0)), rng = opts.rng || s.rngBerbenih(p.id + '|' + p.tahun + '|hayat'), sebab = null;
 
     if (umur >= CONFIG.UMUR_MAKS) { sebab = 'had_umur'; }
     else if (q > 0) {
@@ -201,11 +232,24 @@
     return { berubah: true, daripada: lama, kepada: baru, peristiwa: [{ jenis: 'kategori_bertukar', mesej: mesej + extra }] };
   }
 
+  /** Tamatkan kerjaya dengan sebab tertentu dan simpan Legacy Summary. */
+  function tamatkan(sebab) {
+    var s = S(), p = s && s.loadPlayer();
+    if (!p) { return { ok: false, ralat: 'Tiada profil pemain.' }; }
+    if (p.tamat) { return { ok: false, ralat: 'Kerjaya anda sudah tamat.' }; }
+    kemaskiniJawatanTertinggi(); p = s.loadPlayer();
+    var legasi = bina(p, sebab);
+    var r = s.applyEffects({}, { kiraTindakan: false, patch: { tamat: legasi }, log: { tindakan: 'hayat', nama: legasi.tajuk + ' pada usia ' + legasi.umur, peringkat: 'hayat' } });
+    return r && r.ok ? { ok: true, tamat: legasi } : { ok: false, ralat: (r && r.ralat) || 'Gagal menamatkan kerjaya.' };
+  }
+  /** Bersara awal atas pilihan pemain (v5.3). */
+  function bersaraAwal() { return tamatkan('bersara_sukarela'); }
+
   /** Padam profil dan mulakan semula tidak dibuat di sini; UI memanggil Save.clearPlayer(). */
   return {
     CONFIG: CONFIG, umurSemasa: umurSemasa, risikoTahunan: risikoTahunan, labelRisiko: labelRisiko, ringkasan: ringkasan,
-    sudahTamat: sudahTamat, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
-    jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat,
+    sudahTamat: sudahTamat, bersaraAwal: bersaraAwal, tamatkan: tamatkan, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
+    jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat, anugerahGelaran: anugerahGelaran,
     kategoriSepatutnya: kategoriSepatutnya, prosesPeralihanKategori: prosesPeralihanKategori
   };
 });

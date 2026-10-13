@@ -67,6 +67,12 @@
       id: 'kerja_sampingan', nama: 'Kerja Sampingan / Perniagaan',
       penerangan: 'Menambah pendapatan melalui kerja sampingan atau perniagaan kecil.',
       kesan: { myr: 500, ap: -2 }
+    },
+    {
+      id: 'rehat_keluarga', nama: 'Rehat & Masa Keluarga',
+      penerangan: 'Berehat daripada politik untuk memulihkan tenaga. Stress -15, Kesihatan +4.',
+      kesan: { ap: -2 },
+      stres: { stress: -15, kesihatan: 4 }
     }
   ];
 
@@ -162,6 +168,7 @@
     if (Et && def.etika) { opsEfek.patch = { etika: Et.selepasTindakanBersih(p, def.etika) }; }
     var r = S.applyEffects(kesan, opsEfek);
     if (!r.ok) { return r; }
+    if (def.stres) { var STr = typeof globalThis !== 'undefined' ? globalThis.MyPolitikStres : null; if (STr) { STr.laras(def.stres); r.perubahan.stres = def.stres; } }   // v5.6: Rehat
 
     var peristiwa = [];
     var layakSelepas = getKelayakanBertanding(r.profil).ipCukup;
@@ -172,7 +179,7 @@
       });
     }
 
-    var mesej = def.nama + ': ' + S.ringkasPerubahan(r.perubahan) + '.';
+    var mesej = def.nama + ': ' + S.ringkasPerubahan(r.perubahan) + '.' + (def.stres ? ' Stress ' + def.stres.stress + ', Kesihatan +' + def.stres.kesihatan + '.' : '');
     if (isu) { mesej += ' Isu tempatan dicatat: ' + isu.tajuk + '.'; }
     return { ok: true, mesej: mesej, perubahan: r.perubahan, profil: r.profil, isu: isu, peristiwa: peristiwa };
   }

@@ -18,8 +18,15 @@
     .acara-tunggu[hidden] { display: none; }
     .acara__ikon { font-size: 2.2rem; line-height: 1; margin: 0 0 6px; }
     .acara__pil { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
-    .acara__pil li { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 8px 10px; font-size: .88rem; }
-    .acara__pil li.is-off { opacity: .55; }
+    .modal__body .acara__pil { padding-left: 0; }
+    .modal__footer[hidden] { display: none !important; }
+    .acara__pil li { margin: 0; }
+    .acara__opsi { display: block; width: 100%; text-align: left; font: inherit; font-size: .88rem; color: inherit; background: transparent; cursor: pointer; border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 10px 12px; transition: border-color .15s, background .15s, transform .05s; }
+    .acara__opsi:hover, .acara__opsi:focus-visible { border-color: #f5b800; background: rgba(245,184,0,.10); outline: none; }
+    .acara__opsi:active { transform: scale(.99); }
+    .acara__opsi.is-utama { border-color: rgba(245,184,0,.6); }
+    .acara__opsi.is-off { opacity: .55; cursor: not-allowed; }
+    .acara__opsi.is-off:hover { border-color: rgba(128,128,128,.35); background: transparent; }
     .acara__pil small { display: block; opacity: .8; }
     .acara__kesan { font-weight: 700; }
     .ring { display: grid; gap: 10px; }
@@ -54,7 +61,16 @@
     .takwim__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .72rem; color: var(--text-dim); }
     .takwim__legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
     .c-akar_umbi { background: #2ECC71; } .c-cawangan { background: #4DA3FF; } .c-bahagian { background: #F2B705; } .c-pau { background: #E8344F; } .c-pasca_pau { background: #A78BFA; }
+    .meter-bar { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin: 0 0 var(--space-4); }
+    .meter { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev-2); }
+    .meter__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); }
+    .meter__head b { color: var(--text); letter-spacing: 0; text-transform: none; }
+    .meter__track { height: 8px; margin: 6px 0 4px; border-radius: 99px; background: var(--bg-elev-3); overflow: hidden; }
+    .meter__track i { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--success); transition: width .4s; }
+    .meter__track i.is-sederhana { background: var(--warning); } .meter__track i.is-tinggi { background: #FF8A3D; } .meter__track i.is-kritikal { background: var(--danger); }
+    .meter small { display: block; font-size: .72rem; color: var(--text-muted); }
     #p-jawatan-lain { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+    .badge-office[hidden], #p-jawatan-lain[hidden] { display: none !important; }   /* v5.5: lencana kosong tidak dipaparkan */
     .dash-profile { display: grid; gap: var(--space-4); }
     .dash-profile__top { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
     .dash-profile__info { min-width: 0; flex: 1 1 240px; }
@@ -87,6 +103,12 @@
     .banner--warn { border-color: rgba(255, 77, 94, .5); background: rgba(255, 77, 94, .08); }
     .dash-loc li.is-risiko { border-color: rgba(229, 48, 63, .6); color: #FFD9DD; }
     .legasi { max-width: 640px; margin: var(--space-6) auto; padding: var(--space-5); }
+    .legasi__sub { margin: var(--space-4) 0 var(--space-2); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); }
+    .legasi__gelar { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .legasi__gelar li { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev-2); }
+    .legasi__gelar li > span { font-size: 1.5rem; }
+    .legasi__gelar b { display: block; color: var(--gold); }
+    .legasi__gelar small { color: var(--text-muted); }
     .legasi__kepala { text-align: center; margin-bottom: var(--space-4); }
     .legasi__kepala h1 { margin: 4px 0; font-size: 1.7rem; }
     .legasi__kecil { margin: 0; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); }
@@ -149,6 +171,7 @@
       <button type="button" class="btn btn--ghost btn--sm lagu-btn" id="btn-lagu" aria-expanded="false" aria-controls="kad-lagu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Lagu</span></button>
       <button type="button" class="btn btn--ghost btn--sm" data-perlembagaan title="Perlembagaan Parti" aria-label="Perlembagaan Parti">📜<span class="plb-btn-teks"> Perlembagaan</span></button>
       <button type="button" class="btn btn--ghost btn--sm" id="btn-simpan">Simpan</button>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-bersara" title="Bersara awal dan lihat rumusan kerjaya">Bersara</button>
       <button type="button" class="btn btn--danger btn--sm" id="btn-reset">Reset</button>
     </div>
   </header>
@@ -197,6 +220,11 @@
         <div class="stat"><div class="stat__label">Dana (MYR)</div><div class="stat__value" id="r-myr">0</div></div>
         <div class="stat"><div class="stat__label">Mata Tindakan (AP)</div><div class="stat__value stat__value--red" id="r-ap">0</div></div>
         <div class="stat"><div class="stat__label">Status Tahun</div><div class="stat__value" id="r-tahun" style="font-size:1.1rem">2026</div><div class="stat__label" id="r-tahun-sub" style="margin-top:2px;text-transform:none;letter-spacing:0"></div></div>
+      </div>
+
+      <div class="meter-bar" id="meter-bar" aria-label="Stress dan Kesihatan">
+        <div class="meter"><div class="meter__head"><span>Stress</span><b id="m-stress-teks">0</b></div><div class="meter__track"><i id="m-stress"></i></div><small id="m-stress-info"></small></div>
+        <div class="meter"><div class="meter__head"><span>Kesihatan</span><b id="m-kes-teks">100</b></div><div class="meter__track"><i id="m-kes"></i></div><small id="m-kes-info"></small></div>
       </div>
 
       <div class="acara-tunggu" id="acara-tunggu" hidden><span>📜 Satu acara menunggu keputusan anda.</span><button type="button" class="btn btn--gold" data-act="acara-buka">Buka Acara</button></div>
@@ -303,6 +331,7 @@
   <script src="js/lagu.js"></script>
   <script src="js/watak.js"></script>
   <script src="js/perlembagaan.js"></script>
+  <script src="js/stress.js"></script>
   <script src="js/hayat.js"></script>
   <script src="js/app.js"></script>
   <!-- Statistik lawatan tanpa kuki (GoatCounter) -->
