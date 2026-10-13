@@ -208,7 +208,7 @@
       masuk('ajk_cawangan', 'AJK Cawangan', 'cawangan', ahli && cukupIP, ahli ? kekurangan : 'Hanya untuk Ahli Biasa.', min),
       jawatanSayap
         ? masuk('sayap_cawangan', jawatanSayap, 'cawangan', ahli && cukupIP, ahli ? kekurangan : 'Hanya untuk Ahli Biasa.', min)
-        : masuk('sayap_cawangan', 'Ketua Sayap Cawangan', 'cawangan', false, 'Kategori Veteran/Ahli Biasa tidak mempunyai sayap.', min),
+        : masuk('sayap_cawangan', 'Ketua Sayap Cawangan', 'cawangan', false, 'Kategori Biasa dan Veteran tidak mempunyai sayap.', min),
       masuk('bahagian', 'Jawatan Bahagian', 'bahagian', false, 'Terkunci untuk Ahli Biasa.', null),
       masuk('pusat', 'Jawatan Pusat (MKT)', 'pusat', false, 'Terkunci untuk Ahli Biasa.', null)
     ];

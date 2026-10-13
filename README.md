@@ -51,7 +51,7 @@ Modul utama dalam `js/`:
 | `map.js`, `geo.js` | Peta SVG negeri, parlimen dan DUN |
 | `menu.js` | Menu utama pada `index.html` (Sambung, Permainan Baharu, Cara Bermain) |
 | `perlembagaan.js` | Modal rujukan Perlembagaan Parti (fasal boleh lipat) |
-| `hayat.js` | Umur pemain, risiko kesihatan dan Legacy Summary (kerjaya tamat) |
+| `hayat.js` | Umur pemain, risiko kesihatan, Legacy Summary (kerjaya tamat) dan peralihan kategori mengikut umur pada AGM |
 | `app.js` | Menggabungkan semua modul ke dalam dashboard |
 
 Data permainan disimpan dalam pelayar (localStorage). Tiada pelayan atau akaun diperlukan.

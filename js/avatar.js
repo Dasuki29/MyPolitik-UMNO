@@ -1,6 +1,7 @@
 /* ==========================================================================
    Nusa Politik — js/avatar.js
-   Avatar watak (SVG asli, dilukis dengan kod): Pemuda, Puteri, Wanita, Veteran.
+   Avatar watak (SVG asli, dilukis dengan kod): Pemuda, Puteri, Wanita, Biasa, Veteran.
+   v5.1: tambah Biasa (lelaki pertengahan umur, baju Melayu biru tua, songkok hitam).
    v4.3: Pemuda (baju Melayu putih, songkok hitam), Puteri (kebaya putih, tudung merah jambu),
          Wanita (baju kurung putih, tudung merah, berusia), Veteran (baju Melayu merah, songkok hitam, berusia).
      MyPolitikAvatar.LIST                        senarai { kod, label, penerangan }
@@ -20,6 +21,7 @@
     { kod: 'pemuda',  label: 'Pemuda',  penerangan: 'Lelaki muda, baju Melayu putih, songkok hitam' },
     { kod: 'puteri',  label: 'Puteri',  penerangan: 'Perempuan muda, kebaya putih, tudung merah jambu' },
     { kod: 'wanita',  label: 'Wanita',  penerangan: 'Perempuan berusia, baju kurung putih, tudung merah' },
+    { kod: 'biasa',   label: 'Biasa',   penerangan: 'Lelaki pertengahan umur, baju Melayu biru tua, songkok hitam' },
     { kod: 'veteran', label: 'Veteran', penerangan: 'Lelaki berusia, baju Melayu merah, songkok hitam' }
   ];
 
@@ -27,6 +29,7 @@
     pemuda:  { bg1: '#E8344F', bg2: '#7A0A1E' },
     puteri:  { bg1: '#5B6BC0', bg2: '#232A63' },
     wanita:  { bg1: '#FFD84D', bg2: '#B8860B' },
+    biasa:   { bg1: '#2E8B6E', bg2: '#0E3B2E' },
     veteran: { bg1: '#6B7387', bg2: '#242834' }
   };
 
@@ -118,6 +121,33 @@
            '<circle cx="38.8" cy="53" r="3" fill="#E3877A" opacity=".2"/><circle cx="57.2" cy="53" r="3" fill="#E3877A" opacity=".2"/>';
       // kerongsang di bahu
       s += '<g transform="translate(33 76)"><circle r="3" fill="#E2B93B" stroke="#B8860B" stroke-width="1"/><circle r="1" fill="#fff" opacity=".8"/></g>';
+      return s;
+    }
+
+    /* biasa (lelaki 41-59) */
+    if (kod === 'biasa') {
+      var kb = '#D8A57C', gb = '#AE7650';
+      s += '<path d="M6 96 C8 76 26 68 48 68 C70 68 88 76 90 96Z" fill="#1D3A6E"/>' +
+           '<path d="M6 96 C8 76 26 68 48 68 C70 68 88 76 90 96" fill="none" stroke="#11264B" stroke-width="1.6"/>' +
+           '<path d="M48 76 L48 96" stroke="#11264B" stroke-width="1.6"/>' +
+           '<circle cx="48" cy="82" r="1.6" fill="#E2B93B"/><circle cx="48" cy="89" r="1.6" fill="#E2B93B"/>' +
+           '<path d="M20 90 Q30 84 40 86 M76 90 Q66 84 56 86" fill="none" stroke="#3B5FA3" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>';
+      s += '<rect x="41" y="56" width="14" height="14" rx="4" fill="' + kb + '"/>' +
+           '<path d="M37 67 Q48 74 59 67 L59 74 Q48 81 37 74Z" fill="#2B4E8F" stroke="#11264B" stroke-width="1.3" stroke-linejoin="round"/>';
+      s += '<circle cx="32" cy="47" r="3.4" fill="' + kb + '"/><circle cx="64" cy="47" r="3.4" fill="' + kb + '"/>' +
+           '<ellipse cx="48" cy="46" rx="16" ry="18.5" fill="' + kb + '"/>' +
+           '<path d="M33 40 Q31.6 45 33.4 49.5 Q35 46 35.2 41.5Z M63 40 Q64.4 45 62.6 49.5 Q61 46 60.8 41.5Z" fill="#6E6A68"/>';
+      s += '<path d="M36 40.4 q4.5 -2.8 9 -.6 M51 39.8 q4.5 -2.2 9 .6" fill="none" stroke="#3A2A22" stroke-width="2.6" stroke-linecap="round"/>' +
+           MATA(42, 46, 0) + MATA(54, 46, 0) +
+           '<path d="M39 37.4 q9 -2.2 18 0" fill="none" stroke="' + gb + '" stroke-width=".9" stroke-linecap="round" opacity=".6"/>' +
+           '<path d="M36.6 45.8 l-2.4 -.6 M59.4 45.8 l2.4 -.6" stroke="' + gb + '" stroke-width=".9" stroke-linecap="round"/>' +
+           '<path d="M48 47 q-2.2 5.4 .9 6.2" fill="none" stroke="' + gb + '" stroke-width="1.3" stroke-linecap="round"/>' +
+           '<path d="M40.4 52 q-1.4 4.6 .4 8 M55.6 52 q1.4 4.6 -.4 8" fill="none" stroke="' + gb + '" stroke-width=".9" stroke-linecap="round" opacity=".7"/>' +
+           '<path d="M48 55.4 Q43 52.8 39 56 Q43 59 48 57.4 Q53 59 57 56 Q53 52.8 48 55.4Z" fill="#3A2A22"/>' +
+           '<path d="M44 60.4 q4 2.2 8 0" fill="none" stroke="#7A3B2A" stroke-width="1.6" stroke-linecap="round"/>';
+      s += '<path d="M30 36.5 L32 20.5 Q32.5 15.5 39.5 15.5 L56.5 15.5 Q63.5 15.5 64 20.5 L66 36.5 Q48 31 30 36.5Z" fill="#15171D"/>' +
+           '<path d="M32.6 22.5 Q48 18.5 63.4 22.5 L63.8 25.5 Q48 21.5 32.2 25.5Z" fill="#2B2F3A" opacity=".8"/>' +
+           '<path d="M30.5 35.6 Q48 30.4 65.5 35.6" fill="none" stroke="#2B2F3A" stroke-width="1.2"/>';
       return s;
     }
 

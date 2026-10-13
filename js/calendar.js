@@ -291,6 +291,11 @@
     var HY = tahunBaharu ? muat('MyPolitikHayat', 'hayat.js') : null;                       // v5.0: umur +1 dan semakan kesihatan
     if (HY) { peristiwa = peristiwa.concat(HY.prosesTahunBaharu().peristiwa || []); }
 
+    if (bulan === 8) {                                                                       // v5.1: peralihan kategori mengikut umur pada AGM
+      var HK = muat('MyPolitikHayat', 'hayat.js');
+      if (HK && HK.prosesPeralihanKategori) { peristiwa = peristiwa.concat(HK.prosesPeralihanKategori().peristiwa || []); }
+    }
+
     peristiwa = peristiwa.concat(mesejMasuk(bulan, tahun, tahunBaharu));
     var akhir = S.loadPlayer();
     return {

@@ -32,6 +32,7 @@
   function S() { return root.MyPolitikSave || (typeof require === 'function' ? require('./save.js') : null); }
   function J() { return root.MyPolitikJawatan || (typeof require === 'function' ? tryReq('./jawatan.js') : null); }
   function W() { return root.MyPolitikWatak || (typeof require === 'function' ? tryReq('./watak.js') : null); }
+  function Dt() { return root.MyPolitikData || (typeof require === 'function' ? tryReq('./data.js') : null); }
   function Et() { return root.MyPolitikEtika || (typeof require === 'function' ? tryReq('./etika.js') : null); }
   function tryReq(f) { try { return require(f); } catch (e) { return null; } }
 
@@ -151,10 +152,62 @@
     return { peristiwa: peristiwa, tamat: null, umur: umur, risiko: q };
   }
 
+  /* ------------------------------------------------------------------------
+     5. PERALIHAN KATEGORI MENGIKUT UMUR (v5.1) — dilaksanakan pada AGM (Bulan 8)
+     Pemuda -> Biasa -> Veteran (lelaki); Puteri -> Wanita -> Veteran (perempuan).
+     Avatar/sayap hanya mengikut jika avatar semasa masih sama dengan kategori lama
+     (pilihan avatar yang sengaja ditukar semasa pendaftaran dihormati).
+     Jawatan sayap dilucutkan dan pendaftaran pertandingan sayap dibatalkan apabila sayap berubah.
+     ------------------------------------------------------------------------ */
+  var NAMA_KATEGORI = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita', biasa: 'Biasa', veteran: 'Veteran' };
+
+  function kategoriSepatutnya(p) {
+    var D = Dt(), u = umurSemasa(p);
+    if (!D || !D.kategoriMengikutUmur || u === null || !p.demografik) { return null; }
+    return D.kategoriMengikutUmur(String(p.demografik.jantina || '').charAt(0), u);
+  }
+
+  /** Semak dan laksanakan peralihan. Pulang { berubah, daripada, kepada, peristiwa:[] }. */
+  function prosesPeralihanKategori() {
+    var s = S(), p = s && s.loadPlayer(), kosong = { berubah: false, peristiwa: [] };
+    if (!p || p.tamat || !p.demografik) { return kosong; }
+    var lama = p.demografik.kategoriKod, baru = kategoriSepatutnya(p);
+    if (!baru || baru === lama) { return kosong; }
+
+    var patch = { demografik: Object.assign({}, p.demografik, { kategoriKod: baru, kategori: NAMA_KATEGORI[baru] }) };
+    var ikutAvatar = !p.avatar || p.avatar === lama, mesej = 'Pada AGM tahun ini, kategori keahlian anda bertukar daripada ' + NAMA_KATEGORI[lama] + ' kepada ' + NAMA_KATEGORI[baru] + ' (usia ' + umurSemasa(p) + ' tahun).';
+    var extra = '';
+    if (ikutAvatar) {
+      patch.avatar = baru;
+      var senarai = (Array.isArray(p.jawatanList) ? p.jawatanList : []), kekal = senarai.filter(function (j) { return j.kumpulan !== 'sayap'; });
+      var hilang = senarai.length - kekal.length;
+      if (hilang > 0) {
+        kekal.sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); });
+        patch.jawatanList = kekal; patch.jawatan = kekal.length ? kekal[0].jawatan : 'Ahli Biasa';
+        extra += ' ' + hilang + ' jawatan sayap ' + (NAMA_KATEGORI[lama]) + ' anda dilepaskan kerana anda tidak lagi layak.';
+        if (!kekal.length) { patch.cabaran = null; patch.amaranAktif = false; }
+      }
+      if (p.pemilihan && p.pemilihan.daftar) {
+        var pm = JSON.parse(JSON.stringify(p.pemilihan)), batal = 0;
+        Object.keys(pm.daftar).forEach(function (k) {
+          if (/^sayap_/.test(k) && !(pm.keputusan && pm.keputusan[k])) { delete pm.daftar[k]; batal++; }
+        });
+        if (batal) { patch.pemilihan = pm; extra += ' Pendaftaran pertandingan sayap dibatalkan.'; }
+      }
+      extra += (baru === 'biasa' || baru === 'veteran') ? ' Kategori ini tidak mempunyai jawatan sayap.' : ' Anda kini layak bertanding jawatan sayap ' + NAMA_KATEGORI[baru] + '.';
+    } else {
+      extra = ' Avatar pilihan anda dikekalkan.';
+    }
+    var r = s.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: 'kategori', nama: 'Kategori ' + NAMA_KATEGORI[lama] + ' → ' + NAMA_KATEGORI[baru], peringkat: 'hayat' } });
+    if (!r || !r.ok) { return kosong; }
+    return { berubah: true, daripada: lama, kepada: baru, peristiwa: [{ jenis: 'kategori_bertukar', mesej: mesej + extra }] };
+  }
+
   /** Padam profil dan mulakan semula tidak dibuat di sini; UI memanggil Save.clearPlayer(). */
   return {
     CONFIG: CONFIG, umurSemasa: umurSemasa, risikoTahunan: risikoTahunan, labelRisiko: labelRisiko, ringkasan: ringkasan,
     sudahTamat: sudahTamat, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
-    jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat
+    jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat,
+    kategoriSepatutnya: kategoriSepatutnya, prosesPeralihanKategori: prosesPeralihanKategori
   };
 });

@@ -382,7 +382,7 @@
     var penting = { disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
-                    fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan' };
+                    kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan' };
     for (var i = 0; i < (senarai || []).length; i++) {
       var e = senarai[i];
       if (!e || !e.mesej) { continue; }
@@ -615,7 +615,7 @@
     }
     var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Jawatan &amp; Mandat Anda</h2>';
     h += '<p class="note">Anda boleh memegang jawatan di Cawangan, Bahagian dan Pusat serentak (satu jawatan utama dan satu jawatan sayap bagi setiap peringkat). ' +
-      (J.sayapPemain(p) ? 'Sayap anda: <b>' + esc(J.NAMA_SAYAP[J.sayapPemain(p)]) + '</b>.' : 'Anda tiada sayap (Ahli Biasa / Veteran), jadi jawatan sayap tidak dibuka.') + '</p>';
+      (J.sayapPemain(p) ? 'Sayap anda: <b>' + esc(J.NAMA_SAYAP[J.sayapPemain(p)]) + '</b>.' : 'Kategori anda (Biasa / Veteran) tiada sayap, jadi jawatan sayap tidak dibuka.') + '</p>';
     h += senarai.length ? '<div class="btn-group" style="flex-wrap:wrap;margin-bottom:10px">' + senarai.map(function (j) {
       return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + ' &middot; ' + esc(j.label) + '</span>'; }).join('') + '</div>'
       : '<p class="empty">Belum memegang sebarang jawatan.</p>';
