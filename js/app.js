@@ -621,7 +621,7 @@
       return '<div class="kv"><span>' + esc(nama) + '</span><b class="' + (x.layak ? 'text-gold' : '') + '">' + teks + '</b></div>';
     }
     var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Jawatan &amp; Mandat Anda</h2>';
-    h += '<p class="note">Anda boleh memegang jawatan di Cawangan, Bahagian dan Pusat serentak (satu jawatan utama dan satu jawatan sayap bagi setiap peringkat). ' +
+    h += '<p class="note">Anda hanya boleh memegang <b>satu jawatan</b> pada satu masa. Menang jawatan yang lebih tinggi akan melepaskan jawatan lama secara automatik. ' +
       (J.sayapPemain(p) ? 'Sayap anda: <b>' + esc(J.NAMA_SAYAP[J.sayapPemain(p)]) + '</b>.' : 'Kategori anda (Biasa / Veteran) tiada sayap, jadi jawatan sayap tidak dibuka.') + '</p>';
     h += senarai.length ? '<div class="btn-group" style="flex-wrap:wrap;margin-bottom:10px">' + senarai.map(function (j) {
       return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + ' &middot; ' + esc(j.label) + '</span>'; }).join('') + '</div>'
@@ -832,6 +832,7 @@
 
   function render() {
     state.renderTerjadual = false;
+    if (J && J.selaraskan) { var pj = S.loadPlayer(), tj = pj && !pj.tamat ? J.selaraskan(pj) : null; if (tj) { S.applyEffects({}, { kiraTindakan: false, patch: tj }); } }     // v5.5: satu jawatan sahaja (simpanan lama)
     if (ET && ET.kuatkuasaGantung) { ET.kuatkuasaGantung(); }          // v4.6: lucut jawatan jika digantung
     if (HY) { HY.kemaskiniJawatanTertinggi(); }                         // v5.0: rekod jawatan tertinggi untuk Legacy Summary
     var p = S.loadPlayer();
