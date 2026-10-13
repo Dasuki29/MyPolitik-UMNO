@@ -50,6 +50,8 @@ Modul utama dalam `js/`:
 | `watak.js` | Gaya Kepimpinan dan kad Laluan Karier Sebenar |
 | `map.js`, `geo.js` | Peta SVG negeri, parlimen dan DUN |
 | `menu.js` | Menu utama pada `index.html` (Sambung, Permainan Baharu, Cara Bermain) |
+| `perlembagaan.js` | Modal rujukan Perlembagaan Parti (fasal boleh lipat) |
+| `hayat.js` | Umur pemain, risiko kesihatan dan Legacy Summary (kerjaya tamat) |
 | `app.js` | Menggabungkan semua modul ke dalam dashboard |
 
 Data permainan disimpan dalam pelayar (localStorage). Tiada pelayan atau akaun diperlukan.
