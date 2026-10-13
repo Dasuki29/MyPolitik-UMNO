@@ -590,7 +590,7 @@
     d.tertunggak = null; simpan(d);
     return {
       ok: true, mesej: mesej, perubahan: res.perubahan,
-      ringkas: S.ringkasPerubahan(res.perubahan) || 'Tiada perubahan sumber',
+      ringkas: [S.ringkasPerubahan(res.perubahan), c.stres && c.stres.stress ? 'Stress ' + (c.stres.stress > 0 ? '+' : '') + c.stres.stress : ''].filter(Boolean).join(', ') || 'Tiada perubahan sumber',
       acara: { id: t.id, tajuk: t.tajuk, ikon: t.ikon }, pilihan: { id: c.id, label: c.label }, berisiko: !!c.hasil
     };
   }
