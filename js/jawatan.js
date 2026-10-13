@@ -10,7 +10,7 @@
         Menang jawatan lebih tinggi pada peringkat dan kumpulan yang sama menggantikan yang lama.
         profil.jawatan sentiasa = nama jawatan berpangkat tertinggi (sandaran untuk modul lama).
    2. Jawatan mengikut sayap
-        Sayap pemain = profil.avatar (pemuda | puteri | wanita). 'veteran' = Ahli Biasa tanpa sayap.
+        Sayap pemain = profil.avatar (pemuda | puteri | wanita). 'biasa' dan 'veteran' tiada sayap. Kategori bertukar mengikut umur pada AGM (hayat.js).
         Hanya jawatan sayap yang sepadan dibuka. Jawatan utama dibuka kepada semua.
    3. Mandat perwakilan (sah tahun semasa SAHAJA)
         profil.perwakilan = { cawangan: <tahun menang>|0, bahagian: <tahun menang>|0 }

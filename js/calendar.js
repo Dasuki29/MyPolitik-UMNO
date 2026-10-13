@@ -267,6 +267,7 @@
   function majuBulan() {
     var p = S && S.loadPlayer();
     if (!p) { return gagal('tiada_profil', 'Tiada profil pemain.'); }
+    if (p.tamat) { return gagal('kerjaya_tamat', 'Kerjaya anda telah tamat. Mulakan permainan baharu.'); }     // v5.0
     var asal = snapshot(p), bulanLama = sah(p.bulan), tahunLama = p.tahun, peristiwa = [];
 
     peristiwa = peristiwa.concat(tutupMusim(p));
@@ -286,6 +287,14 @@
       });
     }
     if (!r.ok) { return r; }
+
+    var HY = tahunBaharu ? muat('MyPolitikHayat', 'hayat.js') : null;                       // v5.0: umur +1 dan semakan kesihatan
+    if (HY) { peristiwa = peristiwa.concat(HY.prosesTahunBaharu().peristiwa || []); }
+
+    if (bulan === 8) {                                                                       // v5.1: peralihan kategori mengikut umur pada AGM
+      var HK = muat('MyPolitikHayat', 'hayat.js');
+      if (HK && HK.prosesPeralihanKategori) { peristiwa = peristiwa.concat(HK.prosesPeralihanKategori().peristiwa || []); }
+    }
 
     peristiwa = peristiwa.concat(mesejMasuk(bulan, tahun, tahunBaharu));
     var akhir = S.loadPlayer();

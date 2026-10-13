@@ -853,7 +853,7 @@ option { background: var(--bg-elev-2); color: var(--text); }
 
 /* ---- Pilihan avatar ---- */
 .avatar-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
-@media (min-width: 640px) { .avatar-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 640px) { .avatar-grid { grid-template-columns: repeat(5, 1fr); } }
 .av { position: relative; display: block; margin: 0; }
 .av input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
 .av__box { display: grid; justify-items: center; gap: 4px; padding: 12px 8px; text-align: center;
@@ -1383,7 +1383,8 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
               </div>
               <div class="field">
                 <label for="f-umur">Umur</label>
-                <input class="input" id="f-umur" name="umur" type="number" inputmode="numeric" min="18" max="100" placeholder="18 hingga 100" aria-describedby="e-umur" required>
+                <input class="input" id="f-umur" name="umur" type="number" inputmode="numeric" min="18" max="60" placeholder="18 hingga 60" aria-describedby="e-umur h-umur" required>
+                <p class="note" id="h-umur" style="margin:4px 0 0;font-size:.78rem">Umur bertambah 1 tahun setiap tahun permainan. Risiko kesihatan meningkat selepas 45 tahun, dan kerjaya tamat pada usia 100 tahun.</p>
                 <p class="field__error" id="e-umur" role="alert"></p>
               </div>
               <div class="field" style="grid-column:1/-1">
@@ -1542,7 +1543,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
       function v(id) { var e = document.getElementById(id); return e ? e.value : ''; }
       function mark() {
         var u = parseInt(v('f-umur'), 10);
-        var ok1 = v('f-nama').trim().length > 1 && !!f.querySelector('input[name=jantina]:checked') && u >= 18 && u <= 100;
+        var ok1 = v('f-nama').trim().length > 1 && !!f.querySelector('input[name=jantina]:checked') && u >= 18 && u <= 60;
         var ok2 = !!f.querySelector('#avatar-grid input:checked');
         var ok3 = !!v('s-cawangan');
         [ok1, ok2, ok3].forEach(function (ok, i) { st.children[i].classList.toggle('is-done', ok); });

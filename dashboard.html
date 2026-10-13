@@ -85,6 +85,15 @@
     .note { margin: 0 0 var(--space-3); font-size: .88rem; color: var(--text-muted); }
     .banner { padding: var(--space-3) var(--space-4); border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev-2); margin-bottom: var(--space-4); font-size: .9rem; }
     .banner--warn { border-color: rgba(255, 77, 94, .5); background: rgba(255, 77, 94, .08); }
+    .dash-loc li.is-risiko { border-color: rgba(229, 48, 63, .6); color: #FFD9DD; }
+    .legasi { max-width: 640px; margin: var(--space-6) auto; padding: var(--space-5); }
+    .legasi__kepala { text-align: center; margin-bottom: var(--space-4); }
+    .legasi__kepala h1 { margin: 4px 0; font-size: 1.7rem; }
+    .legasi__kecil { margin: 0; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); }
+    .legasi__gelaran { margin: 0; color: var(--gold); font-weight: 600; }
+    .legasi__mesej { text-align: center; font-size: 1rem; line-height: 1.6; margin: 0 0 var(--space-4); }
+    .legasi__butang { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: var(--space-5); }
+    .legasi__nota { margin: var(--space-4) 0 0; text-align: center; font-size: .75rem; color: var(--text-dim); }
     .banner--gantung { border: 2px solid #E5303F; background: rgba(229, 48, 63, .16); color: #FFD9DD; }
     .banner--gantung strong { color: #fff; }
     .badge-office--gantung { --badge-c1: #E5303F; --badge-c2: #8F1420; --badge-fg: #fff; }
@@ -155,6 +164,8 @@
           <div class="lagu__badan" id="lagu-badan" data-spotify="6DXCRlgStdHtqYWOxHRWSH" hidden></div>
           <p class="lagu__nota">Dimainkan melalui Spotify (perlu internet; log masuk Spotify untuk lagu penuh). Senyapkan audio permainan jika bunyi bertindih.</p>
         </section>
+  <section class="container"><div class="card legasi" id="legasi" aria-live="polite" hidden></div></section>
+
   <main class="container page" id="kandungan" hidden>
 
     <div class="banner banner--gantung" id="p-gantung" role="alert" hidden></div>
@@ -176,6 +187,7 @@
             <li><b>Bahagian</b><span id="p-bahagian">–</span></li>
             <li><b>DUN</b><span id="p-dun">–</span></li>
             <li><b>Cawangan</b><span id="p-cawangan">–</span></li>
+            <li><b>Umur</b><span id="p-umur">–</span></li>
           </ul>
         </div>
       </div>
@@ -291,6 +303,7 @@
   <script src="js/lagu.js"></script>
   <script src="js/watak.js"></script>
   <script src="js/perlembagaan.js"></script>
+  <script src="js/hayat.js"></script>
   <script src="js/app.js"></script>
   <!-- Statistik lawatan tanpa kuki (GoatCounter) -->
   <script data-goatcounter="https://dasuki29.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

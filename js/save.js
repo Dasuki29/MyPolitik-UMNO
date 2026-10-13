@@ -66,7 +66,7 @@
     return !!(p && typeof p === 'object' && typeof p.nama === 'string' && p.nama && typeof p.id === 'string' && p.id);
   }
 
-  var SENARAI_AVATAR = ['pemuda', 'puteri', 'wanita', 'veteran'];
+  var SENARAI_AVATAR = ['pemuda', 'puteri', 'wanita', 'biasa', 'veteran'];
   function avatarSah(k) { return SENARAI_AVATAR.indexOf(k) >= 0; }
 
   /** Lengkapkan medan yang tiada (profil lama daripada versi 1) dan hadkan nilai. */

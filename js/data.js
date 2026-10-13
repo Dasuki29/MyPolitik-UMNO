@@ -68,28 +68,34 @@
     ]
   };
 
-  /* Demografi ahli. "veteran" ialah Veteran/Ahli Biasa: lelaki 41 tahun ke atas
-     dan wanita 66 tahun ke atas. Julat umur boleh dilaras untuk keseimbangan. */
+  /* Demografi ahli (v5.1, lima kategori; julat tidak bertindih):
+       Pemuda  lelaki 18-40        Puteri  perempuan 18-35
+       Wanita  perempuan 36-59     Biasa   lelaki 41-59
+       Veteran lelaki atau perempuan 60 tahun ke atas.
+     Kategori pemain bertukar mengikut umur pada AGM (lihat hayat.js, kategoriMengikutUmur). */
   var DEMOGRAFI = {
-    pemuda:  { label: 'Pemuda',             berat: 0.26, minBil: 3, profil: [{ jantina: 'L', umur: [18, 40], w: 1 }] },
-    puteri:  { label: 'Puteri',             berat: 0.14, minBil: 3, profil: [{ jantina: 'P', umur: [18, 35], w: 1 }] },
-    wanita:  { label: 'Wanita',             berat: 0.26, minBil: 3, profil: [{ jantina: 'P', umur: [36, 65], w: 1 }] },
-    veteran: { label: 'Veteran/Ahli Biasa', berat: 0.34, minBil: 8, profil: [{ jantina: 'L', umur: [41, 85], w: 0.75 }, { jantina: 'P', umur: [66, 85], w: 0.25 }] }
+    pemuda:  { label: 'Pemuda',  berat: 0.26, minBil: 3, profil: [{ jantina: 'L', umur: [18, 40], w: 1 }] },
+    puteri:  { label: 'Puteri',  berat: 0.14, minBil: 3, profil: [{ jantina: 'P', umur: [18, 35], w: 1 }] },
+    wanita:  { label: 'Wanita',  berat: 0.22, minBil: 3, profil: [{ jantina: 'P', umur: [36, 59], w: 1 }] },
+    biasa:   { label: 'Biasa',   berat: 0.22, minBil: 4, profil: [{ jantina: 'L', umur: [41, 59], w: 1 }] },
+    veteran: { label: 'Veteran', berat: 0.16, minBil: 4, profil: [{ jantina: 'L', umur: [60, 85], w: 0.55 }, { jantina: 'P', umur: [60, 85], w: 0.45 }] }
   };
+
+  /** Kod kategori ikut jantina ('L'|'P') dan umur. Pulang null jika tidak sah (umur < 18). */
+  function kategoriMengikutUmur(jantina, umur) {
+    var j = String(jantina || '').trim().toUpperCase().charAt(0);
+    umur = parseInt(umur, 10);
+    if ((j !== 'L' && j !== 'P') || !isFinite(umur) || umur < 18) { return null; }
+    if (umur >= 60) { return 'veteran'; }
+    if (j === 'L') { return umur <= 40 ? 'pemuda' : 'biasa'; }
+    return umur <= 35 ? 'puteri' : 'wanita';
+  }
 
   /** Tentukan kategori demografi pemain. jantina: 'L' | 'P'. Pulang null jika tidak sah. */
   function tentukanDemografi(jantina, umur) {
     var j = String(jantina || '').trim().toUpperCase().charAt(0);
-    umur = parseInt(umur, 10);
-    if ((j !== 'L' && j !== 'P') || !isFinite(umur) || umur < 18) { return null; }
-    var kod = null;
-    Object.keys(DEMOGRAFI).forEach(function (k) {
-      DEMOGRAFI[k].profil.forEach(function (p) {
-        if (!kod && p.jantina === j && umur >= p.umur[0] && umur <= p.umur[1]) { kod = k; }
-      });
-    });
-    if (!kod && umur > 85) { kod = 'veteran'; }
-    return kod ? { kod: kod, label: DEMOGRAFI[kod].label, jantina: j === 'L' ? 'Lelaki' : 'Perempuan', umur: umur } : null;
+    var kod = kategoriMengikutUmur(j, umur);
+    return kod ? { kod: kod, label: DEMOGRAFI[kod].label, jantina: j === 'L' ? 'Lelaki' : 'Perempuan', umur: parseInt(umur, 10) } : null;
   }
 
   function negeriDariKod(kodParlimen) {
@@ -599,15 +605,17 @@
   /**
    * Berat demografi daripada angka Sheet. Lelaki/Perempuan dan Bawah/Atas 40 dianggap
    * tidak bersandar: Pemuda = lelaki bawah 40, Puteri = perempuan bawah 40,
-   * Wanita = perempuan atas 40, Veteran = lelaki atas 40. Pulang null jika data tiada.
+   * Wanita = perempuan atas 40, Biasa/Veteran = lelaki atas 40. Andaian: 25% ahli "atas 40"
+   berumur 60 tahun ke atas (Veteran, kedua-dua jantina). Pulang null jika data tiada.
    */
   function bobotDemografi(c) {
     var jk = (c.lelaki || 0) + (c.perempuan || 0), um = (c.bawah40 || 0) + (c.atas40 || 0);
     if (jk <= 0 && um <= 0) { return null; }                 // tiada maklumat: guna agihan lalai
     // Paksi yang tiada data guna nisbah lalai DEMOGRAFI (lelaki 0.60, bawah 40 tahun 0.40).
-    var pL = jk > 0 ? c.lelaki / jk : DEMOGRAFI.pemuda.berat + DEMOGRAFI.veteran.berat;
-    var pU = um > 0 ? c.bawah40 / um : DEMOGRAFI.pemuda.berat + DEMOGRAFI.puteri.berat;
-    return { pemuda: pL * pU, puteri: (1 - pL) * pU, wanita: (1 - pL) * (1 - pU), veteran: pL * (1 - pU) };
+    var pL = jk > 0 ? c.lelaki / jk : 0.60;
+    var pU = um > 0 ? c.bawah40 / um : 0.40;
+    var V60 = 0.25, atas = 1 - pU;
+    return { pemuda: pL * pU, puteri: (1 - pL) * pU, wanita: (1 - pL) * atas * (1 - V60), biasa: pL * atas * (1 - V60), veteran: atas * V60 };
   }
 
   /** Agihan bilangan ikut demografi: minimum terjamin + baki ikut berat. */
@@ -877,6 +885,7 @@
     jumlahJawatan: jumlahJawatan,
     getLeadershipTemplate: getLeadershipTemplate,
     tentukanDemografi: tentukanDemografi,
+    kategoriMengikutUmur: kategoriMengikutUmur,
     negeriDariKod: negeriDariKod,
 
     // data sumber

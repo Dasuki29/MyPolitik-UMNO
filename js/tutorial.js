@@ -33,9 +33,11 @@
   var SAYAP = {
     pemuda: { nama: 'Pemuda', jawatan: 'Ketua Pemuda Cawangan', huraian: 'lelaki berumur 18–40 tahun' },
     puteri: { nama: 'Puteri', jawatan: 'Ketua Puteri Cawangan', huraian: 'perempuan berumur 18–35 tahun' },
-    wanita: { nama: 'Wanita', jawatan: 'Ketua Wanita Cawangan', huraian: 'perempuan berumur 36–65 tahun' },
-    veteran: { nama: 'Veteran/Ahli Biasa', jawatan: null, huraian: 'lelaki 41 tahun ke atas dan perempuan 66 tahun ke atas' }
+    wanita: { nama: 'Wanita', jawatan: 'Ketua Wanita Cawangan', huraian: 'perempuan berumur 36–59 tahun' },
+    biasa: { nama: 'Biasa', jawatan: null, huraian: 'lelaki berumur 41–59 tahun' },
+    veteran: { nama: 'Veteran', jawatan: null, huraian: 'lelaki atau perempuan berumur 60 tahun ke atas' }
   };
+
 
   /* ------------------------------------------------------------------------
      STORAN
@@ -139,12 +141,13 @@
       ? (sy.jawatan
           ? 'Anda dalam kategori <b>' + esc(sy.nama) + '</b> (' + esc(sy.huraian) + '). Selepas mencapai <b>50 IP</b>, anda boleh bertanding <b>' + esc(sy.jawatan) + '</b> pada tab ini.'
           : 'Anda dalam kategori <b>' + esc(sy.nama) + '</b>. Kategori ini tiada pertandingan Ketua Sayap, tetapi anda masih boleh bertanding AJK Cawangan dan Perwakilan.')
-      : 'Pemuda, Puteri dan Wanita mempunyai Ketua Sayap Cawangan masing-masing. Kategori anda ditentukan oleh jantina dan umur semasa pendaftaran.';
+      : 'Pemuda, Puteri dan Wanita mempunyai Ketua Sayap Cawangan masing-masing. Kategori anda ditentukan oleh jantina dan umur, dan bertukar secara automatik pada AGM apabila umur anda melepasi had kategori.';
     return [
       { id: 'mula', tajuk: 'Selamat datang ke Nusa Politik', isi: 'Anda bermula sebagai <b>Ahli Biasa</b> di cawangan anda. Matlamat: bina pengaruh, menang pemilihan, dan naik hingga ke Perhimpunan Agung. Tutorial ringkas ini mengambil kira-kira dua minit.' },
       { id: 'ip', sasaran: '#r-ip', bekas: '.stat', tajuk: 'Pengaruh (IP)', isi: 'IP ialah kekuatan politik anda. IP menentukan kelayakan bertanding (AJK dan Sayap Cawangan perlu <b>50 IP</b>; jawatan lebih tinggi perlu lebih banyak, sehingga <b>420 IP</b> untuk Presiden) dan menjadi faktor utama kemenangan. Makin tinggi IP anda, makin <b>perlahan</b> ia bertambah.', petua: 'Cara paling mudah menambah IP: Ziarah Kasih (+10 IP pada permulaan).' },
       { id: 'myr', sasaran: '#r-myr', bekas: '.stat', tajuk: 'Dana (MYR)', isi: 'Dana digunakan untuk kempen, jamuan dan menyumbang kepada program. Dana <b>terkumpul</b> dan <b>tidak</b> ditetapkan semula; setiap bulan anda menerima elaun (RM 450 asas, ditambah elaun jawatan).' },
       { id: 'ap', sasaran: '#r-ap', bekas: '.stat', tajuk: 'Mata Tindakan (AP)', isi: 'Setiap tindakan menggunakan AP. AP <b>ditetapkan semula kepada 5</b> pada permulaan setiap bulan, jadi AP yang tidak digunakan tidak dibawa ke bulan berikutnya.', petua: 'Gunakan AP anda sebelum menekan Teruskan ke Bulan Seterusnya.' },
+      { id: 'umur', sasaran: '#p-umur', bekas: 'li', tajuk: 'Umur & Kesihatan', isi: 'Umur anda sentiasa dipaparkan di sini dan bertambah <b>1 tahun</b> setiap kali tahun bertukar (selepas Bulan 12). Selepas <b>45 tahun</b> risiko kesihatan mula meningkat, terutama melebihi <b>60 tahun</b>. Jika kesihatan merosot, anda boleh bersara paksa atau meninggal dunia dan permainan tamat dengan <b>Legacy Summary</b>. Usia maksimum ialah <b>100 tahun</b>.', petua: 'Pemain berusia akan mempunyai masa yang lebih singkat untuk mencapai jawatan tertinggi.' },
       { id: 'bulan', sasaran: '.takwim', tajuk: 'Masa Bulanan', isi: 'Permainan bergerak <b>bulan demi bulan</b> (Bulan 1–12). <b>Bulan 1–3</b>: kerja akar umbi, bonus +25% IP. <b>Bulan 4–6</b>: Mesyuarat dan Pemilihan Cawangan &amp; Sayap. <b>Bulan 7</b>: Mesyuarat dan Pemilihan Bahagian &amp; Sayap. <b>Bulan 8</b>: Perhimpunan Agung (PAU) dan Pemilihan Pusat. <b>Bulan 9–12</b>: Pasca-PAU dan khidmat masyarakat.' },
       { id: 'lanjut', sasaran: '#btn-tahun', tajuk: 'Teruskan ke Bulan Seterusnya', isi: 'Tekan butang ini bila anda selesai dengan bulan semasa. Anda akan melihat pratonton: AP diset semula, elaun masuk, dan kesetiaan akar umbi, AJK dan perwakilan <b>susut sedikit</b> jika tidak dijaga. Anda tidak boleh kembali ke bulan sebelumnya.' },
       { id: 'tindakan', sasaran: '#tab-tindakan', tajuk: 'Cuba: Tab Tindakan', isi: 'Di sinilah anda melakukan kerja akar umbi. <b>Tekan tab ini sekarang</b> untuk meneruskan.', klik: true, tunggu: 'Menunggu anda menekan tab ⚡ Tindakan Pemain…' },
@@ -302,16 +305,17 @@
           ['8', 'PAU & Pusat', 'Perhimpunan Agung; pemilihan Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap (tahun pemilihan)'],
           ['9–12', 'Pasca-PAU', 'Kembali ke akar umbi; laksana tanggungjawab jawatan']]) +
         '<h4>Pembaharuan setiap bulan</h4><ul><li><b>AP</b> ditetapkan semula kepada 5 (baki lama hilang).</li><li><b>Dana</b> bertambah: RM 450 asas, ditambah RM 300 (Cawangan), RM 800 (Bahagian) dan RM 2,000 (Pusat) bagi <b>setiap peringkat</b> yang anda pegang.</li><li><b>Kesetiaan susut</b>: Akar Umbi -3, AJK -2 dan Perwakilan -3 setiap bulan (pemegang jawatan menanggung -2 Akar Umbi tambahan). Pulihkan melalui Gotong-Royong, Ziarah dan Khidmat sebelum musim pemilihan.</li></ul>' +
-        '<div class="tut-kotak"><b>Tahun pemilihan</b>: setiap 3 tahun bermula 2026 (pertandingan jawatan). <b>Perwakilan</b> dipilih semula <b>setiap tahun</b> di Cawangan; mandat tahun lalu luput pada Bulan 1.</div>' +
+        '<div class="tut-kotak"><b>Tahun pemilihan</b>: setiap 3 tahun bermula 2026 (pertandingan jawatan). Setiap tahun baharu, umur anda bertambah 1 tahun dan semakan kesihatan dijalankan. <b>Perwakilan</b> dipilih semula <b>setiap tahun</b> di Cawangan; mandat tahun lalu luput pada Bulan 1.</div>' +
         '<h4>Jika terlepas musim</h4><p>Mesyuarat yang masih berjalan apabila tetingkapnya tamat <b>ditutup secara automatik</b>. Mesyuarat yang tidak sempat dimulakan ditandakan <i>Terlepas</i>. Pertandingan yang anda daftar akan tetap diundi oleh urus setia.</p>' +
         '<h4>Petua</h4><ul><li>Habiskan AP sebelum menekan bulan seterusnya.</li><li>Rancang tindakan IP besar pada Bulan 1–3 untuk bonus.</li></ul>' },
       { id: 'sayap', tajuk: 'Peranan Sayap', html:
-        '<h3>Peranan Sayap: Pemuda, Puteri, Wanita</h3><p>Kategori anda ditentukan semasa pendaftaran berdasarkan jantina dan umur.</p>' +
+        '<h3>Kategori &amp; Sayap: Pemuda, Puteri, Wanita, Biasa, Veteran</h3><p>Terdapat <b>lima kategori</b> keahlian, ditentukan oleh jantina dan umur. Kategori bertukar secara automatik pada <b>AGM (Bulan 8)</b> apabila umur anda melepasi had.</p>' +
         jadual([['Kategori', 'Siapa', 'Jawatan sayap cawangan'],
           ['Pemuda', 'Lelaki 18–40', 'Ketua Pemuda Cawangan'], ['Puteri', 'Perempuan 18–35', 'Ketua Puteri Cawangan'],
-          ['Wanita', 'Perempuan 36–65', 'Ketua Wanita Cawangan'], ['Veteran/Ahli Biasa', 'Lelaki 41+, perempuan 66+', 'Tiada (sayap)']]) +
+          ['Wanita', 'Perempuan 36–59', 'Ketua Wanita Cawangan'], ['Biasa', 'Lelaki 41–59', 'Tiada (sayap)'], ['Veteran', 'Lelaki atau perempuan 60+', 'Tiada (sayap)']]) +
+        '<h4>Peralihan kategori mengikut umur</h4><ul><li>Lelaki: <b>Pemuda → Biasa → Veteran</b>. Perempuan: <b>Puteri → Wanita → Veteran</b>.</li><li>Contoh: pemain Pemuda berumur 38 tahun akan menjadi <b>Biasa</b> pada AGM selepas umurnya melebihi 40 tahun, dan <b>Veteran</b> selepas 60 tahun.</li><li>Apabila kategori bertukar, avatar mengikut kategori baharu, <b>jawatan sayap lama dilepaskan</b> dan pendaftaran pertandingan sayap dibatalkan. Anda mendapat pemberitahuan pada AGM.</li><li>Jika anda sengaja memilih avatar yang berbeza daripada kategori semasa mendaftar, avatar dan sayap anda dikekalkan.</li><li>Kategori Biasa dan Veteran tiada jawatan sayap; jawatan utama (AJK Cawangan, Bahagian, MKT dan seterusnya) tetap dibuka.</li></ul>' +
         (sy ? '<div class="tut-kotak"><b>Kategori anda: ' + esc(sy.nama) + '</b> (' + esc(sy.huraian) + ').' + (sy.jawatan ? ' Anda boleh bertanding <b>' + esc(sy.jawatan) + '</b> apabila IP mencapai 50.' : ' Fokus pada AJK Cawangan dan Perwakilan.') + '</div>' : '') +
-        '<h4>Mengapa sayap penting?</h4><ul><li>Hanya jawatan sayap <b>sayap anda</b> dibuka di setiap peringkat: Cawangan, Bahagian dan Pusat (Ketua Pemuda / Puteri / Wanita).</li><li>Anda mendapat bonus kekuatan dalam pertandingan sayap sendiri. Pemain Veteran/Ahli Biasa tiada jawatan sayap.</li><li>Jawatan sayap dipegang <b>serentak</b> dengan satu jawatan utama pada peringkat yang sama.</li><li>Ketua Sayap Cawangan tidak lagi hadir Bahagian secara automatik; menangi Perwakilan Cawangan tahun itu.</li></ul>' },
+        '<h4>Mengapa sayap penting?</h4><ul><li>Hanya jawatan sayap <b>sayap anda</b> dibuka di setiap peringkat: Cawangan, Bahagian dan Pusat (Ketua Pemuda / Puteri / Wanita).</li><li>Anda mendapat bonus kekuatan dalam pertandingan sayap sendiri. Pemain kategori Biasa dan Veteran tiada jawatan sayap.</li><li>Jawatan sayap dipegang <b>serentak</b> dengan satu jawatan utama pada peringkat yang sama.</li><li>Ketua Sayap Cawangan tidak lagi hadir Bahagian secara automatik; menangi Perwakilan Cawangan tahun itu.</li></ul>' },
       { id: 'pemilihan', tajuk: 'Strategi Pemilihan', html:
         '<h3>Strategi Pemilihan</h3><h4>Langkah</h4><ol><li>Kumpul IP yang diperlukan: AJK/Sayap Cawangan <b>50</b>, Ketua Cawangan <b>95</b>, AJK Bahagian 140, Naib Ketua Bahagian 185, Ketua Bahagian 220, Ahli MKT 250, Naib Presiden 300, Timbalan Presiden 350 dan Presiden <b>420</b>. Ketua Sayap: Cawangan 50, Bahagian 160, Pusat 280.</li><li>Pada tab Pemilihan, <b>daftar</b> sebagai calon sebelum atau semasa tetingkap peringkat itu (Cawangan bulan 4–6, Bahagian bulan 7, Pusat bulan 8).</li><li>Jalankan <b>kempen</b> untuk menambah mata kempen.</li><li>Pengundian berlaku apabila anda menekan Hari Mengundi (dalam tetingkap) atau apabila mesyuarat ditutup.</li></ol>' +
         '<h4>Apa yang mempengaruhi undi</h4>' + jadual([['Faktor', 'Pemilihan Cawangan', 'Pemilihan Bahagian'],
@@ -325,6 +329,13 @@
         jadual([['Peranan', 'Kos AP', 'Kesan'], ['Pembawa Usul', '2', 'Lulus +12 IP; ditolak -4 IP; kredit Reputasi penuh'], ['Pembahas', '1', 'Sokong/bantah; kredit separuh'], ['Mengundi', '0', 'Kesan kecil dan percuma']]) +
         '<p>Menutup mesyuarat memutuskan baki usul tanpa kesan kepada anda, mengundi pemilihan peringkat itu, lalu memaparkan <b>ringkasan</b> (usul, pemilihan, perubahan IP/Dana) dan langkah seterusnya.</p>' +
         '<h4>Siapa boleh hadir?</h4><ul><li><b>Cawangan</b>: semua.</li><li><b>Bahagian</b> (bulan 7): Perwakilan Cawangan terpilih <b>tahun ini</b>, atau pemegang jawatan Bahagian/Pusat.</li><li><b>PAU</b> (bulan 8): Perwakilan Bahagian terpilih tahun ini, Ketua Bahagian atau pemegang jawatan Pusat.</li></ul>' },
+      { id: 'hayat', tajuk: 'Umur & Kesihatan', html:
+        '<h3>Umur &amp; Penamat Kerjaya</h3><p>Anda memilih umur permulaan semasa pendaftaran (18 hingga 60 tahun). Umur dipaparkan pada profil dan bertambah <b>1 tahun</b> setiap kali Bulan 12 selesai dan tahun bertukar.</p>' +
+        '<h4>Risiko kesihatan</h4><p>Pada setiap pertukaran tahun, permainan menyemak kesihatan anda. Risiko meningkat <b>beransur-ansur</b> mengikut usia:</p>' +
+        jadual([['Usia', 'Risiko tamat kerjaya setahun (anggaran)'], ['Bawah 45', 'Tiada'], ['50', 'kira-kira 0.5%'], ['60', 'kira-kira 1.3%'], ['70', 'kira-kira 3.2%'], ['80', 'kira-kira 8%'], ['90', 'kira-kira 20%'], ['100', 'Tamat pasti']]) +
+        '<p>Jika berlaku, kerjaya tamat sama ada kerana <b>meninggal dunia</b> atau <b>bersara paksa atas nasihat doktor</b>.</p>' +
+        '<h4>Legacy Summary</h4><p>Apabila kerjaya tamat, skrin rumusan memaparkan umur terakhir, tempoh berkhidmat, jawatan tertinggi, gaya kepimpinan, IP, reputasi, Modal Sosial dan rekod disiplin. Anda kemudian boleh memulakan kerjaya baharu.</p>' +
+        '<div class="tut-kotak">Selepas 60 tahun, anda menerima <b>pemeriksaan kesihatan tahunan</b> yang memaparkan tahap risiko tahun depan. Pemain yang bermula pada usia lebih tinggi mempunyai masa lebih singkat untuk mencapai jawatan Pusat. Angka ini ialah angka permainan, bukan statistik perubatan.</div>' },
       { id: 'disiplin', tajuk: 'Tataetika & Disiplin', html:
         '<h3>Tataetika &amp; Disiplin</h3><p>Setiap kempen bersih, kelabu atau kotor. Kempen bersih membina <b>Modal Sosial</b> (menambah kekuatan undi); kempen kotor memberi mata pantas tetapi menaikkan <b>risiko dilaporkan</b>.</p>' +
         '<h4>Proses</h4><ol><li>Aduan kepada Jawatankuasa Disiplin (Fasal 20.5).</li><li>Pendengaran: anda memilih pembelaan, akur atau membawa ke mahkamah.</li><li>Keputusan: amaran, gantung, dilarang bertanding atau dipecat (Fasal 20.10).</li></ol>' +
@@ -346,6 +357,7 @@
         '<h3>Soalan Lazim</h3><h4>Mengapa saya tidak boleh mula Mesyuarat Bahagian?</h4><p>Anda mesti menjadi perwakilan atau pemegang jawatan yang layak, dan bulan semasa mesti 7. Mandat perwakilan tahun lalu sudah luput. Semak kad Kelayakan Perwakilan di tab Mesyuarat.</p>' +
         '<h4>Mengapa AP saya kembali kepada 5?</h4><p>AP diset semula setiap bulan. Ia tidak terkumpul.</p>' +
         '<h4>Mengapa IP saya naik makin perlahan?</h4><p>Pertambahan IP dikurangkan apabila IP anda sudah tinggi. Ini menjadikan jawatan Pusat benar-benar sukar dicapai.</p>' +
+        '<h4>Mengapa permainan saya tamat?</h4><p>Kerjaya tamat jika kesihatan merosot pada usia lanjut (meninggal atau bersara paksa), atau apabila anda mencapai usia 100 tahun. Lihat topik Umur &amp; Kesihatan.</p>' +
         '<h4>Mengapa jawatan saya hilang?</h4><p>Jika anda <b>digantung</b> atau dipecat oleh Jawatankuasa Disiplin, semua jawatan dilucutkan serta-merta. Lihat topik Tataetika &amp; Disiplin.</p>' +
         '<h4>Di mana saya boleh baca Perlembagaan?</h4><p>Tekan butang <b>📜 Perlembagaan</b> di bahagian atas dashboard atau pada menu utama.</p>' +
         '<h4>Bolehkah saya kembali ke bulan sebelumnya?</h4><p>Tidak. Pastikan anda sudah berpuas hati sebelum menekan butang bulan seterusnya.</p>' +
