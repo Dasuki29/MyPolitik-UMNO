@@ -105,12 +105,30 @@
       return { boleh: false, sebab: 'Keahlian anda telah dipecat (Fasal 20.10d). Rayuan boleh dibuat selepas 3 tahun (Fasal 20.12.2).' };
     }
     if (e.status === 'digantung' && jenis !== 'tindakan') {
-      return { boleh: false, sebab: 'Hak keahlian anda digantung sehingga ' + tarikhTamat(h) + ' (Fasal 20.10b).' };
+      if (jenis === 'tugas_jawatan') {
+        return { boleh: false, sebab: 'Keahlian anda digantung sehingga ' + tarikhTamat(h) + '. Anda dilucutkan daripada semua jawatan dan tidak boleh menggunakan AP untuk tugas rasmi jawatan (Fasal 20.10b).' };
+      }
+      return { boleh: false, sebab: 'Hak keahlian anda digantung sehingga ' + tarikhTamat(h) + ' (Fasal 20.10b). Anda tidak boleh mencalon, mengundi atau bertanding.' };
     }
     if (e.status === 'dilarang' && jenis === 'jawatan') {
       return { boleh: false, sebab: 'Anda dilarang bertanding jawatan sehingga ' + tarikhTamat(h) + ' (Fasal 20.10c).' };
     }
     return { boleh: true, sebab: '' };
+  }
+
+  /**
+   * v4.6: untuk simpanan lama / sebarang laluan yang terlepas. Jika status 'digantung' tetapi pemain masih
+   * memegang jawatan, lucutkan sekarang. Idempotent; pulang true jika ada perubahan.
+   */
+  function kuatkuasaGantung() {
+    var p = S.loadPlayer();
+    if (!p || getEtika(p).status !== 'digantung') { return false; }
+    var ada = (p.jawatan && p.jawatan !== 'Ahli Biasa') || (p.jawatanList && p.jawatanList.length) || (p.perwakilan && (p.perwakilan.cawangan || p.perwakilan.bahagian));
+    if (!ada) { return false; }
+    var e = getEtika(p); if (e.hukuman) { e.hukuman.jawatanDilucut = p.jawatan || ''; }
+    var r = S.applyEffects({}, { kiraTindakan: false, patch: { etika: e, jawatanList: [], jawatan: 'Ahli Biasa', cabaran: null, amaranAktif: false, perwakilan: { cawangan: 0, bahagian: 0 } },
+      log: { tindakan: 'disiplin', nama: 'Jawatan dilucutkan (digantung)', peringkat: 'disiplin' } });
+    return !!(r && r.ok);
   }
 
   function tarikhTamat(h) { return h && h.tamatTahun ? 'bulan ' + h.tamatBulan + '/' + h.tamatTahun : 'tempoh ditetapkan MKT'; }
@@ -218,6 +236,10 @@
       var t = tambahBulan(p.tahun, p.bulan, CONFIG.BULAN_GANTUNG); h.tamatTahun = t.tahun; h.tamatBulan = t.bulan;
       e.status = 'digantung'; e.modal = clamp(e.modal - 10, 0, 100);
       kesan.reputasi = -12; kesan.kesetiaan = { akarUmbi: -10 };
+      // v4.6: lucut SEMUA jawatan serta-merta (status UI: "Ahli (Digantung)"). Jawatan tidak dipulangkan selepas tempoh tamat.
+      h.jawatanDilucut = (p.jawatan && p.jawatan !== 'Ahli Biasa') ? p.jawatan : '';
+      patch.jawatanList = []; patch.jawatan = 'Ahli Biasa'; patch.cabaran = null; patch.amaranAktif = false;
+      patch.perwakilan = { cawangan: 0, bahagian: 0 };
     } else if (jenis === 'dilarang') {
       var t2 = tambahBulan(p.tahun, p.bulan, CONFIG.BULAN_LARANGAN); h.tamatTahun = t2.tahun; h.tamatBulan = t2.bulan;
       e.status = 'dilarang'; e.modal = clamp(e.modal - 12, 0, 100);
@@ -248,7 +270,7 @@
   function mesejHukuman(jenis, perkara, fasal, h) {
     var t = {
       amaran: 'Lembaga Disiplin memberi AMARAN kepada anda (Fasal 20.10a) atas: ' + perkara + '. Rekod disiplin anda dicatat; kesalahan seterusnya lebih berat.',
-      digantung: 'Lembaga Disiplin MENGGANTUNG hak keahlian anda selama ' + CONFIG.BULAN_GANTUNG + ' bulan (Fasal 20.10b) atas: ' + perkara + '. Anda tidak boleh bertanding, berkempen atau mengundi sehingga ' + tarikhTamat(h) + '.',
+      digantung: 'Lembaga Disiplin MENGGANTUNG hak keahlian anda selama ' + CONFIG.BULAN_GANTUNG + ' bulan (Fasal 20.10b) atas: ' + perkara + '. Semua jawatan anda dilucutkan serta-merta. Anda tidak boleh mencalon, mengundi, bertanding atau berkempen, dan tidak boleh menggunakan AP untuk tugas rasmi jawatan sehingga ' + tarikhTamat(h) + '.',
       dilarang: 'Anda DILARANG BERTANDING mana-mana jawatan selama ' + (CONFIG.BULAN_LARANGAN / 12) + ' tahun (Fasal 20.10c) atas: ' + perkara + '. Anda masih boleh berkhidmat dan menjadi perwakilan.',
       dipecat: 'Lembaga Disiplin mengesyorkan PEMECATAN dan MKT telah MENGESAHKANNYA (Fasal 20.10d) atas: ' + perkara + '. Semua jawatan anda hilang. Rayuan boleh dibuat selepas 3 tahun (Fasal 20.12.2).'
     };
@@ -365,7 +387,7 @@
   return {
     CONFIG: CONFIG, HUKUMAN_NAMA: HUKUMAN_NAMA,
     getEtika: getEtika, bulanKeahlian: bulanKeahlian, semakKeahlian: semakKeahlian, semakPenggal: semakPenggal,
-    semakHak: semakHak, peluangLapor: peluangLapor, selepasAktiviti: selepasAktiviti,
+    semakHak: semakHak, kuatkuasaGantung: kuatkuasaGantung, peluangLapor: peluangLapor, selepasAktiviti: selepasAktiviti,
     selepasTindakanBersih: selepasTindakanBersih, selepasAcara: selepasAcara,
     prosesBulan: prosesBulan, responsPendengaran: responsPendengaran,
     bolehRayu: bolehRayu, rayuPemecatan: rayuPemecatan, ringkasan: ringkasan, bonusUndi: bonusUndi, labelRisiko: labelRisiko

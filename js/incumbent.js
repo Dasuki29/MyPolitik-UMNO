@@ -91,6 +91,8 @@
 
   function semakBoleh(def, p) {
     if (!p) { return { boleh: false, sebab: 'Tiada profil pemain.' }; }
+    var EtG = typeof globalThis !== 'undefined' ? globalThis.MyPolitikEtika : null;      // v4.6: digantung/dipecat tidak boleh guna AP untuk tugas jawatan
+    if (EtG) { var hakG = EtG.semakHak(p, 'tugas_jawatan'); if (!hakG.boleh) { return { boleh: false, sebab: hakG.sebab }; } }
     if (!adalahPemegangJawatan(p)) { return { boleh: false, sebab: 'Tindakan ini untuk pemegang jawatan. Anda masih Ahli Biasa.' }; }
     if (p.ap + (def.kesan.ap || 0) < 0) { return { boleh: false, sebab: 'AP tidak mencukupi (perlu ' + Math.abs(def.kesan.ap) + ').' }; }
     if (p.myr + (def.kesan.myr || 0) < 0) { return { boleh: false, sebab: 'Wang tidak mencukupi (perlu MYR ' + Math.abs(def.kesan.myr).toLocaleString('ms-MY') + ').' }; }
