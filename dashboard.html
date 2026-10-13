@@ -292,5 +292,21 @@
   <script src="js/watak.js"></script>
   <script src="js/perlembagaan.js"></script>
   <script src="js/app.js"></script>
+  <!-- Statistik lawatan tanpa kuki (GoatCounter) -->
+  <script data-goatcounter="https://dasuki29.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <script>
+    /* Acara tanpa data peribadi. Selamat jika GoatCounter disekat atau belum dimuatkan. */
+    (function () {
+      function acara(nama) { try { if (window.goatcounter && window.goatcounter.count) { window.goatcounter.count({ path: 'acara/' + nama, title: nama, event: true }); } } catch (e) { /* abaikan */ } }
+      document.addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-menu],[data-perlembagaan],#btn-submit,#btn-tahun') : null;
+        if (!t) { return; }
+        if (t.hasAttribute('data-menu')) { acara('menu-' + t.getAttribute('data-menu')); }
+        else if (t.hasAttribute('data-perlembagaan')) { acara('perlembagaan-buka'); }
+        else if (t.id === 'btn-submit') { acara('daftar-hantar'); }
+        else if (t.id === 'btn-tahun') { acara('bulan-seterusnya'); }
+      });
+    })();
+  </script>
 </body>
 </html>
