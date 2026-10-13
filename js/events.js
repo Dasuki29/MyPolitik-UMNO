@@ -40,7 +40,9 @@
     PELUANG_AKTIVITI: 0.15,        // peluang acara selepas satu tindakan
     MAKS_AKTIVITI_SEBULAN: 2,
     ELAK_ULANG: 4,                 // acara sama tidak diulang dalam N acara terakhir
-    BULAN_BANJIR: [11, 12, 1, 2]   // musim tengkujuh: banjir lebih kerap
+    BULAN_BANJIR: [11, 12, 1, 2],  // musim tengkujuh: banjir lebih kerap
+    PELUANG_KRISIS: 0.35,          // v5.8: peluang krisis politik apabila bulan bertukar (pemegang jawatan sahaja)
+    KRISIS_JARAK_BULAN: 2          // sekurang-kurangnya N bulan antara dua krisis (purata satu krisis setiap ~4-5 bulan)
   };
 
   /* ------------------------------------------------------------------------
@@ -282,7 +284,7 @@
 
     /* --- Krisis Akar Umbi (v5.6): dicetus oleh Stress tinggi / jawatan tinggi. v5.7: berat naik mengikut bilangan jawatan --- */
     {
-      id: 'akar_umbi_terpinggir', kategori: 'politik', ikon: '😔', tajuk: 'Akar Umbi Rasa Terpinggir',
+      id: 'akar_umbi_terpinggir', kategori: 'politik', krisis: true, ikon: '😔', tajuk: 'Akar Umbi Rasa Terpinggir',
       syarat: function (p) { return (Number(p.stress) || 0) >= 60 && p.jawatan !== 'Ahli Biasa'; },
       berat: function (p) { return 4 + ((Number(p.stress) || 0) - 60) / 4 + 2 * (bilJ(p) - 1); },
       huraian: 'Anda terlalu sibuk dengan tugas dan tekanan. Ahli cawangan {cawangan} merungut tidak pernah bertemu anda lagi dan mula berasa terpinggir.',
@@ -293,7 +295,7 @@
       ]
     },
     {
-      id: 'sabotaj_akar_umbi', kategori: 'politik', ikon: '🕵️', tajuk: 'Sabotaj dalam Cawangan',
+      id: 'sabotaj_akar_umbi', kategori: 'politik', krisis: true, ikon: '🕵️', tajuk: 'Sabotaj dalam Cawangan',
       syarat: function (p) { return ((Number(p.stress) || 0) >= 65 || (p.stress >= 50 && p.jawatan === 'Presiden')) && p.jawatan !== 'Ahli Biasa'; },
       berat: function (p) { return 3 + ((Number(p.stress) || 0) - 60) / 4 + 2 * (bilJ(p) - 1); },
       huraian: 'Sekumpulan ahli yang marah menyebarkan khabar angin bahawa anda sudah letih dan tidak layak. Mereka menghalang usaha anda di mesyuarat cawangan {cawangan}.',
@@ -306,7 +308,7 @@
       ]
     },
     {
-      id: 'ahli_marah_pemimpin_letih', kategori: 'politik', ikon: '😡', tajuk: 'Ahli Marah: Pemimpin Dah Tak Peduli',
+      id: 'ahli_marah_pemimpin_letih', kategori: 'politik', krisis: true, ikon: '😡', tajuk: 'Ahli Marah: Pemimpin Dah Tak Peduli',
       syarat: function (p) { return (Number(p.stress) || 0) >= 60 && p.jawatan !== 'Ahli Biasa'; },
       berat: function (p) { return 3 + ((Number(p.stress) || 0) - 60) / 5 + 2 * (bilJ(p) - 1); },
       huraian: 'Ahli akar umbi di {dun} meluahkan kemarahan di media sosial kerana anda kelihatan letih, lewat membalas dan tidak lagi mendengar masalah mereka.',
@@ -317,7 +319,7 @@
       ]
     },
     {
-      id: 'cemburu_cabaran_jawatan', kategori: 'politik', ikon: '🗡️', tajuk: 'Ahli Cemburu: Cabaran terhadap Kedudukan Anda',
+      id: 'cemburu_cabaran_jawatan', kategori: 'politik', krisis: true, ikon: '🗡️', tajuk: 'Ahli Cemburu: Cabaran terhadap Kedudukan Anda',
       syarat: function (p) { return bilJ(p) >= 2 && (Number(p.stress) || 0) >= 80; },
       berat: function (p) { return 6 + 3 * (bilJ(p) - 2) + ((Number(p.stress) || 0) - 80) / 3; },
       huraian: 'Anda memegang terlalu banyak jawatan serentak dan sudah kepenatan. Pemimpin muda di {cawangan} berasa terpinggir dan cemburu; mereka mengumpul sokongan untuk mencabar dan merampas salah satu jawatan anda.',
@@ -330,7 +332,7 @@
       ]
     },
     {
-      id: 'monopoli_jawatan_sabotaj', kategori: 'politik', ikon: '😒', tajuk: 'Sabotaj: "Semua Jawatan Awak Nak Ambil?"',
+      id: 'monopoli_jawatan_sabotaj', kategori: 'politik', krisis: true, ikon: '😒', tajuk: 'Sabotaj: "Semua Jawatan Awak Nak Ambil?"',
       syarat: function (p) { return bilJ(p) >= 3 && (Number(p.stress) || 0) >= 70; },
       berat: function (p) { return 5 + (bilJ(p) - 3) * 2 + ((Number(p.stress) || 0) - 70) / 4; },
       huraian: 'Anda memegang jawatan di Cawangan, Bahagian dan Pusat sekaligus. Ahli yang tidak dilantik mengadu bahawa kuasa dimonopoli dan mula menyabotaj mesyuarat serta memboikot program anda.',
@@ -338,6 +340,68 @@
         { id: 'a', label: 'Lepaskan jawatan peringkat paling rendah', huraian: 'Beri peluang kepada ahli cawangan. Stress -15.', lepasJawatan: 'terendah', stres: { stress: -15, kesihatan: 2 }, kesan: { kesetiaan: { akarUmbi: 6 } }, mesej: 'Anda melepaskan jawatan peringkat bawah. Ahli tempatan menyambut baik keputusan anda.' },
         { id: 'b', label: 'Bendung dengan jamuan & pujukan (Dana)', huraian: 'Kos tinggi dan meletihkan. Stress +4.', kesan: { myr: -800, kesetiaan: { akarUmbi: 3, ajk: 3 } }, stres: { stress: 4 }, mesej: 'Pujukan anda meredakan sebahagian ahli, namun anda semakin letih.' },
         { id: 'c', label: 'Abaikan dan teruskan', huraian: 'Pembangkang dalaman menang sokongan; salah satu jawatan anda dilucutkan.', lucut: true, stres: { stress: 6 }, kesan: { ip: -8, kesetiaan: { akarUmbi: -14 } }, mesej: 'Sabotaj merebak dan salah satu jawatan anda dilucutkan. Sokongan akar umbi jatuh drastik.' }
+      ]
+    },
+
+    /* --- Krisis & Dilema Kepimpinan (v5.8). hanyaKrisis: hanya keluar melalui undian krisis bulanan. 2-3 pilihan, sentiasa ada satu pilihan tanpa kos. --- */
+    {
+      id: 'krisis_pemberontakan_akar_umbi', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '🔥', tajuk: 'Pemberontakan Akar Umbi',
+      berat: function (p) { var ak = (p.kesetiaan && Number(p.kesetiaan.akarUmbi)) || 0; return 2 + (ak < 40 ? 3 : 0) + ((Number(p.stress) || 0) >= 60 ? 2 : 0); },
+      huraian: 'Sekumpulan ketua ranting di {cawangan} mengadakan mesyuarat tergempar tanpa pengetahuan anda. Mereka mahu memboikot program anda dan menuntut perubahan kepimpinan.',
+      pilihan: [
+        { id: 'a', label: 'Akur tuntutan dan taja dialog terbuka (Dana + AP)', huraian: 'Mahal dan meletihkan, tetapi meredakan api. Stress +3.', kesan: { myr: -600, ap: -2, kesetiaan: { akarUmbi: 8, ketuaCawangan: 3 } }, stres: { stress: 3 }, mesej: 'Dialog terbuka meredakan keadaan. Ketua ranting kembali menyokong anda.' },
+        { id: 'b', label: 'Tegur dan singkirkan penghasut', huraian: 'Berisiko. Stress +5.', stres: { stress: 5 }, kesan: {}, hasil: [
+            { peluang: 0.45, kesan: { ip: 6, kesetiaan: { ajk: 4, akarUmbi: 2 } }, mesej: 'Penghasut ditegur dan kumpulan itu berpecah. Kedudukan anda diperkukuh.' },
+            { peluang: 0.55, kesan: { ip: -10, reputasi: -3, kesetiaan: { akarUmbi: -14, ajk: -6 } }, mesej: 'Tindakan keras menimbulkan lebih banyak kemarahan. Pemberontakan merebak ke ranting lain.' } ] },
+        { id: 'c', label: 'Abaikan, mereka akan reda sendiri', huraian: 'Tiada kos, tetapi sokongan jatuh. Stress +6.', kesan: { ip: -8, kesetiaan: { akarUmbi: -16 } }, stres: { stress: 6 }, mesej: 'Pemberontakan dibiarkan membesar. Akar umbi berasa anda tidak peduli.' }
+      ]
+    },
+    {
+      id: 'krisis_kebocoran_dana', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '💸', tajuk: 'Isu Kebocoran Dana',
+      berat: function (p) { return 2 + (Number(p.myr) >= 3000 ? 2 : 0); },
+      huraian: 'Audit dalaman mendapati RM 4,800 dana program {cawangan} tidak dapat dijelaskan. Bendahari mengaku kehilangan resit, dan khabar angin sudah sampai ke Bahagian.',
+      pilihan: [
+        { id: 'a', label: 'Tanggung kerugian dengan Dana sendiri', huraian: 'Selamatkan nama baik. Stress +2.', kesan: { myr: -1500, ip: 4, reputasi: 2, kesetiaan: { akarUmbi: 4 } }, etika: { modal: 3 }, stres: { stress: 2 }, mesej: 'Anda menutup kekurangan dengan wang sendiri. Ahli menghormati sikap bertanggungjawab anda.' },
+        { id: 'b', label: 'Laporkan dan minta siasatan dalaman (AP)', huraian: 'Jujur tetapi memalukan buat sementara. Stress +5.', kesan: { ap: -2, ip: -4, reputasi: 3, kesetiaan: { akarUmbi: -4, ajk: 3 } }, etika: { modal: 4 }, stres: { stress: 5 }, mesej: 'Siasatan dibuka. Imej cawangan tercalar tetapi integriti anda dipuji.' },
+        { id: 'c', label: 'Tutup cerita secara senyap', huraian: 'Tiada kos, tetapi sangat berisiko. Stress +4.', stres: { stress: 4 }, etika: { modal: -4, risiko: 10 }, kesan: {}, hasil: [
+            { peluang: 0.5, kesan: { ip: 0 }, mesej: 'Isu itu tenggelam tanpa sesiapa menyedarinya, buat masa ini.' },
+            { peluang: 0.5, kesan: { ip: -15, reputasi: -4, kesetiaan: { akarUmbi: -12, ajk: -8 } }, mesej: 'Isu bocor ke media. Anda dituduh menutup salah laku dan sokongan runtuh.' } ] }
+      ]
+    },
+    {
+      id: 'krisis_sabotaj_musuh', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '🕵️', tajuk: 'Sabotaj Musuh Politik',
+      berat: function (p) { return 2 + Math.min(3, Math.floor((Number(p.ip) || 0) / 150)); },
+      huraian: 'Surat layang dan dokumen mesyuarat dalaman anda sampai ke tangan wartawan. Pesaing politik anda dipercayai berada di sebalik kebocoran itu.',
+      pilihan: [
+        { id: 'a', label: 'Siasat dan dedahkan dalangnya (AP + Dana)', huraian: 'Perlukan bukti kukuh. Stress +4.', kesan: { ap: -2, myr: -400 }, stres: { stress: 4 }, hasil: [
+            { peluang: 0.5, kesan: { ip: 10, reputasi: 2, kesetiaan: { ajk: 4, perwakilan: 3 } }, mesej: 'Dalang dikenal pasti dan pesaing anda malu. Sokongan kepada anda menguat.' },
+            { peluang: 0.5, kesan: { ip: -6, reputasi: -2 }, mesej: 'Bukti tidak cukup. Anda dituduh membuat tuduhan melulu.' } ] },
+        { id: 'b', label: 'Perkukuh barisan: tutup semua pintu bocor (AP)', huraian: 'Selamat tetapi memenatkan. Stress +3.', kesan: { ap: -2, ip: 3, kesetiaan: { ajk: 5 } }, stres: { stress: 3 }, mesej: 'Anda mengetatkan kawalan maklumat. AJK lebih bersatu, walaupun suasana tegang.' },
+        { id: 'c', label: 'Buat tidak tahu', huraian: 'Tiada kos. Stress +2.', kesan: { ip: -5, kesetiaan: { perwakilan: -4 } }, stres: { stress: 2 }, mesej: 'Anda berdiam diri. Pesaing menganggap anda lemah dan terus menyerang.' }
+      ]
+    },
+    {
+      id: 'krisis_kenyataan_media', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '🎙️', tajuk: 'Kontroversi Kenyataan Media',
+      berat: function (p) { return 2 + ((Number(p.ip) || 0) >= 100 ? 2 : 0); },
+      huraian: 'Sebahagian kenyataan anda dalam sidang media dipotong dan tular. Netizen menuduh anda menghina rakyat, dan kumpulan WhatsApp ahli penuh dengan kemarahan.',
+      pilihan: [
+        { id: 'a', label: 'Minta maaf secara terbuka', huraian: 'Pahit tetapi ikhlas. Stress -2.', kesan: { ip: -3, reputasi: 1, kesetiaan: { akarUmbi: 4 } }, stres: { stress: -2 }, mesej: 'Permohonan maaf anda diterima ramai. Kontroversi reda dalam beberapa hari.' },
+        { id: 'b', label: 'Pertahankan kenyataan dengan penjelasan penuh (AP)', huraian: 'Berisiko. Stress +4.', kesan: { ap: -2 }, stres: { stress: 4 }, hasil: [
+            { peluang: 0.5, kesan: { ip: 8, reputasi: 2, kesetiaan: { akarUmbi: 3 } }, mesej: 'Klip penuh disebarkan dan ramai sedar anda dipotong di luar konteks. Sokongan naik.' },
+            { peluang: 0.5, kesan: { ip: -9, reputasi: -3, kesetiaan: { akarUmbi: -8 } }, mesej: 'Penjelasan anda dianggap berdolak-dalik dan kemarahan bertambah.' } ] },
+        { id: 'c', label: 'Salahkan wartawan dan netizen', huraian: 'Memuaskan hati, tetapi sokongan jatuh. Stress +3.', kesan: { ip: -8, reputasi: -3, kesetiaan: { akarUmbi: -7 } }, stres: { stress: 3 }, mesej: 'Anda menyalahkan orang lain. Ramai menganggap anda angkuh dan tidak bertanggungjawab.' }
+      ]
+    },
+    {
+      id: 'krisis_skandal_orang_kanan', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '📰', tajuk: 'Skandal Orang Kanan',
+      berat: 2,
+      huraian: 'Setiausaha politik anda didakwa menyalahgunakan nama anda untuk mengutip "sumbangan" daripada peniaga di {dun}. Media mula bertanya sama ada anda tahu.',
+      pilihan: [
+        { id: 'a', label: 'Pecat serta-merta dan buat laporan', huraian: 'Tegas dan bersih. Stress +3.', kesan: { ip: 2, reputasi: 2, kesetiaan: { akarUmbi: 3, ajk: -3 } }, etika: { modal: 3 }, stres: { stress: 3 }, mesej: 'Anda bertindak tegas. Imej bersih terpelihara, walaupun sebahagian AJK yang rapat dengannya kecewa.' },
+        { id: 'b', label: 'Lindungi dia dan nafikan segala tuduhan', huraian: 'Tiada kos, tetapi berisiko tinggi. Stress +5.', stres: { stress: 5 }, etika: { modal: -3, risiko: 8 }, kesan: {}, hasil: [
+            { peluang: 0.4, kesan: { kesetiaan: { ajk: 5 } }, mesej: 'Tuduhan tidak dapat dibuktikan dan orang kanan anda terhutang budi.' },
+            { peluang: 0.6, kesan: { ip: -12, reputasi: -4, kesetiaan: { akarUmbi: -10 } }, mesej: 'Bukti baharu muncul dan anda dituduh bersubahat. Sokongan akar umbi jatuh.' } ] },
+        { id: 'c', label: 'Serahkan kepada Jawatankuasa Disiplin (AP)', huraian: 'Ikut saluran rasmi. Stress +2.', kesan: { ap: -1, ip: -2, reputasi: 2, kesetiaan: { ajk: 2 } }, etika: { modal: 2 }, stres: { stress: 2 }, mesej: 'Anda menyerahkan perkara itu kepada parti. Prosesnya lambat tetapi anda dilihat adil.' }
       ]
     }
   ];
@@ -348,7 +412,7 @@
   function storan() { try { return root.localStorage || null; } catch (e) { return null; } }
   var memori = null;            // sandaran jika localStorage tidak tersedia
 
-  function lalai() { return { pemilik: '', sejarah: [], tertunggak: null, kiraBulan: {}, bil: 0 }; }
+  function lalai() { return { pemilik: '', sejarah: [], tertunggak: null, kiraBulan: {}, bil: 0, krisisTerakhir: 0 }; }
   function muat() {
     var s = storan(), d = null;
     if (s) { try { d = JSON.parse(s.getItem(KEY)); } catch (e) { d = null; } }
@@ -395,7 +459,7 @@
 
   function bina(a, p, uid) {
     return {
-      uid: uid, id: a.id, kategori: a.kategori, ikon: a.ikon,
+      uid: uid, id: a.id, kategori: a.kategori, ikon: a.ikon, krisis: !!a.krisis,
       tajuk: a.tajuk, huraian: isi(a.huraian, p),
       bulan: p.bulan, tahun: p.tahun
     };
@@ -434,16 +498,29 @@
     if (wajib) { opts.paksa = wajib.id; }
     var kunciBulan = p.tahun + '-' + p.bulan;
     if (opts.pencetus === 'aktiviti' && (d.kiraBulan[kunciBulan] || 0) >= CONFIG.MAKS_AKTIVITI_SEBULAN) { return null; }
-    if (!opts.paksa && !opts.abaikanPeluang) {
+    var a = null;
+    var indeksBulan = p.tahun * 12 + p.bulan, adaJawatan = p.jawatan && p.jawatan !== 'Ahli Biasa';
+    if (!opts.paksa && opts.pencetus !== 'aktiviti') {                 // v5.8: undian krisis bulanan (pemegang jawatan sahaja)
+      var layakKrisis = adaJawatan && (opts.krisis === true || (!opts.abaikanPeluang && indeksBulan - (d.krisisTerakhir || 0) >= CONFIG.KRISIS_JARAK_BULAN && rng() < CONFIG.PELUANG_KRISIS));
+      if (layakKrisis) {
+        var kolam = ACARA.filter(function (x) { return x.krisis && d.sejarah.slice(-CONFIG.ELAK_ULANG).indexOf(x.id) < 0 && beratAcara(x, p) > 0; });
+        if (!kolam.length) { kolam = ACARA.filter(function (x) { return x.krisis && beratAcara(x, p) > 0; }); }
+        if (kolam.length) {
+          var jk = kolam.reduce(function (n, x) { return n + beratAcara(x, p); }, 0), tk = rng() * jk;
+          for (var k = 0; k < kolam.length; k++) { tk -= beratAcara(kolam[k], p); if (tk < 0) { a = kolam[k]; break; } }
+          a = a || kolam[kolam.length - 1]; d.krisisTerakhir = indeksBulan;
+        }
+      }
+    }
+    if (!a && !opts.paksa && !opts.abaikanPeluang) {                   // acara biasa: peluang bulanan / aktiviti
       var peluang = opts.pencetus === 'aktiviti' ? CONFIG.PELUANG_AKTIVITI : CONFIG.PELUANG_BULAN;
       if (rng() >= peluang) { return null; }
     }
-
-    var a = null;
-    if (opts.paksa) { a = def(opts.paksa); if (!a) { return null; } }
+    if (a) { /* krisis dipilih */ }
+    else if (opts.paksa) { a = def(opts.paksa); if (!a) { return null; } }
     else {
-      var calon = ACARA.filter(function (x) { return d.sejarah.slice(-CONFIG.ELAK_ULANG).indexOf(x.id) < 0 && beratAcara(x, p) > 0; });
-      if (!calon.length) { calon = ACARA.filter(function (x) { return beratAcara(x, p) > 0; }); }
+      var calon = ACARA.filter(function (x) { return !x.hanyaKrisis && d.sejarah.slice(-CONFIG.ELAK_ULANG).indexOf(x.id) < 0 && beratAcara(x, p) > 0; });
+      if (!calon.length) { calon = ACARA.filter(function (x) { return !x.hanyaKrisis && beratAcara(x, p) > 0; }); }
       var jumlah = calon.reduce(function (n, x) { return n + beratAcara(x, p); }, 0), t = rng() * jumlah;
       for (var i = 0; i < calon.length; i++) { t -= beratAcara(calon[i], p); if (t < 0) { a = calon[i]; break; } }
       a = a || calon[calon.length - 1];

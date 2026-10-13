@@ -924,8 +924,8 @@
           (c.boleh ? '' : '<small>' + esc(c.sebab) + '</small>') + '</button></li>';
       }).join('');
       var id = await modal({
-        tajuk: ps.tajuk,
-        isi: '<p class="acara__ikon" aria-hidden="true">' + esc(ps.ikon) + '</p><p>' + esc(ps.huraian) + '</p>' +
+        tajuk: (ps.krisis ? '\u26A0\uFE0F KRISIS: ' : '') + ps.tajuk,
+        isi: (ps.krisis ? '<p class="acara__tag">Krisis Politik · Keputusan anda akan membawa akibat</p>' : '') + '<p class="acara__ikon" aria-hidden="true">' + esc(ps.ikon) + '</p><p>' + esc(ps.huraian) + '</p>' +
           '<p style="margin:8px 0 0;font-size:.82rem">AP: <b>' + p.ap + '</b> · Dana: <b>RM ' + fmt(p.myr) + '</b></p><ul class="acara__pil">' + senarai + '</ul>',
         butang: []
       });
@@ -934,7 +934,7 @@
       if (!r.ok) { toast(r.ralat, 'ralat'); render(); return; }
       render();
       await modal({
-        tajuk: r.acara.tajuk + ' — Keputusan',
+        tajuk: (ps.krisis ? 'Krisis: ' : '') + r.acara.tajuk + ' — Keputusan',
         isi: '<p>' + esc(r.mesej) + '</p><p class="acara__kesan">' + esc(r.ringkas) + '</p>'
       });
     } finally { acaraSibuk = false; render(); }
