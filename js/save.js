@@ -76,6 +76,8 @@
     p.versi = VERSI;
     var bln = parseInt(p.bulan, 10);                 // Bulan 1 hingga 12 (sistem masa bulanan)
     p.bulan = isFinite(bln) ? Math.max(1, Math.min(12, bln)) : DEFAULTS.bulan;
+    p.stress = isFinite(Number(p.stress)) ? clamp(Math.round(Number(p.stress)), 0, 100) : 0;                 // v5.6
+    p.kesihatan = isFinite(Number(p.kesihatan)) ? clamp(Math.round(Number(p.kesihatan)), 0, 100) : 100;
     p.ip = Math.max(0, Math.round(Number(p.ip) || 0));
     p.ap = Math.max(0, Math.round(Number(p.ap) || 0));
     p.myr = Math.max(0, Math.round(Number(p.myr) || 0));

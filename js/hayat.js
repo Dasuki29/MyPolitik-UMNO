@@ -33,6 +33,7 @@
   function J() { return root.MyPolitikJawatan || (typeof require === 'function' ? tryReq('./jawatan.js') : null); }
   function W() { return root.MyPolitikWatak || (typeof require === 'function' ? tryReq('./watak.js') : null); }
   function Dt() { return root.MyPolitikData || (typeof require === 'function' ? tryReq('./data.js') : null); }
+  function St() { return root.MyPolitikStres || (typeof require === 'function' ? tryReq('./stress.js') : null); }
   function Et() { return root.MyPolitikEtika || (typeof require === 'function' ? tryReq('./etika.js') : null); }
   function tryReq(f) { try { return require(f); } catch (e) { return null; } }
 
@@ -58,8 +59,8 @@
 
   /** Ringkasan untuk UI: { umur, risiko (0-1), peratus, label, tamat }. */
   function ringkasan(p) {
-    var u = umurSemasa(p), r = risikoTahunan(u);
-    return { umur: u, risiko: r, peratus: Math.round(r * 1000) / 10, label: labelRisiko(r), nampakRisiko: u !== null && u >= CONFIG.UMUR_RISIKO_MULA, tamat: (p && p.tamat) || null };
+    var u = umurSemasa(p), st = St(), tb = st && st.risikoTambahan ? st.risikoTambahan(p) : 0, r = Math.min(0.95, risikoTahunan(u) + tb);   // v5.6: kesihatan lemah menambah risiko
+    return { umur: u, risiko: r, peratus: Math.round(r * 1000) / 10, label: labelRisiko(r), nampakRisiko: u !== null && (u >= CONFIG.UMUR_RISIKO_MULA || tb > 0), tamat: (p && p.tamat) || null };
   }
 
   function sudahTamat(p) { return !!(p && p.tamat); }
@@ -114,10 +115,11 @@
     return senarai.length ? senarai : [GELARAN_LALAI];
   }
 
-  var TAJUK_SEBAB = { meninggal: 'Tamat Hayat', bersara_kesihatan: 'Bersara Paksa (Kesihatan)', had_umur: 'Mencapai Usia 100 Tahun', bersara_sukarela: 'Bersara Secara Sukarela' };
+  var TAJUK_SEBAB = { meninggal: 'Tamat Hayat', bersara_kesihatan: 'Bersara Paksa (Kesihatan)', had_umur: 'Mencapai Usia 100 Tahun', bersara_sukarela: 'Bersara Secara Sukarela', kesihatan_merosot: 'Kesihatan Merosot (Tekanan Kerja)' };
 
   function mesejSebab(sebab, umur) {
     if (sebab === 'meninggal') { return 'Anda telah meninggal dunia pada usia ' + umur + ' tahun. Al-Fatihah. Perjalanan politik anda berakhir di sini.'; }
+    if (sebab === 'kesihatan_merosot') { return 'Tekanan kerja bertahun-tahun meruntuhkan kesihatan anda. Atas nasihat doktor, anda bersara sepenuhnya daripada politik pada usia ' + umur + ' tahun.'; }
     if (sebab === 'bersara_sukarela') { return 'Anda memutuskan untuk bersara daripada politik pada usia ' + umur + ' tahun. Terima kasih atas khidmat anda kepada parti.'; }
     if (sebab === 'bersara_kesihatan') { return 'Atas nasihat doktor, anda bersara sepenuhnya daripada politik pada usia ' + umur + ' tahun kerana masalah kesihatan.'; }
     return 'Anda mencapai usia ' + umur + ' tahun, had umur permainan ini. Perjalanan politik anda ditutup dengan penuh kehormatan.';
@@ -159,7 +161,7 @@
     kemaskiniJawatanTertinggi(); p = s.loadPlayer();
     var umur = umurSemasa(p);
     if (umur === null) { return { peristiwa: peristiwa, tamat: null }; }
-    var q = risikoTahunan(umur), rng = opts.rng || s.rngBerbenih(p.id + '|' + p.tahun + '|hayat'), sebab = null;
+    var stt = St(), q = Math.min(0.95, risikoTahunan(umur) + (stt && stt.risikoTambahan ? stt.risikoTambahan(p) : 0)), rng = opts.rng || s.rngBerbenih(p.id + '|' + p.tahun + '|hayat'), sebab = null;
 
     if (umur >= CONFIG.UMUR_MAKS) { sebab = 'had_umur'; }
     else if (q > 0) {
@@ -230,21 +232,23 @@
     return { berubah: true, daripada: lama, kepada: baru, peristiwa: [{ jenis: 'kategori_bertukar', mesej: mesej + extra }] };
   }
 
-  /** Bersara awal atas pilihan pemain (v5.2): kerjaya ditamatkan dan Legacy Summary disimpan. */
-  function bersaraAwal() {
+  /** Tamatkan kerjaya dengan sebab tertentu dan simpan Legacy Summary. */
+  function tamatkan(sebab) {
     var s = S(), p = s && s.loadPlayer();
     if (!p) { return { ok: false, ralat: 'Tiada profil pemain.' }; }
     if (p.tamat) { return { ok: false, ralat: 'Kerjaya anda sudah tamat.' }; }
     kemaskiniJawatanTertinggi(); p = s.loadPlayer();
-    var legasi = bina(p, 'bersara_sukarela');
+    var legasi = bina(p, sebab);
     var r = s.applyEffects({}, { kiraTindakan: false, patch: { tamat: legasi }, log: { tindakan: 'hayat', nama: legasi.tajuk + ' pada usia ' + legasi.umur, peringkat: 'hayat' } });
-    return r && r.ok ? { ok: true, tamat: legasi } : { ok: false, ralat: (r && r.ralat) || 'Gagal bersara.' };
+    return r && r.ok ? { ok: true, tamat: legasi } : { ok: false, ralat: (r && r.ralat) || 'Gagal menamatkan kerjaya.' };
   }
+  /** Bersara awal atas pilihan pemain (v5.3). */
+  function bersaraAwal() { return tamatkan('bersara_sukarela'); }
 
   /** Padam profil dan mulakan semula tidak dibuat di sini; UI memanggil Save.clearPlayer(). */
   return {
     CONFIG: CONFIG, umurSemasa: umurSemasa, risikoTahunan: risikoTahunan, labelRisiko: labelRisiko, ringkasan: ringkasan,
-    sudahTamat: sudahTamat, bersaraAwal: bersaraAwal, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
+    sudahTamat: sudahTamat, bersaraAwal: bersaraAwal, tamatkan: tamatkan, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
     jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat, anugerahGelaran: anugerahGelaran,
     kategoriSepatutnya: kategoriSepatutnya, prosesPeralihanKategori: prosesPeralihanKategori
   };

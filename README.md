@@ -52,6 +52,7 @@ Modul utama dalam `js/`:
 | `menu.js` | Menu utama pada `index.html` (Sambung, Permainan Baharu, Cara Bermain) |
 | `perlembagaan.js` | Modal rujukan Perlembagaan Parti (fasal boleh lipat) |
 | `slot.js`, `slotpanel.js` | Slot simpanan berbilang (5 watak) dan panel Simpanan Permainan pada menu |
+| `stress.js` | Stress, Kesihatan, tindakan Rehat dan kesan kepada risiko tamat kerjaya |
 | `hayat.js` | Umur pemain, risiko kesihatan, Legacy Summary (kerjaya tamat) dan peralihan kategori mengikut umur pada AGM |
 | `app.js` | Menggabungkan semua modul ke dalam dashboard |
 

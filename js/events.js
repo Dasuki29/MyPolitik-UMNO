@@ -276,6 +276,43 @@
         { id: 'b', label: 'Akui kesilapan dan mohon maaf', huraian: 'Sikap jujur sedikit meringankan.', kesan: { reputasi: 2 }, pendengaran: 'akur', mesej: 'Anda mengakui dan memohon maaf. Jawatankuasa mengambil kira keikhlasan anda.' },
         { id: 'c', label: 'Ugut bawa ke mahkamah awam', huraian: 'Fasal 20.7: membawa perkara parti ke mahkamah sebelum mematuhi peraturan parti menggugurkan keahlian.', kesan: {}, pendengaran: 'mahkamah', mesej: 'Anda mengancam mahkamah. Jawatankuasa mencatat bahawa anda telah melanggar Fasal 20.7.' }
       ]
+    },
+
+    /* --- Krisis Akar Umbi (v5.6): dicetus oleh Stress tinggi / jawatan tinggi --- */
+    {
+      id: 'akar_umbi_terpinggir', kategori: 'politik', ikon: '😔', tajuk: 'Akar Umbi Rasa Terpinggir',
+      syarat: function (p) { return (Number(p.stress) || 0) >= 60 && p.jawatan !== 'Ahli Biasa'; },
+      berat: function (p) { return 4 + ((Number(p.stress) || 0) - 60) / 4; },
+      huraian: 'Anda terlalu sibuk dengan tugas dan tekanan. Ahli cawangan {cawangan} merungut tidak pernah bertemu anda lagi dan mula berasa terpinggir.',
+      pilihan: [
+        { id: 'a', label: 'Lepaskan jawatan untuk berehat', huraian: 'Anda kembali menjadi Ahli Biasa. Stress -35.', lepasJawatan: true, stres: { stress: -35, kesihatan: 3 }, kesan: { kesetiaan: { akarUmbi: 6 } }, mesej: 'Anda melepaskan jawatan. Ahli menghargai kejujuran anda dan tekanan berkurang.' },
+        { id: 'b', label: 'Turun padang bertemu ahli (AP)', huraian: 'Luangkan masa, tetapi memenatkan. Stress -5.', kesan: { ap: -3, kesetiaan: { akarUmbi: 5 } }, stres: { stress: -5 }, mesej: 'Ahli gembira anda hadir, namun jadual anda bertambah padat.' },
+        { id: 'c', label: 'Abaikan rungutan itu', huraian: 'Sokongan akar umbi jatuh drastik.', kesan: { ip: -10, kesetiaan: { akarUmbi: -15 } }, stres: { stress: 6 }, mesej: 'Ahli berasa diketepikan. Sokongan akar umbi merosot dan tekanan anda bertambah.' }
+      ]
+    },
+    {
+      id: 'sabotaj_akar_umbi', kategori: 'politik', ikon: '🕵️', tajuk: 'Sabotaj dalam Cawangan',
+      syarat: function (p) { return ((Number(p.stress) || 0) >= 65 || (p.stress >= 50 && p.jawatan === 'Presiden')) && p.jawatan !== 'Ahli Biasa'; },
+      berat: function (p) { return 3 + ((Number(p.stress) || 0) - 60) / 4; },
+      huraian: 'Sekumpulan ahli yang marah menyebarkan khabar angin bahawa anda sudah letih dan tidak layak. Mereka menghalang usaha anda di mesyuarat cawangan {cawangan}.',
+      pilihan: [
+        { id: 'a', label: 'Letak jawatan dengan terhormat', huraian: 'Serangan terhenti. Stress -30.', lepasJawatan: true, stres: { stress: -30, kesihatan: 2 }, kesan: { reputasi: 1 }, mesej: 'Anda berundur dengan maruah. Serangan politik terhadap anda reda.' },
+        { id: 'b', label: 'Bendung dengan jamuan & pujukan (Dana)', huraian: 'Kos tinggi tetapi menenangkan keadaan. Stress +4.', kesan: { myr: -600, kesetiaan: { akarUmbi: 4, ajk: 3 } }, stres: { stress: 4 }, mesej: 'Pujukan anda berjaya meredakan sebahagian ahli, tetapi anda semakin letih.' },
+        { id: 'c', label: 'Lawan balik', huraian: 'Berisiko tinggi.', stres: { stress: 8 }, kesan: {}, hasil: [
+            { peluang: 0.4, kesan: { ip: 6, kesetiaan: { akarUmbi: 3 } }, mesej: 'Anda mematahkan hujah mereka dan ahli kembali menyokong anda.' },
+            { peluang: 0.6, kesan: { ip: -14, reputasi: -3, kesetiaan: { akarUmbi: -14, ajk: -8 } }, mesej: 'Pertengkaran terbuka merosakkan imej anda. Sokongan akar umbi jatuh drastik.' } ] }
+      ]
+    },
+    {
+      id: 'ahli_marah_pemimpin_letih', kategori: 'politik', ikon: '😡', tajuk: 'Ahli Marah: Pemimpin Dah Tak Peduli',
+      syarat: function (p) { return (Number(p.stress) || 0) >= 60 && p.jawatan !== 'Ahli Biasa'; },
+      berat: function (p) { return 3 + ((Number(p.stress) || 0) - 60) / 5; },
+      huraian: 'Ahli akar umbi di {dun} meluahkan kemarahan di media sosial kerana anda kelihatan letih, lewat membalas dan tidak lagi mendengar masalah mereka.',
+      pilihan: [
+        { id: 'a', label: 'Ambil cuti rehat sebulan (AP)', huraian: 'Pulihkan diri, dan minta ahli bersabar. Stress -20.', kesan: { ap: -3, kesetiaan: { akarUmbi: -3 } }, stres: { stress: -20, kesihatan: 5 }, mesej: 'Anda berehat dan kembali lebih bertenaga. Sedikit ahli kecewa, tetapi ramai memahami.' },
+        { id: 'b', label: 'Lepaskan jawatan', huraian: 'Serahkan kepada orang lain. Stress -35.', lepasJawatan: true, stres: { stress: -35, kesihatan: 3 }, kesan: {}, mesej: 'Anda menyerahkan tugas kepada orang lain dan memulihkan diri.' },
+        { id: 'c', label: 'Teruskan seperti biasa', huraian: 'Sokongan jatuh drastik.', kesan: { reputasi: -3, kesetiaan: { akarUmbi: -12, ajk: -6 } }, stres: { stress: 5 }, mesej: 'Kemarahan ahli merebak. Sokongan akar umbi jatuh dan tekanan anda bertambah.' }
+      ]
     }
   ];
 
@@ -346,7 +383,7 @@
       if (p.ap < kos.ap) { boleh = false; sebab = 'AP tidak mencukupi (perlu ' + kos.ap + ').'; }
       else if (p.myr < kos.myr) { boleh = false; sebab = 'Dana tidak mencukupi (perlu RM ' + kos.myr + ').'; }
       var ringkas = S.ringkasPerubahan({ ip: (c.kesan || {}).ip || 0, myr: (c.kesan || {}).myr || 0, ap: (c.kesan || {}).ap || 0, reputasi: (c.kesan || {}).reputasi || 0, kesetiaan: (c.kesan || {}).kesetiaan || {} });
-      return { id: c.id, label: c.label, huraian: c.huraian || '', ringkas: ringkas || 'Tiada kos', berisiko: !!c.hasil, kos: kos, boleh: boleh, sebab: sebab };
+      return { id: c.id, label: c.label, huraian: c.huraian || '', ringkas: ((ringkas || '') + (c.stres && c.stres.stress ? (ringkas ? ', ' : '') + 'Stress ' + (c.stres.stress > 0 ? '+' : '') + c.stres.stress : '') + (c.lepasJawatan ? (ringkas || (c.stres && c.stres.stress) ? ', ' : '') + 'Lepas jawatan' : '')) || 'Tiada kos', berisiko: !!c.hasil, kos: kos, boleh: boleh, sebab: sebab };
     });
   }
   function papar(acara, p) {
@@ -438,6 +475,11 @@
       log: { tindakan: 'acara:' + t.id, acara: t.tajuk, pilihan: c.label }
     });
     if (!res.ok) { return { ok: false, kod: res.kod, ralat: res.ralat }; }   // cth AP/Dana tidak cukup: acara kekal menunggu
+    var STr = root.MyPolitikStres || (typeof require === 'function' ? (function () { try { return require('./stress.js'); } catch (e) { return null; } })() : null);
+    if (STr) {                                                    // v5.6: kesan Stress/Kesihatan dan melepaskan jawatan
+      if (c.lepasJawatan) { STr.lepasJawatan(); }
+      if (c.stres) { STr.laras(c.stres); }
+    }
     if (Et && c.pendengaran) { Et.responsPendengaran(c.pendengaran); }
     if (eo && eo.mesej) { mesej += eo.mesej; }
 

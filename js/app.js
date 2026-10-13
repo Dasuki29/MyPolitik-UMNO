@@ -315,7 +315,7 @@
   if (!document.getElementById('btn-tahun')) { return; }
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
-      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
+      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, ST = W.MyPolitikStres, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -468,6 +468,20 @@
     var tk = K ? K.getTakwim(p) : null;
     var tp = $('p-tahun'); tp.textContent = labelTahun(p.tahun) + (tk ? ' · BULAN ' + tk.bulan : ''); tp.setAttribute('data-fasa', pem ? 'pemilihan' : 'pentadbiran');
     $('r-ip').textContent = fmt(p.ip); $('r-myr').textContent = 'RM ' + fmt(p.myr); $('r-ap').textContent = fmt(p.ap);
+    var stm = ST ? ST.ringkasan(p) : null, mb = $('meter-bar');                               // v5.6: meter Stress dan Kesihatan
+    if (mb) {
+      mb.hidden = !stm;
+      if (stm) {
+        var kelas = function (l) { return l === 'Kritikal' ? 'is-kritikal' : l === 'Tinggi' || l === 'Lemah' ? 'is-tinggi' : l === 'Sederhana' ? 'is-sederhana' : ''; };
+        $('m-stress').style.width = stm.stress + '%'; $('m-stress').className = kelas(stm.labelStress);
+        $('m-stress-teks').textContent = stm.stress + ' · ' + stm.labelStress;
+        $('m-stress-info').textContent = 'Beban jawatan +' + stm.beban + ', pulih -' + ST.CONFIG.PEMULIHAN + ' sebulan';
+        var kl = stm.labelKesihatan === 'Kritikal' ? 'is-kritikal' : stm.labelKesihatan === 'Lemah' ? 'is-tinggi' : stm.labelKesihatan === 'Sederhana' ? 'is-sederhana' : '';
+        $('m-kes').style.width = stm.kesihatan + '%'; $('m-kes').className = kl;
+        $('m-kes-teks').textContent = stm.kesihatan + '% · ' + stm.labelKesihatan;
+        $('m-kes-info').textContent = (stm.kadarKesihatan > 0 ? 'Pulih +' : stm.kadarKesihatan < 0 ? 'Merosot ' : 'Stabil ') + (stm.kadarKesihatan ? stm.kadarKesihatan : '') + (stm.kadarKesihatan ? ' sebulan' : '') + (stm.risikoTambahan > 0 ? ' · risiko tamat +' + Math.round(stm.risikoTambahan * 1000) / 10 + '%/tahun' : '');
+      }
+    }
     $('r-tahun').textContent = labelTahun(p.tahun);
     var seterusnya = E ? E.tahunPemilihanSeterusnya(p.tahun) : p.tahun;
     $('r-tahun-sub').textContent = (tk ? 'Bulan ' + tk.bulan + ' (' + tk.namaBulan + ') · ' : '') + (pem ? 'Pertandingan & kempen dibuka' : 'Perwakilan tahunan dibuka · jawatan ' + seterusnya);

@@ -64,6 +64,12 @@
       id: 'kenyataan_media', nama: 'Terbit Kenyataan Media',
       penerangan: 'Menerbitkan kenyataan untuk menaikkan nama, dengan risiko menjauhkan penentang.',
       kesan: { ip: 15, ap: -1, kesetiaan: { penentang: -10 } }
+    },
+    {
+      id: 'rehat_keluarga', nama: 'Rehat & Masa Keluarga',
+      penerangan: 'Berehat daripada politik untuk memulihkan tenaga. Stress -15, Kesihatan +4.',
+      kesan: { ap: -2 },
+      stres: { stress: -15, kesihatan: 4 }
     }
   ];
 
@@ -139,6 +145,7 @@
       patch: Et && def.etika ? { etika: Et.selepasTindakanBersih(p, def.etika) } : undefined
     });
     if (!r.ok) { return r; }
+    if (def.stres) { var STr = typeof globalThis !== 'undefined' ? globalThis.MyPolitikStres : null; if (STr) { STr.laras(def.stres); r.perubahan.stres = def.stres; } }   // v5.6: Rehat
 
     var amaran = semakAmaranKesetiaan({ rng: opts.rng });
     var peristiwa = [];
@@ -146,7 +153,7 @@
 
     return {
       ok: true,
-      mesej: def.nama + ': ' + S.ringkasPerubahan(r.perubahan) + '.',
+      mesej: def.nama + ': ' + S.ringkasPerubahan(r.perubahan) + '.' + (def.stres ? ' Stress ' + def.stres.stress + ', Kesihatan +' + def.stres.kesihatan + '.' : ''),
       perubahan: r.perubahan,
       profil: S.loadPlayer() || r.profil,
       amaran: amaran,
