@@ -277,6 +277,12 @@
   }
 
   el.resumeNew.addEventListener('click', function () {
+    var Sl = window.MyPolitikSlot;                                   // v5.4: guna slot kosong supaya watak sedia ada tidak terpadam
+    if (Sl) {
+      var k = Sl.slotKosong();
+      if (k && k !== Sl.aktif() && Sl.aktifkan(k).ok) { window.location.reload(); return; }
+      if (!k && !window.confirm('Semua slot penuh. Padam watak di slot ' + Sl.aktif() + ' dan daftar watak baharu?')) { return; }
+    }
     S.clearPlayer();
     el.resume.hidden = true;
     el.nama.focus();

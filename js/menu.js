@@ -39,8 +39,17 @@
     if (!btnSambung) { return; }
     btnSambung.hidden = !p;
     if (p && info) {
-      info.textContent = p.nama + ' · ' + p.jawatan + ' · Cawangan ' + p.cawangan + ' · ' + p.tahun + ', bulan ' + (p.bulan || 1);
+      info.textContent = (window.MyPolitikSlot ? 'Slot ' + window.MyPolitikSlot.aktif() + ' · ' : '') + p.nama + ' · ' + p.jawatan + ' · Cawangan ' + p.cawangan + ' · ' + p.tahun + ', bulan ' + (p.bulan || 1);
     }
+  }
+
+  /** v5.4: watak baharu menggunakan slot kosong supaya watak sedia ada tidak terpadam. */
+  function permainanBaharu() {
+    var Sl = window.MyPolitikSlot;
+    if (!Sl || !Sl.ringkasan(Sl.aktif())) { tunjukBorang(); return; }       // slot aktif kosong: terus daftar
+    var k = Sl.slotKosong();
+    if (k && Sl.aktifkan(k).ok) { try { history.replaceState(null, '', location.pathname + '#daftar'); } catch (e) { /* abaikan */ } location.reload(); return; }
+    if (window.MyPolitikSlotPanel) { window.MyPolitikSlotPanel.buka('Semua slot penuh. Padam satu watak untuk memulakan watak baharu.'); }
   }
 
   menu.addEventListener('click', function (e) {
@@ -48,7 +57,8 @@
     if (!b) { return; }
     var a = b.getAttribute('data-menu');
     if (a === 'sambung') { window.location.assign('dashboard.html'); }
-    else if (a === 'baharu') { tunjukBorang(); }
+    else if (a === 'baharu') { permainanBaharu(); }
+    else if (a === 'slot' && window.MyPolitikSlotPanel) { window.MyPolitikSlotPanel.buka(); }
     else if (a === 'lagu') { tunjukBorang('kad-lagu'); }
     else if (a === 'bantuan' && bantuan) {
       bantuan.hidden = !bantuan.hidden;

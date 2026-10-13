@@ -357,6 +357,7 @@
         '<h3>Soalan Lazim</h3><h4>Mengapa saya tidak boleh mula Mesyuarat Bahagian?</h4><p>Anda mesti menjadi perwakilan atau pemegang jawatan yang layak, dan bulan semasa mesti 7. Mandat perwakilan tahun lalu sudah luput. Semak kad Kelayakan Perwakilan di tab Mesyuarat.</p>' +
         '<h4>Mengapa AP saya kembali kepada 5?</h4><p>AP diset semula setiap bulan. Ia tidak terkumpul.</p>' +
         '<h4>Mengapa IP saya naik makin perlahan?</h4><p>Pertambahan IP dikurangkan apabila IP anda sudah tinggi. Ini menjadikan jawatan Pusat benar-benar sukar dicapai.</p>' +
+        '<h4>Boleh saya main beberapa watak?</h4><p>Boleh. Menu utama mempunyai <b>Simpanan permainan</b> dengan 5 slot. Setiap slot menyimpan satu watak lengkap (profil, acara dan tutorial). Pilih <b>Main</b> untuk meneruskan sesuatu watak, <b>Watak baharu</b> pada slot kosong, atau <b>Padam</b> untuk mengosongkan slot. Simpanan disimpan dalam pelayar dan peranti ini sahaja.</p>' +
         '<h4>Mengapa permainan saya tamat?</h4><p>Kerjaya tamat jika kesihatan merosot pada usia lanjut (meninggal atau bersara paksa), atau apabila anda mencapai usia 100 tahun. Lihat topik Umur &amp; Kesihatan.</p>' +
         '<h4>Mengapa jawatan saya hilang?</h4><p>Jika anda <b>digantung</b> atau dipecat oleh Jawatankuasa Disiplin, semua jawatan dilucutkan serta-merta. Lihat topik Tataetika &amp; Disiplin.</p>' +
         '<h4>Di mana saya boleh baca Perlembagaan?</h4><p>Tekan butang <b>📜 Perlembagaan</b> di bahagian atas dashboard atau pada menu utama.</p>' +
