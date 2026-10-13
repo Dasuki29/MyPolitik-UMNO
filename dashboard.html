@@ -18,8 +18,15 @@
     .acara-tunggu[hidden] { display: none; }
     .acara__ikon { font-size: 2.2rem; line-height: 1; margin: 0 0 6px; }
     .acara__pil { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
-    .acara__pil li { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 8px 10px; font-size: .88rem; }
-    .acara__pil li.is-off { opacity: .55; }
+    .modal__body .acara__pil { padding-left: 0; }
+    .modal__footer[hidden] { display: none !important; }
+    .acara__pil li { margin: 0; }
+    .acara__opsi { display: block; width: 100%; text-align: left; font: inherit; font-size: .88rem; color: inherit; background: transparent; cursor: pointer; border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 10px 12px; transition: border-color .15s, background .15s, transform .05s; }
+    .acara__opsi:hover, .acara__opsi:focus-visible { border-color: #f5b800; background: rgba(245,184,0,.10); outline: none; }
+    .acara__opsi:active { transform: scale(.99); }
+    .acara__opsi.is-utama { border-color: rgba(245,184,0,.6); }
+    .acara__opsi.is-off { opacity: .55; cursor: not-allowed; }
+    .acara__opsi.is-off:hover { border-color: rgba(128,128,128,.35); background: transparent; }
     .acara__pil small { display: block; opacity: .8; }
     .acara__kesan { font-weight: 700; }
     .ring { display: grid; gap: 10px; }

@@ -351,7 +351,8 @@
       var ov = $('modal'), kaki = $('modal-kaki'), lama = document.activeElement;
       $('modal-tajuk').textContent = o.tajuk || '';
       $('modal-isi').innerHTML = o.isi || '';
-      kaki.innerHTML = '';
+      kaki.innerHTML = ''; kaki.hidden = !!(o.butang && !o.butang.length);
+      Array.prototype.forEach.call($('modal-isi').querySelectorAll('[data-pilih]'), function (el) { el.addEventListener('click', function () { tutup(el.getAttribute('data-pilih')); }); });
       (o.butang || [{ label: 'Tutup', nilai: true, kelas: 'btn--gold' }]).forEach(function (b) {
         var bt = document.createElement('button');
         bt.type = 'button'; bt.className = 'btn ' + (b.kelas || 'btn--ghost'); bt.textContent = b.label; bt.disabled = !!b.nonaktif;
@@ -380,7 +381,7 @@
       modalAktif = tutup;
       document.addEventListener('keydown', kunci); ov.addEventListener('click', luar); $('modal-tutup').addEventListener('click', x);
       ov.classList.add('is-open'); ov.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-open');
-      var fb = kaki.querySelector('button:last-child'); if (fb) { fb.focus(); }
+      var fb = kaki.querySelector('button:last-child') || $('modal-isi').querySelector('[data-pilih]:not([disabled])'); if (fb) { fb.focus(); }
     });
   }
 
@@ -916,16 +917,17 @@
     try {
       var p = S.loadPlayer(), ps = EV.getTertunggak() || acara, abjad = ['A', 'B', 'C'];
       var senarai = ps.pilihan.map(function (c, i) {
-        return '<li class="' + (c.boleh ? '' : 'is-off') + '"><b>' + abjad[i] + '. ' + esc(c.label) + '</b>' +
+        // v5.7: seluruh kad pilihan ialah butang; klik terus memilih (tiada butang berasingan di bawah)
+        return '<li><button type="button" class="acara__opsi' + (i === 0 ? ' is-utama' : '') + (c.boleh ? '' : ' is-off') + '" data-pilih="' + esc(c.id) + '"' + (c.boleh ? '' : ' disabled') + '><b>' + abjad[i] + '. ' + esc(c.label) + '</b>' +
           '<small>' + esc(c.huraian) + (c.berisiko ? ' (berisiko)' : '') + '</small>' +
           '<small class="acara__kesan">' + esc(c.ringkas) + '</small>' +
-          (c.boleh ? '' : '<small>' + esc(c.sebab) + '</small>') + '</li>';
+          (c.boleh ? '' : '<small>' + esc(c.sebab) + '</small>') + '</button></li>';
       }).join('');
       var id = await modal({
         tajuk: ps.tajuk,
         isi: '<p class="acara__ikon" aria-hidden="true">' + esc(ps.ikon) + '</p><p>' + esc(ps.huraian) + '</p>' +
           '<p style="margin:8px 0 0;font-size:.82rem">AP: <b>' + p.ap + '</b> · Dana: <b>RM ' + fmt(p.myr) + '</b></p><ul class="acara__pil">' + senarai + '</ul>',
-        butang: ps.pilihan.map(function (c, i) { return { label: abjad[i] + '. ' + c.label, nilai: c.id, nonaktif: !c.boleh, kelas: i === 0 ? 'btn--gold' : 'btn--ghost' }; })
+        butang: []
       });
       if (!id) { toast('Acara masih menunggu keputusan anda.'); render(); return; }
       var r = EV.pilih(id);
