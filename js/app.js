@@ -184,6 +184,7 @@
     kemaskiniPratonton();
   }
   binaPemilihAvatar();
+  try { var um0 = window.sessionStorage.getItem('myPolitik_umurMula'); if (um0 && el.umur) { el.umur.value = um0; window.sessionStorage.removeItem('myPolitik_umurMula'); cadangkanAvatar(); } } catch (e) { /* abaikan */ }   // v5.2: Main Semula bermula umur 18
 
   /* ---------- Muat data ---------- */
   function ringkasan(h) {
@@ -838,15 +839,20 @@
     var t = p.tamat, k = $('kandungan'), l = $('legasi');
     if (!l) { return; }
     if (k) { k.hidden = true; }
-    var baris = [['Nama', p.nama], ['Umur terakhir', t.umur + ' tahun'], ['Tempoh berkhidmat', t.tahunMula + ' hingga ' + t.tahun + ' (' + t.tahunBerkhidmat + ' tahun)'],
-      ['Jawatan tertinggi', t.jawatanTertinggi], ['Jawatan terakhir', t.jawatanAkhir], ['Gaya kepimpinan', t.gaya || '–'],
-      ['Pengaruh (IP)', fmt(t.ip)], ['Reputasi Parti', t.reputasi + '%'], ['Modal Sosial', t.modalSosial === null ? '–' : t.modalSosial + '%'],
-      ['Hukuman disiplin', String(t.hukumanDisiplin)], ['Tindakan dijalankan', fmt(t.bilTindakan)]];
-    l.innerHTML = '<div class="legasi__kepala"><p class="legasi__kecil">Legacy Summary · ' + esc(t.tajuk) + '</p><h1>' + esc(p.nama) + '</h1><p class="legasi__gelaran">' + esc(t.gelaran) + '</p></div>' +
+    var DISIPLIN = { baik: 'Baik (tiada sekatan)', digantung: 'Digantung', dilarang: 'Dilarang bertanding', dipecat: 'Dipecat' };
+    var gel = (t.gelarList && t.gelarList.length) ? t.gelarList : [{ ikon: '\uD83D\uDEA9', nama: t.gelaran, huraian: '' }];
+    var baris = [['Umur terakhir', t.umur + ' tahun'], ['Tempoh berkhidmat', t.tahunBerkhidmat + ' tahun (' + t.tahunMula + '\u2013' + t.tahun + ')'],
+      ['Jawatan tertinggi', t.jawatanTertinggi], ['Jawatan terakhir', t.jawatanAkhir],
+      ['Sokongan akar umbi (akhir)', (t.kesetiaanAkarUmbi === undefined ? '\u2013' : t.kesetiaanAkarUmbi + '%')],
+      ['Status disiplin', (DISIPLIN[t.statusDisiplin] || 'Baik') + (t.hukumanDisiplin ? ' \u00B7 ' + t.hukumanDisiplin + ' hukuman' : '')],
+      ['Gaya kepimpinan', t.gaya || '\u2013'], ['Pengaruh (IP)', fmt(t.ip)], ['Reputasi Parti', t.reputasi + '%']];
+    l.setAttribute('role', 'dialog'); l.setAttribute('aria-modal', 'true'); l.setAttribute('aria-label', 'Rumusan Kerjaya');
+    l.innerHTML = '<div class="legasi__kepala"><p class="legasi__kecil">Rumusan Kerjaya \u00B7 ' + esc(t.tajuk) + '</p><h1>' + esc(p.nama) + '</h1><p class="legasi__gelaran">' + esc(gel[0].nama) + '</p></div>' +
       '<p class="legasi__mesej">' + esc(t.mesej) + '</p>' +
-      '<div class="legasi__jadual">' + baris.map(function (b) { return '<div class="kv"><span>' + esc(b[0]) + '</span><b>' + esc(b[1]) + '</b></div>'; }).join('') + '</div>' +
+      '<h2 class="legasi__sub">Gelaran Politik</h2><ul class="legasi__gelar">' + gel.map(function (g) { return '<li><span aria-hidden="true">' + g.ikon + '</span><div><b>' + esc(g.nama) + '</b><small>' + esc(g.huraian) + '</small></div></li>'; }).join('') + '</ul>' +
+      '<h2 class="legasi__sub">Statistik Kerjaya</h2><div class="legasi__jadual">' + baris.map(function (b) { return '<div class="kv"><span>' + esc(b[0]) + '</span><b>' + esc(b[1]) + '</b></div>'; }).join('') + '</div>' +
       (t.gayaHuraian ? '<p class="note" style="margin-top:12px">' + esc(t.gayaHuraian) + '</p>' : '') +
-      '<div class="legasi__butang"><button type="button" class="btn btn--gold" data-act="legasi-baharu">Mulakan Kerjaya Baharu</button> <a class="btn btn--ghost" href="' + INDEX_URL + '">Menu Utama</a></div>' +
+      '<div class="legasi__butang"><button type="button" class="btn btn--gold" data-act="legasi-baharu">Main Semula (mula umur 18)</button> <a class="btn btn--ghost" href="' + INDEX_URL + '">Menu Utama</a></div>' +
       '<p class="legasi__nota">Simulasi permainan. Umur dan risiko kesihatan ialah angka permainan, bukan ramalan sebenar.</p>';
     l.hidden = false;
     var h = l.querySelector('h1'); if (h) { h.setAttribute('tabindex', '-1'); }
@@ -1031,7 +1037,7 @@
     var act = t.getAttribute('data-act');
     if (!act) { var tb = t.getAttribute('data-tab'); if (tb) { setTab(tb); } return; }
     var kod = t.getAttribute('data-kod'), lvl = t.getAttribute('data-lvl');
-    if (act === 'legasi-baharu') { S.clearPlayer(); if (EV) { EV.reset(); } if (TUT) { TUT.reset(); } W.location.assign(INDEX_URL + '#daftar'); return; }    // v5.0
+    if (act === 'legasi-baharu') { try { W.sessionStorage.setItem('myPolitik_umurMula', '18'); } catch (e) { /* abaikan */ } S.clearPlayer(); if (EV) { EV.reset(); } if (TUT) { TUT.reset(); } W.location.assign(INDEX_URL + '#daftar'); return; }    // v5.0
     if (act === 'ringkasan') { tunjukRingkasan(M.getRingkasan(lvl)); return; }
     if (act === 'bulan') { lanjutBulan(); return; }
     if (act === 'acara-buka') { bukaAcaraTertunggak(); return; }

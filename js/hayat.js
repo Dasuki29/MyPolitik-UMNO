@@ -91,6 +91,29 @@
     return pangkat >= 10 ? 'Tokoh Pusat' : pangkat >= 7 ? 'Pemimpin Bahagian' : pangkat >= 3 ? 'Pemimpin Cawangan' : pangkat >= 1 ? 'Pegawai Cawangan' : 'Ahli Akar Umbi';
   }
 
+  /* ------------------------------------------------------------------------
+     3b. GELARAN POLITIK (v5.2) — dianugerahkan automatik berdasarkan prestasi
+     ctx: { umur, tahunBerkhidmat, pangkat, jawatan, akarUmbi, reputasi, modal, salah, status, myr }
+     Pulang senarai { kod, nama, ikon, huraian } mengikut keutamaan (maksimum 4, sekurang-kurangnya 1).
+     ------------------------------------------------------------------------ */
+  var GELARAN = [
+    { kod: 'presiden', ikon: '\uD83C\uDFDB\uFE0F', nama: 'Presiden Parti', huraian: 'Mencapai kerusi tertinggi parti.', semak: function (c) { return /^Presiden$/i.test(c.jawatan || ''); } },
+    { kod: 'tokoh_pusat', ikon: '\u2B50', nama: 'Tokoh Pusat', huraian: 'Pernah memimpin di peringkat Pusat.', semak: function (c) { return c.pangkat >= 10; } },
+    { kod: 'pemimpin_bahagian', ikon: '\uD83D\uDDFA\uFE0F', nama: 'Pemimpin Bahagian', huraian: 'Disegani di peringkat Bahagian.', semak: function (c) { return c.pangkat >= 7 && c.pangkat < 10; } },
+    { kod: 'tokoh_veteran', ikon: '\uD83C\uDF96\uFE0F', nama: 'Tokoh Veteran', huraian: 'Berkhidmat lama hingga usia lanjut.', semak: function (c) { return c.umur >= 65 && c.tahunBerkhidmat >= 10; } },
+    { kod: 'akar_umbi', ikon: '\uD83C\uDF31', nama: 'Pemimpin Akar Umbi', huraian: 'Sokongan akar umbi kekal kukuh.', semak: function (c) { return c.akarUmbi >= 70; } },
+    { kod: 'berintegriti', ikon: '\uD83E\uDD1D', nama: 'Pemimpin Berintegriti', huraian: 'Kerjaya bersih tanpa rekod disiplin.', semak: function (c) { return c.salah === 0 && c.modal >= 60 && c.status === 'baik'; } },
+    { kod: 'kontroversial', ikon: '\uD83D\uDD25', nama: 'Politikus Kontroversial', huraian: 'Kerjaya diwarnai tindakan disiplin dan kontroversi.', semak: function (c) { return c.salah >= 2 || c.status === 'dipecat' || c.status === 'dilarang' || c.status === 'digantung'; } },
+    { kod: 'penyatu', ikon: '\uD83D\uDD4A\uFE0F', nama: 'Penyatu Parti', huraian: 'Reputasi parti yang tinggi.', semak: function (c) { return c.reputasi >= 80; } },
+    { kod: 'gigih', ikon: '\uD83D\uDCAA', nama: 'Pejuang Gigih', huraian: 'Berkhidmat 15 tahun atau lebih.', semak: function (c) { return c.tahunBerkhidmat >= 15; } }
+  ];
+  var GELARAN_LALAI = { kod: 'ahli_setia', ikon: '\uD83D\uDEA9', nama: 'Ahli Setia', huraian: 'Berkhidmat dengan setia kepada parti.' };
+
+  function anugerahGelaran(ctx) {
+    var senarai = GELARAN.filter(function (g) { return g.semak(ctx); }).slice(0, 4).map(function (g) { return { kod: g.kod, ikon: g.ikon, nama: g.nama, huraian: g.huraian }; });
+    return senarai.length ? senarai : [GELARAN_LALAI];
+  }
+
   var TAJUK_SEBAB = { meninggal: 'Tamat Hayat', bersara_kesihatan: 'Bersara Paksa (Kesihatan)', had_umur: 'Mencapai Usia 100 Tahun' };
 
   function mesejSebab(sebab, umur) {
@@ -106,7 +129,12 @@
     var w = null, et = null, ET = Et(), WK = W();
     try { w = WK && WK.tentukan ? WK.tentukan(p) : null; } catch (e) { w = null; }
     try { et = ET && ET.ringkasan ? ET.ringkasan(p) : null; } catch (e) { et = null; }
+    var akarUmbi = p.kesetiaan && isFinite(Number(p.kesetiaan.akarUmbi)) ? Number(p.kesetiaan.akarUmbi) : 0;
+    var statusDisiplin = et ? et.status : 'baik', salah = et ? et.salah : 0, modal = et ? et.modal : 50;
+    var gelarList = anugerahGelaran({ umur: umur, tahunBerkhidmat: Math.max(0, p.tahun - CONFIG.TAHUN_MULA), pangkat: top.pangkat || 0, jawatan: top.jawatan,
+      akarUmbi: akarUmbi, reputasi: p.reputasi || 0, modal: modal, salah: salah, status: statusDisiplin, myr: p.myr || 0 });
     return {
+      kesetiaanAkarUmbi: akarUmbi, statusDisiplin: statusDisiplin, gelarList: gelarList,
       sebab: sebab, tajuk: TAJUK_SEBAB[sebab] || 'Penamat Kerjaya', mesej: mesejSebab(sebab, umur),
       umur: umur, tahun: p.tahun, bulan: p.bulan, tahunMula: CONFIG.TAHUN_MULA,
       tahunBerkhidmat: Math.max(0, p.tahun - CONFIG.TAHUN_MULA),
@@ -205,7 +233,7 @@
   return {
     CONFIG: CONFIG, umurSemasa: umurSemasa, risikoTahunan: risikoTahunan, labelRisiko: labelRisiko, ringkasan: ringkasan,
     sudahTamat: sudahTamat, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
-    jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat,
+    jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat, anugerahGelaran: anugerahGelaran,
     kategoriSepatutnya: kategoriSepatutnya, prosesPeralihanKategori: prosesPeralihanKategori
   };
 });
