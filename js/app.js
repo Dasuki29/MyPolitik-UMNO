@@ -1022,6 +1022,20 @@
     W.location.assign(INDEX_URL);
   }
 
+  async function bersaraAwal() {
+    var p0 = S.loadPlayer();
+    if (!p0 || p0.tamat || !HY) { return; }
+    var ya = await modal({
+      tajuk: 'Bersara Awal?',
+      isi: '<p>Anda akan menamatkan kerjaya politik anda sekarang pada usia <b>' + HY.umurSemasa(p0) + ' tahun</b> dan melihat rumusan kerjaya serta gelaran anda.</p><p><b>Permainan ini tidak boleh diteruskan selepas bersara.</b> Anda boleh memulakan kerjaya baharu dari umur 18.</p>',
+      butang: [{ label: 'Batal', nilai: false }, { label: 'Ya, Bersara', nilai: true, kelas: 'btn--gold' }]
+    });
+    if (!ya) { return; }
+    var r = HY.bersaraAwal();
+    if (!r.ok) { toast(r.ralat || 'Gagal bersara.', 'ralat'); return; }
+    render();
+  }
+
   function simpan() {
     var p = S.loadPlayer();
     if (!p) { toast('Tiada profil untuk disimpan.', 'ralat'); return; }
@@ -1089,6 +1103,7 @@
 
   $('btn-tahun').addEventListener('click', lanjutBulan);
   $('btn-reset').addEventListener('click', reset);
+  if ($('btn-bersara')) { $('btn-bersara').addEventListener('click', bersaraAwal); }
   $('btn-simpan').addEventListener('click', simpan);
 
   /* ---------- Mula ---------- */

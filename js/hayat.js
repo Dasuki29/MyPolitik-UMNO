@@ -114,10 +114,11 @@
     return senarai.length ? senarai : [GELARAN_LALAI];
   }
 
-  var TAJUK_SEBAB = { meninggal: 'Tamat Hayat', bersara_kesihatan: 'Bersara Paksa (Kesihatan)', had_umur: 'Mencapai Usia 100 Tahun' };
+  var TAJUK_SEBAB = { meninggal: 'Tamat Hayat', bersara_kesihatan: 'Bersara Paksa (Kesihatan)', had_umur: 'Mencapai Usia 100 Tahun', bersara_sukarela: 'Bersara Secara Sukarela' };
 
   function mesejSebab(sebab, umur) {
     if (sebab === 'meninggal') { return 'Anda telah meninggal dunia pada usia ' + umur + ' tahun. Al-Fatihah. Perjalanan politik anda berakhir di sini.'; }
+    if (sebab === 'bersara_sukarela') { return 'Anda memutuskan untuk bersara daripada politik pada usia ' + umur + ' tahun. Terima kasih atas khidmat anda kepada parti.'; }
     if (sebab === 'bersara_kesihatan') { return 'Atas nasihat doktor, anda bersara sepenuhnya daripada politik pada usia ' + umur + ' tahun kerana masalah kesihatan.'; }
     return 'Anda mencapai usia ' + umur + ' tahun, had umur permainan ini. Perjalanan politik anda ditutup dengan penuh kehormatan.';
   }
@@ -229,10 +230,21 @@
     return { berubah: true, daripada: lama, kepada: baru, peristiwa: [{ jenis: 'kategori_bertukar', mesej: mesej + extra }] };
   }
 
+  /** Bersara awal atas pilihan pemain (v5.2): kerjaya ditamatkan dan Legacy Summary disimpan. */
+  function bersaraAwal() {
+    var s = S(), p = s && s.loadPlayer();
+    if (!p) { return { ok: false, ralat: 'Tiada profil pemain.' }; }
+    if (p.tamat) { return { ok: false, ralat: 'Kerjaya anda sudah tamat.' }; }
+    kemaskiniJawatanTertinggi(); p = s.loadPlayer();
+    var legasi = bina(p, 'bersara_sukarela');
+    var r = s.applyEffects({}, { kiraTindakan: false, patch: { tamat: legasi }, log: { tindakan: 'hayat', nama: legasi.tajuk + ' pada usia ' + legasi.umur, peringkat: 'hayat' } });
+    return r && r.ok ? { ok: true, tamat: legasi } : { ok: false, ralat: (r && r.ralat) || 'Gagal bersara.' };
+  }
+
   /** Padam profil dan mulakan semula tidak dibuat di sini; UI memanggil Save.clearPlayer(). */
   return {
     CONFIG: CONFIG, umurSemasa: umurSemasa, risikoTahunan: risikoTahunan, labelRisiko: labelRisiko, ringkasan: ringkasan,
-    sudahTamat: sudahTamat, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
+    sudahTamat: sudahTamat, bersaraAwal: bersaraAwal, prosesTahunBaharu: prosesTahunBaharu, kemaskiniJawatanTertinggi: kemaskiniJawatanTertinggi,
     jawatanTertinggiSemasa: jawatanTertinggiSemasa, gelaranPangkat: gelaranPangkat, anugerahGelaran: anugerahGelaran,
     kategoriSepatutnya: kategoriSepatutnya, prosesPeralihanKategori: prosesPeralihanKategori
   };
