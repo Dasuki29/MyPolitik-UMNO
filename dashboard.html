@@ -85,6 +85,9 @@
     .note { margin: 0 0 var(--space-3); font-size: .88rem; color: var(--text-muted); }
     .banner { padding: var(--space-3) var(--space-4); border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev-2); margin-bottom: var(--space-4); font-size: .9rem; }
     .banner--warn { border-color: rgba(255, 77, 94, .5); background: rgba(255, 77, 94, .08); }
+    .banner--gantung { border: 2px solid #E5303F; background: rgba(229, 48, 63, .16); color: #FFD9DD; }
+    .banner--gantung strong { color: #fff; }
+    .badge-office--gantung { --badge-c1: #E5303F; --badge-c2: #8F1420; --badge-fg: #fff; }
     .banner--gold { border-color: rgba(242, 183, 5, .5); background: rgba(242, 183, 5, .07); }
     .banner strong { display: block; color: var(--white); margin-bottom: 2px; }
     .choice:disabled { opacity: .5; cursor: not-allowed; transform: none; }
@@ -152,6 +155,8 @@
           <p class="lagu__nota">Dimainkan melalui Spotify (perlu internet; log masuk Spotify untuk lagu penuh). Senyapkan audio permainan jika bunyi bertindih.</p>
         </section>
   <main class="container page" id="kandungan" hidden>
+
+    <div class="banner banner--gantung" id="p-gantung" role="alert" hidden></div>
 
     <!-- 1. Profil pemain + Bar Sumber + Kawalan Masa -->
     <section class="card dash-profile" aria-label="Profil pemain">

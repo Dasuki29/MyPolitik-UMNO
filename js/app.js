@@ -432,6 +432,15 @@
     var lp = $('p-perwakilan'), sp = M ? M.getStatusPerwakilan(p) : null;
     if (lp) { var lb = sp && (sp.pau.lencana || sp.bahagian.lencana); lp.hidden = !lb; lp.textContent = lb || ''; }
     var l = $('p-jawatan'); l.textContent = p.jawatan; l.className = 'badge-office badge-office--' + kelasLencana(p.jawatan);
+    var rg = ET ? ET.ringkasan(p) : null, gantung = !!(rg && rg.status === 'digantung');
+    if (gantung) { l.textContent = 'Ahli (Digantung)'; l.className = 'badge-office badge-office--gantung'; if (lp) { lp.hidden = true; } }     // v4.6
+    var kg = $('p-gantung');
+    if (kg) {
+      kg.hidden = !gantung;
+      kg.innerHTML = gantung ? '<strong>⛔ Keahlian anda DIGANTUNG</strong>Sehingga bulan ' + esc(rg.hukuman ? rg.hukuman.tamatBulan + '/' + rg.hukuman.tamatTahun : '') +
+        ' (Fasal 20.10b). Semua jawatan anda telah dilucutkan' + (rg.hukuman && rg.hukuman.jawatanDilucut ? ' (' + esc(rg.hukuman.jawatanDilucut) + ')' : '') +
+        '. Anda tidak boleh mencalon, mengundi atau bertanding dalam pemilihan parti, dan tidak boleh menggunakan AP untuk tugas rasmi jawatan.' : '';
+    }
     var jl = $('p-jawatan-lain');
     if (jl) {
       var semua = J ? J.ringkas(p) : [];
@@ -563,7 +572,7 @@
       h += '<div class="banner banner--warn" role="alert"><strong>Keahlian anda dipecat</strong>' + esc(r.hukuman ? r.hukuman.perkara : '') + '. Semua jawatan hilang dan hak keahlian ditarik (Fasal 20.10d). ' +
         (r.rayuan && r.rayuan.boleh ? '<button type="button" class="btn btn--gold btn--sm" data-act="rayu" style="margin-top:8px">Hantar Rayuan Pemecatan</button>' : esc(r.rayuan ? r.rayuan.sebab : '')) + '</div>';
     } else if (r.status === 'digantung') {
-      h += '<div class="banner banner--warn" role="alert"><strong>Hak keahlian digantung</strong>Anda tidak boleh bertanding, berkempen atau menyertai mesyuarat sehingga bulan ' + esc(r.hukuman ? r.hukuman.tamatBulan + '/' + r.hukuman.tamatTahun : '') + ' (Fasal 20.10b). Anda masih boleh berkhidmat kepada masyarakat untuk membina Modal Sosial.</div>';
+      h += '<div class="banner banner--gantung" role="alert"><strong>Ahli (Digantung)</strong>Semua jawatan dilucutkan. Anda tidak boleh mencalon, mengundi, bertanding, berkempen atau menyertai mesyuarat sehingga bulan ' + esc(r.hukuman ? r.hukuman.tamatBulan + '/' + r.hukuman.tamatTahun : '') + ' (Fasal 20.10b). Anda masih boleh berkhidmat kepada masyarakat untuk membina Modal Sosial.</div>';
     } else if (r.status === 'dilarang') {
       h += '<div class="banner banner--warn" role="alert"><strong>Dilarang bertanding jawatan</strong>Sehingga bulan ' + esc(r.hukuman ? r.hukuman.tamatBulan + '/' + r.hukuman.tamatTahun : '') + ' (Fasal 20.10c). Anda masih boleh menjadi perwakilan dan berkhidmat.</div>';
     }
@@ -809,6 +818,7 @@
 
   function render() {
     state.renderTerjadual = false;
+    if (ET && ET.kuatkuasaGantung) { ET.kuatkuasaGantung(); }          // v4.6: lucut jawatan jika digantung
     var p = S.loadPlayer();
     if (!p) { W.location.replace(INDEX_URL); return; }
     renderHeader(p); renderSisi(p); renderTabs(p); renderPanel(p);
