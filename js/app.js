@@ -475,7 +475,7 @@
         var kelas = function (l) { return l === 'Kritikal' ? 'is-kritikal' : l === 'Tinggi' || l === 'Lemah' ? 'is-tinggi' : l === 'Sederhana' ? 'is-sederhana' : ''; };
         $('m-stress').style.width = stm.stress + '%'; $('m-stress').className = kelas(stm.labelStress);
         $('m-stress-teks').textContent = stm.stress + ' · ' + stm.labelStress;
-        $('m-stress-info').textContent = 'Beban jawatan +' + stm.beban + ', pulih -' + ST.CONFIG.PEMULIHAN + ' sebulan';
+        $('m-stress-info').textContent = 'Beban ' + (stm.bilJawatan > 1 ? stm.bilJawatan + ' jawatan ' : 'jawatan ') + '+' + stm.beban + ', pulih -' + ST.CONFIG.PEMULIHAN + ' sebulan' + (stm.pecahan && stm.pecahan.length > 1 ? ' (' + stm.pecahan.map(function (x) { return '+' + x.beban; }).join(' ') + ')' : '');
         var kl = stm.labelKesihatan === 'Kritikal' ? 'is-kritikal' : stm.labelKesihatan === 'Lemah' ? 'is-tinggi' : stm.labelKesihatan === 'Sederhana' ? 'is-sederhana' : '';
         $('m-kes').style.width = stm.kesihatan + '%'; $('m-kes').className = kl;
         $('m-kes-teks').textContent = stm.kesihatan + '% · ' + stm.labelKesihatan;
@@ -635,7 +635,7 @@
       return '<div class="kv"><span>' + esc(nama) + '</span><b class="' + (x.layak ? 'text-gold' : '') + '">' + teks + '</b></div>';
     }
     var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Jawatan &amp; Mandat Anda</h2>';
-    h += '<p class="note">Anda hanya boleh memegang <b>satu jawatan</b> pada satu masa. Menang jawatan yang lebih tinggi akan melepaskan jawatan lama secara automatik. ' +
+    h += '<p class="note">Anda boleh memegang jawatan di <b>peringkat berbeza</b> serentak (Cawangan + Bahagian + Pusat), tetapi hanya <b>satu jawatan bagi setiap peringkat</b>. Setiap jawatan menambah Stress bulanan; terlalu banyak jawatan mencetus cemburu dan sabotaj akar umbi. ' +
       (J.sayapPemain(p) ? 'Sayap anda: <b>' + esc(J.NAMA_SAYAP[J.sayapPemain(p)]) + '</b>.' : 'Kategori anda (Biasa / Veteran) tiada sayap, jadi jawatan sayap tidak dibuka.') + '</p>';
     h += senarai.length ? '<div class="btn-group" style="flex-wrap:wrap;margin-bottom:10px">' + senarai.map(function (j) {
       return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + ' &middot; ' + esc(j.label) + '</span>'; }).join('') + '</div>'
@@ -713,7 +713,7 @@
     ['cawangan', 'bahagian', 'pusat'].forEach(function (lv) {
       var baris = st.pertandingan.filter(function (e) { return e.peringkat === lv; });
       if (!baris.length) { return; }
-      h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">' + TAJUK_PERINGKAT[lv][0] + '</h2><p class="note">' + TAJUK_PERINGKAT[lv][1] + '. Satu jawatan utama dan satu jawatan sayap boleh dipertandingkan pada satu peringkat; perwakilan dipertandingkan bersama.</p>';
+      h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">' + TAJUK_PERINGKAT[lv][0] + '</h2><p class="note">' + TAJUK_PERINGKAT[lv][1] + '. Hanya satu jawatan bagi setiap peringkat boleh dipegang (jika kedua-dua jawatan utama dan sayap dimenangi, yang lebih tinggi dikekalkan); perwakilan dipertandingkan bersama.</p>';
       baris.forEach(function (e) { h += barisPertandingan(e); });
       h += '</section>';
     });
@@ -846,7 +846,7 @@
 
   function render() {
     state.renderTerjadual = false;
-    if (J && J.selaraskan) { var pj = S.loadPlayer(), tj = pj && !pj.tamat ? J.selaraskan(pj) : null; if (tj) { S.applyEffects({}, { kiraTindakan: false, patch: tj }); } }     // v5.5: satu jawatan sahaja (simpanan lama)
+    if (J && J.selaraskan) { var pj = S.loadPlayer(), tj = pj && !pj.tamat ? J.selaraskan(pj) : null; if (tj) { S.applyEffects({}, { kiraTindakan: false, patch: tj }); } }     // v5.7: satu jawatan bagi setiap peringkat (simpanan lama)
     if (ET && ET.kuatkuasaGantung) { ET.kuatkuasaGantung(); }          // v4.6: lucut jawatan jika digantung
     if (HY) { HY.kemaskiniJawatanTertinggi(); }                         // v5.0: rekod jawatan tertinggi untuk Legacy Summary
     var p = S.loadPlayer();

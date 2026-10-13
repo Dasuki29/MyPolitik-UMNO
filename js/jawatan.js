@@ -5,8 +5,10 @@
    1. Pegangan berbilang (multi-holding)
         profil.jawatanList = [{ kod, jawatan, peringkat:'cawangan'|'bahagian'|'pusat', kumpulan:'utama'|'sayap',
                                 sayap, pangkat, tahun }]
-        v5.5 EKSKLUSIF: hanya SATU jawatan pada satu masa (utama atau sayap, mana-mana peringkat).
-        Menang jawatan lebih tinggi melepaskan jawatan lama. Tidak boleh bertanding jawatan setara/lebih rendah.
+        v5.7 PERTINDIHAN MENEGAK: boleh memegang jawatan di peringkat BERBEZA serentak (Cawangan + Bahagian + Pusat),
+        tetapi hanya SATU jawatan bagi setiap peringkat (utama atau sayap - contoh: Ketua Bahagian dan Ketua Pemuda
+        Bahagian tidak boleh serentak). Menang jawatan lebih tinggi di peringkat yang sama menggantikan jawatan lama.
+        Beban pelbagai jawatan dikawal oleh Stress (stress.js).
         profil.pangkatUtamaLalu = pangkat utama yang dilepaskan demi sayap (untuk syarat tangga jawatan utama).
         profil.jawatan sentiasa = nama jawatan berpangkat tertinggi (sandaran untuk modul lama).
    2. Jawatan mengikut sayap
@@ -153,9 +155,9 @@
     var pertahan = pegang(p, d.kod);
     if (pertahan) { return { terbuka: true, sebab: '', pertahan: true }; }
     if (d.kumpulan === 'sayap' && d.sayap !== sayapPemain(p)) { return { terbuka: false, sebab: 'Hanya untuk sayap ' + NAMA_SAYAP[d.sayap] + '.' }; }
-    var semasa = getJawatan(p).sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); })[0];
-    if (semasa && (semasa.pangkat || 0) >= d.pangkat) {         // v5.5: hanya satu jawatan pada satu masa; calon mesti naik pangkat
-      return { terbuka: false, sebab: 'Anda sedang memegang ' + semasa.jawatan + '. Hanya boleh bertanding jawatan yang lebih tinggi (jawatan lama dilepaskan jika menang).' };
+    var sama = jawatanSamaPeringkat(p, d);                      // v5.7: satu jawatan setiap peringkat; calon mesti naik pangkat di peringkat itu
+    if (sama && (sama.pangkat || 0) >= d.pangkat) {
+      return { terbuka: false, sebab: 'Konflik peringkat: anda sudah memegang ' + sama.jawatan + ' di peringkat ' + LABEL_PERINGKAT[d.peringkat] + '. Hanya satu jawatan bagi setiap peringkat (boleh bertanding jawatan lebih tinggi di peringkat ini, atau jawatan di peringkat lain).' };
     }
     if (Et && d.keahlian) {                                    // Fasal 15.5: ahli sekurang-kurangnya 3 tahun
       var kh = Et.semakKeahlian(p, d.keahlian, d.fasal);
@@ -184,24 +186,32 @@
   /* ------------------------------------------------------------------------
      KEPUTUSAN PEMILIHAN -> PATCH PROFIL
      ------------------------------------------------------------------------ */
+  /** v5.7: jawatan (pangkat tertinggi) yang dipegang pada peringkat yang sama dengan d, kecuali d itu sendiri. */
+  function jawatanSamaPeringkat(p, d) {
+    var r = null;
+    getJawatan(p).forEach(function (j) { if (j.kod !== d.kod && j.peringkat === d.peringkat && (!r || (j.pangkat || 0) > (r.pangkat || 0))) { r = j; } });
+    return r;
+  }
+
   /** Pulang { jawatanList, jawatan, ... } untuk dipatch ke profil selepas menang/kalah satu jawatan. */
   function terapkan(p, d, menang) {
     var senarai = getJawatan(p);
     var tadiPegang = pegang(p, d.kod);
     var penggal = !!p.penggalSelesai;                                  // Fasal 9.5: simpan rekod satu penggal walaupun jawatan hilang
-    if (menang && senarai.some(function (j) { return j.kod !== d.kod && (j.pangkat || 0) > d.pangkat; })) { return {}; }   // v5.5: menang dua jawatan dalam satu pusingan: yang lebih tinggi dikekalkan
+    var sama = jawatanSamaPeringkat(p, d);
+    if (menang && sama && (sama.pangkat || 0) > d.pangkat) { return {}; }   // menang dua jawatan sama peringkat dalam satu pusingan: yang lebih tinggi dikekalkan
     var dilepas = [];
     senarai.forEach(function (j) {
-      // v5.5: SATU jawatan sahaja. Menang jawatan baharu melepaskan semua jawatan lain (utama atau sayap, mana-mana peringkat).
-      var buang = menang ? true : (j.kod === d.kod);
+      // v5.7: menang melepaskan jawatan LAMA di peringkat yang SAMA sahaja; peringkat lain dikekalkan.
+      var buang = menang ? (j.kod === d.kod || j.peringkat === d.peringkat) : (j.kod === d.kod);
       if (buang) { dilepas.push(j); }
       if (buang && (j.peringkat === 'bahagian' || j.peringkat === 'pusat') && j.tahun && (p.tahun - j.tahun) >= 3) { penggal = true; }
     });
-    var tangga = null;                                                  // pangkat utama tertinggi untuk syarat tangga apabila jawatan utama dilepaskan demi sayap
+    var tangga = null;                                                  // pangkat utama tertinggi dilepaskan (syarat tangga jawatan utama)
     if (menang) {
-      if (d.kumpulan === 'sayap') { tangga = dilepas.reduce(function (m, j) { return j.kumpulan === 'utama' ? Math.max(m, j.pangkat || 0) : m; }, Number(p.pangkatUtamaLalu) || 0); }
-      else { tangga = 0; }
-      senarai = [{ kod: d.kod, jawatan: d.jawatan, peringkat: d.peringkat, kumpulan: d.kumpulan, sayap: d.sayap, pangkat: d.pangkat, tahun: p.tahun }];
+      tangga = dilepas.reduce(function (m, j) { return (j.kumpulan === 'utama' && d.kumpulan === 'sayap') ? Math.max(m, j.pangkat || 0) : m; }, Number(p.pangkatUtamaLalu) || 0);
+      senarai = senarai.filter(function (j) { return dilepas.indexOf(j) < 0; });
+      senarai.push({ kod: d.kod, jawatan: d.jawatan, peringkat: d.peringkat, kumpulan: d.kumpulan, sayap: d.sayap, pangkat: d.pangkat, tahun: p.tahun });
     } else if (tadiPegang) {
       senarai = senarai.filter(function (j) { return j.kod !== d.kod; });
     }
@@ -214,18 +224,19 @@
     return patch;
   }
 
-  /** v5.5: pastikan hanya SATU jawatan (pangkat tertinggi). Pulang patch profil atau null jika tiada perubahan. */
+  /** v5.7: pastikan hanya SATU jawatan bagi setiap peringkat (pangkat tertinggi). Pulang patch profil atau null. */
   function selaraskan(p) {
     var senarai = getJawatan(p);
-    if (senarai.length <= 1 && Array.isArray(p.jawatanList)) { return null; }
     if (!senarai.length) { return null; }
-    var isih = senarai.slice().sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); }), kekal = isih[0];
+    var isih = senarai.slice().sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); }), kekal = [], buang = [], lihat = {};
+    isih.forEach(function (j) { if (lihat[j.peringkat]) { buang.push(j); } else { lihat[j.peringkat] = true; kekal.push(j); } });
+    if (!buang.length) { return null; }
     var penggal = !!p.penggalSelesai, tangga = Number(p.pangkatUtamaLalu) || 0;
-    isih.slice(1).forEach(function (j) {
+    buang.forEach(function (j) {
       if ((j.peringkat === 'bahagian' || j.peringkat === 'pusat') && j.tahun && (p.tahun - j.tahun) >= 3) { penggal = true; }
-      if (kekal.kumpulan === 'sayap' && j.kumpulan === 'utama') { tangga = Math.max(tangga, j.pangkat || 0); }
+      if (j.kumpulan === 'utama' && kekal.some(function (k) { return k.kumpulan === 'sayap'; })) { tangga = Math.max(tangga, j.pangkat || 0); }
     });
-    var patch = { jawatanList: [kekal], jawatan: kekal.jawatan };
+    var patch = { jawatanList: kekal, jawatan: kekal[0].jawatan };
     if (penggal) { patch.penggalSelesai = true; }
     if (tangga) { patch.pangkatUtamaLalu = tangga; }
     return patch;
@@ -243,6 +254,6 @@
     cariDef: cariDef, selaraskan: selaraskan, getJawatan: getJawatan, pegang: pegang, pegangPeringkat: pegangPeringkat, bilJawatan: bilJawatan,
     pangkatTertinggi: pangkatTertinggi, jawatanTertinggi: jawatanTertinggi, peringkatTertinggi: peringkatTertinggi,
     sayapPemain: sayapPemain, exOfficio: exOfficio, perwakilanSah: perwakilanSah,
-    katalogUntuk: katalogUntuk, semakKelayakan: semakKelayakan, terapkan: terapkan, ringkas: ringkas
+    jawatanSamaPeringkat: jawatanSamaPeringkat, katalogUntuk: katalogUntuk, semakKelayakan: semakKelayakan, terapkan: terapkan, ringkas: ringkas
   };
 });

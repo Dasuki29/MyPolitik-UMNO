@@ -1,9 +1,10 @@
 /* ==========================================================================
-   Nusa Politik — js/stress.js   (v5.6)
+   Nusa Politik — js/stress.js   (v5.7)
    Tahap Stress dan Kesihatan pemain.
 
-   - Stress (0 hingga 100) bertambah setiap bulan mengikut jawatan yang dipegang (makin tinggi pangkat,
-     makin besar beban), ditolak pemulihan semula jadi. Ahli Biasa pulih perlahan.
+   - Stress (0 hingga 100) bertambah setiap bulan. v5.7: SETIAP jawatan yang dipegang menambah beban mengikut
+     tier (Cawangan ringan, Bahagian sederhana, Pusat/Nasional berat); semua beban dijumlahkan (pertindihan
+     menegak), ditolak pemulihan semula jadi. Ahli Biasa pulih perlahan.
    - Kesihatan (0 hingga 100) pulih jika Stress rendah, dan merosot jika Stress melebihi 60.
      Makin lanjut usia, makin cepat merosot.
    - Kesihatan di bawah 50 menambah risiko tahunan tamat kerjaya (lihat hayat.js). Kesihatan 0 menamatkan
@@ -23,8 +24,10 @@
 
   var CONFIG = {
     PEMULIHAN: 3,                 // pemulihan Stress semula jadi sebulan
-    BEBAN: [                      // [pangkat minimum, beban sebulan]
-      [12, 8], [10, 7], [8, 6], [6, 5], [4, 4], [3, 3], [1, 2]
+    BEBAN: [                      // v5.7 per jawatan: [pangkat minimum, beban sebulan]; semua jawatan dijumlahkan
+      [12, 7], [10, 6], [8, 5],   // Pusat / Nasional: berat
+      [6, 4], [4, 3],             // Bahagian: sederhana
+      [3, 2], [1, 1]              // Cawangan: ringan
     ],
     AMBANG_STRESS: { sederhana: 40, tinggi: 60, kritikal: 80 },
     PULIH_KESIHATAN: 1,           // kesihatan pulih sebulan jika Stress <= 40
@@ -45,19 +48,23 @@
     return { stress: isFinite(st) ? clamp(Math.round(st), 0, 100) : 0, kesihatan: isFinite(ks) ? clamp(Math.round(ks), 0, 100) : 100 };
   }
 
-  /** Pangkat jawatan semasa (0 jika Ahli Biasa). */
-  function pangkatSemasa(p) {
-    var j = J(), t = 0;
-    if (j && j.getJawatan) { j.getJawatan(p).forEach(function (x) { t = Math.max(t, x.pangkat || 0); }); }
-    return t;
-  }
-
-  /** Beban Stress sebulan daripada jawatan yang dipegang. */
-  function bebanJawatan(p) {
-    var pg = pangkatSemasa(p);
+  /** Beban sebulan satu jawatan (ikut pangkatnya). */
+  function bebanSatu(j) {
+    var pg = (j && j.pangkat) || 0;
     for (var i = 0; i < CONFIG.BEBAN.length; i++) { if (pg >= CONFIG.BEBAN[i][0]) { return CONFIG.BEBAN[i][1]; } }
     return 0;
   }
+
+  function senaraiJawatan(p) { var j = J(); return j && j.getJawatan ? j.getJawatan(p) : []; }
+
+  /** Pecahan beban setiap jawatan: [{kod, jawatan, peringkat, beban}], terbesar dahulu. */
+  function pecahanBeban(p) {
+    return senaraiJawatan(p).map(function (x) { return { kod: x.kod, jawatan: x.jawatan, peringkat: x.peringkat, pangkat: x.pangkat || 0, beban: bebanSatu(x) }; })
+      .sort(function (a, b) { return b.beban - a.beban || b.pangkat - a.pangkat; });
+  }
+
+  /** Jumlah beban Stress sebulan daripada SEMUA jawatan yang dipegang. */
+  function bebanJawatan(p) { return pecahanBeban(p).reduce(function (m, x) { return m + x.beban; }, 0); }
 
   function umur(p) { var h = H(); return h && h.umurSemasa ? h.umurSemasa(p) : null; }
 
@@ -78,7 +85,7 @@
     var n = nilai(p), beban = bebanJawatan(p), u = umur(p);
     return {
       stress: n.stress, kesihatan: n.kesihatan, labelStress: labelStress(n.stress), labelKesihatan: labelKesihatan(n.kesihatan),
-      beban: beban, bersih: beban - CONFIG.PEMULIHAN, kadarKesihatan: kadarKesihatan(n.stress, u), risikoTambahan: risikoTambahan(p)
+      bilJawatan: senaraiJawatan(p).length, pecahan: pecahanBeban(p), beban: beban, bersih: beban - CONFIG.PEMULIHAN, kadarKesihatan: kadarKesihatan(n.stress, u), risikoTambahan: risikoTambahan(p)
     };
   }
 
@@ -97,15 +104,42 @@
     return { ok: !!(r && r.ok), stress: ns, kesihatan: nk };
   }
 
-  /** Lepaskan jawatan semasa secara sukarela (menjadi Ahli Biasa). */
-  function lepasJawatan() {
+  /** Keluarkan jawatan terpilih daripada senarai; simpan pangkat utama untuk syarat tangga. Pulang {ok, dilepas:[...]}. */
+  function buangJawatan(pilih, tindakan, teksLog) {
     var s = S(), p = s && s.loadPlayer();
-    if (!p) { return { ok: false }; }
-    var j = J(), senarai = j && j.getJawatan ? j.getJawatan(p) : [], lama = p.jawatan, tangga = Number(p.pangkatUtamaLalu) || 0;
-    senarai.forEach(function (x) { if (x.kumpulan === 'utama') { tangga = Math.max(tangga, x.pangkat || 0); } });
-    var patch = { jawatanList: [], jawatan: 'Ahli Biasa', cabaran: null, amaranAktif: false, pangkatUtamaLalu: tangga };
-    var r = s.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: 'lepas_jawatan', nama: 'Melepaskan ' + lama, peringkat: 'ahli' } });
-    return { ok: !!(r && r.ok), jawatanLama: lama };
+    if (!p) { return { ok: false, dilepas: [] }; }
+    var senarai = senaraiJawatan(p), dilepas = pilih(senarai.slice());
+    if (!dilepas.length) { return { ok: false, dilepas: [] }; }
+    var baki = senarai.filter(function (x) { return dilepas.indexOf(x) < 0; }), tangga = Number(p.pangkatUtamaLalu) || 0;
+    dilepas.forEach(function (x) { if (x.kumpulan === 'utama') { tangga = Math.max(tangga, x.pangkat || 0); } });
+    baki.sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); });
+    var patch = { jawatanList: baki, jawatan: baki.length ? baki[0].jawatan : 'Ahli Biasa', pangkatUtamaLalu: tangga };
+    if (!baki.length) { patch.cabaran = null; patch.amaranAktif = false; }
+    var nama = dilepas.map(function (x) { return x.jawatan; }).join(', ');
+    var r = s.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: tindakan, nama: teksLog + nama, peringkat: 'ahli' } });
+    return { ok: !!(r && r.ok), dilepas: dilepas, jawatanLama: nama };
+  }
+
+  /** Lepaskan jawatan secara sukarela. kod = jawatan tertentu; 'semua' = semua; tiada = jawatan paling membebankan. */
+  function lepasJawatan(kod) {
+    return buangJawatan(function (l) {
+      if (!l.length) { return []; }
+      if (kod === 'semua') { return l; }
+      if (kod && kod.terendah) { l.sort(function (a, b) { return (a.pangkat || 0) - (b.pangkat || 0); }); return [l[0]]; }
+      if (kod) { return l.filter(function (x) { return x.kod === kod; }); }
+      l.sort(function (a, b) { return bebanSatu(b) - bebanSatu(a) || (b.pangkat || 0) - (a.pangkat || 0); });
+      return [l[0]];
+    }, 'lepas_jawatan', 'Melepaskan ');
+  }
+
+  /** Jawatan dilucutkan oleh pencabar akar umbi. Lalai: jawatan berpangkat TERENDAH (mudah dicabar). */
+  function lucutJawatan(kod) {
+    return buangJawatan(function (l) {
+      if (!l.length) { return []; }
+      if (kod) { return l.filter(function (x) { return x.kod === kod; }); }
+      l.sort(function (a, b) { return (a.pangkat || 0) - (b.pangkat || 0); });
+      return [l[0]];
+    }, 'lucut_jawatan', 'Dilucutkan daripada ');
   }
 
   /**
@@ -132,6 +166,6 @@
 
   return {
     CONFIG: CONFIG, ringkasan: ringkasan, bebanJawatan: bebanJawatan, kadarKesihatan: kadarKesihatan, risikoTambahan: risikoTambahan,
-    labelStress: labelStress, labelKesihatan: labelKesihatan, laras: laras, lepasJawatan: lepasJawatan, prosesBulan: prosesBulan
+    labelStress: labelStress, labelKesihatan: labelKesihatan, laras: laras, lepasJawatan: lepasJawatan, lucutJawatan: lucutJawatan, pecahanBeban: pecahanBeban, bebanSatu: bebanSatu, prosesBulan: prosesBulan
   };
 });
