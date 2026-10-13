@@ -279,11 +279,11 @@
   }
 
   var ALIAS_LAJUR = {
-    id:        ['id', 'kod', 'kodlokaliti'],
+    id:        ['id', 'kod', 'kodlokaliti', 'koddm'],
     parlimen:  ['namaparlimen', 'parlimen', 'namabahagian', 'bahagian'],
     dun:       ['namadun', 'dun'],
-    lokaliti:  ['namalokaliti', 'lokaliti', 'namacawangan', 'cawangan'],
-    jumlah:    ['jumlahahli', 'jumlah', 'ahli'],
+    lokaliti:  ['namalokaliti', 'lokaliti', 'namacawangan', 'cawangan', 'daerahmengundi', 'dm'],
+    jumlah:    ['jumlahahli', 'jumlah', 'ahli', 'pemilih'],   // 'pemilih' = lajur lama Sheet DM; di sini bermaksud bilangan AHLI (rekaan)
     lelaki:    ['lelaki'],
     perempuan: ['perempuan'],
     bawah40:   ['bawah40', 'dibawah40', 'kurang40'],
