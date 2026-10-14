@@ -350,7 +350,7 @@
     {
       id: 'krisis_pemberontakan_akar_umbi', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '🔥', tajuk: 'Pemberontakan Akar Umbi',
       berat: function (p) { var ak = (p.kesetiaan && Number(p.kesetiaan.akarUmbi)) || 0; return 2 + (ak < 40 ? 3 : 0) + ((Number(p.stress) || 0) >= 60 ? 2 : 0); },
-      huraian: 'Sekumpulan ketua ranting di {cawangan} mengadakan mesyuarat tergempar tanpa pengetahuan anda. Mereka mahu memboikot program anda dan menuntut perubahan kepimpinan.',
+      huraian: 'Sekumpulan ahli {cawangan} mengadakan mesyuarat tergempar tanpa pengetahuan anda. Mereka mahu memboikot program anda dan menuntut perubahan kepimpinan.',
       pilihan: [
         { id: 'a', label: 'Akur tuntutan dan taja dialog terbuka (Dana + AP)', huraian: 'Mahal dan meletihkan, tetapi meredakan api. Stress +3.', kesan: { myr: -600, ap: -2, kesetiaan: { akarUmbi: 8, ketuaCawangan: 3 } }, stres: { stress: 3 }, mesej: 'Dialog terbuka meredakan keadaan. Ketua ranting kembali menyokong anda.' },
         { id: 'b', label: 'Tegur dan singkirkan penghasut', huraian: 'Berisiko. Stress +5.', stres: { stress: 5 }, kesan: {}, hasil: [

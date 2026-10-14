@@ -66,7 +66,7 @@
     {
       id: 'kerja_sampingan', nama: 'Kerja Sampingan / Perniagaan',
       penerangan: 'Menambah pendapatan melalui kerja sampingan atau perniagaan kecil.',
-      kesan: { myr: 500, ap: -2 }
+      kesan: { myr: 300, ap: -2 }
     },
     {
       id: 'rehat_keluarga', nama: 'Rehat & Masa Keluarga',
