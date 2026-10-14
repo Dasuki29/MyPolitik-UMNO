@@ -71,6 +71,17 @@
     .meter__track i.is-sederhana { background: var(--warning); } .meter__track i.is-tinggi { background: #FF8A3D; } .meter__track i.is-kritikal { background: var(--danger); }
     .meter small { display: block; font-size: .72rem; color: var(--text-muted); }
     #p-jawatan-lain { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+    .org-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .org-tab { padding: .3rem .8rem; border-radius: 999px; border: 1px solid var(--border, rgba(160,170,200,.35)); background: transparent; color: inherit; font-weight: 700; font-size: .8rem; cursor: pointer; }
+    .org-tab[aria-selected="true"] { background: rgba(212,175,55,.18); border-color: rgba(212,175,55,.7); }
+    .org-peringkat { margin: 0 0 14px; }
+    .org-peringkat h3 { margin: 0 0 6px; font-size: .9rem; }
+    .org-baris { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px dashed rgba(160,170,200,.2); font-size: .84rem; }
+    .org-baris span:first-child { opacity: .75; }
+    .org-baris.is-anda { color: #D4AF37; font-weight: 800; }
+    .org-ajk { margin-top: 6px; font-size: .8rem; opacity: .85; }
+    .org-ajk summary { cursor: pointer; font-weight: 700; }
+    .org-isu { margin: 0 0 12px; padding-left: 18px; font-size: .84rem; }
     .badge-sayap { display: inline-flex; align-items: center; gap: 6px; padding: .2rem .7rem; border-radius: 999px; font-size: .74rem; font-weight: 800; letter-spacing: .02em; border: 1px solid transparent; cursor: help; }
     .badge-sayap[hidden] { display: none !important; }
     .badge-sayap--utama { color: #E9EDF5; background: rgba(120,130,160,.22); border-color: rgba(160,170,200,.45); }
@@ -177,6 +188,7 @@
     <div class="header-actions">
       <button type="button" class="btn btn--ghost btn--sm lagu-btn" id="btn-lagu" aria-expanded="false" aria-controls="kad-lagu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Lagu</span></button>
       <button type="button" class="btn btn--ghost btn--sm" data-perlembagaan title="Perlembagaan Parti" aria-label="Perlembagaan Parti">📜<span class="plb-btn-teks"> Perlembagaan</span></button>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-struktur" title="Struktur organisasi Induk dan Sayap">Struktur</button>
       <button type="button" class="btn btn--ghost btn--sm" id="btn-simpan">Simpan</button>
       <button type="button" class="btn btn--ghost btn--sm" id="btn-bersara" title="Bersara awal dan lihat rumusan kerjaya">Bersara</button>
       <button type="button" class="btn btn--danger btn--sm" id="btn-reset">Reset</button>
@@ -340,6 +352,7 @@
   <script src="js/lagu.js"></script>
   <script src="js/watak.js"></script>
   <script src="js/perlembagaan.js"></script>
+  <script src="js/organisasi.js"></script>
   <script src="js/stress.js"></script>
   <script src="js/hayat.js"></script>
   <script src="js/app.js"></script>

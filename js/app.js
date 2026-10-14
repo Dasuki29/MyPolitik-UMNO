@@ -819,7 +819,7 @@
   function panelMesyuarat(p) {
     if (!M) { return '<div class="card"><p class="empty">Modul mesyuarat tidak dimuatkan.</p></div>'; }
     var k = M.getKeadaanMesyuarat(p), h = '';
-    h += '<div class="banner"><strong>Mesyuarat Tahun ' + p.tahun + '</strong>Mesyuarat berlangsung mengikut urutan: Cawangan, Bahagian, kemudian Perhimpunan Agung (PAU). Pilih peranan anda bagi setiap usul: Pembawa, Pembahas atau Pengundi. Setiap pilihan mempengaruhi IP dan Reputasi Parti.</div>';
+    h += '<div class="banner"><strong>Mesyuarat Tahun ' + p.tahun + '</strong>Mesyuarat berlangsung mengikut urutan: Cawangan, Sayap (jika anda dalam laluan Pemuda, Puteri atau Wanita), Bahagian, kemudian Perhimpunan Agung (PAU). Pilih peranan anda bagi setiap usul: Pembawa, Pembahas atau Pengundi. Setiap pilihan mempengaruhi IP dan Reputasi Parti.</div>';
     var sp = M.getStatusPerwakilan(p);
     function kadPerw(nama, st) {
       var w = st.tetingkap, jarak = w ? (w.status === 'dibuka' ? 'Dibuka sekarang' : w.status === 'belum_tiba' ? 'Dibuka bulan ' + w.label.replace('Bulan ', '') + ' (' + w.jarak + ' bulan lagi)' : 'Musim tahun ini tamat') : '';
@@ -1104,6 +1104,38 @@
     W.location.assign(INDEX_URL);
   }
 
+  /* v6.0: Struktur organisasi (Induk dan Sayap) */
+  function paparStruktur() {
+    var OG = W.MyPolitikOrganisasi, p = S.loadPlayer();
+    if (!OG || !p) { return; }
+    var st = OG.getStruktur(p), tab = st.laluan === 'utama' ? 'induk' : st.laluan;
+    function baris(x) { return '<div class="org-baris' + (x.pemain ? ' is-anda' : '') + '"><span>' + esc(x.jawatan) + '</span><span>' + esc(x.nama) + (x.pemain ? ' (anda)' : '') + '</span></div>'; }
+    function blok(o) {
+      var h = '<div class="org-peringkat"><h3>' + esc(o.label) + '</h3>' + baris(o.ketua) + baris(o.naib);
+      o.tambahan.forEach(function (x) { h += baris(x); });
+      h += '<details class="org-ajk"><summary>' + esc(o.ajk[0].jawatan.replace(/ 1$/, '')) + ' (' + o.bilAjk + ' orang)</summary>' + o.ajk.map(baris).join('') + '</details></div>';
+      return h;
+    }
+    function isi() {
+      var h = '<div class="org-tabs" role="tablist">' + [['induk', 'Induk'], ['pemuda', 'Pemuda'], ['puteri', 'Puteri'], ['wanita', 'Wanita']].map(function (t) {
+        return '<button type="button" class="org-tab" role="tab" data-org="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + (st.laluan === t[0] || (t[0] === 'induk' && st.laluan === 'utama') ? ' ★' : '') + '</button>'; }).join('') + '</div>';
+      if (tab === 'induk') {
+        h += '<p class="note">Struktur Induk: Ketua, Naib Ketua dan AJK di setiap peringkat. Sayap meniru struktur ini.</p>' + OG.PERINGKAT.map(function (k) { return blok(st.induk[k]); }).join('');
+      } else {
+        var s = st.sayap[tab];
+        h += '<p class="note"><strong>' + esc(s.nama) + '</strong>: ' + esc(s.penerangan) + ' Isu yang diperjuangkan:</p><ul class="org-isu">' + s.isu.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' +
+          OG.PERINGKAT.map(function (k) { return blok(s.peringkat[k]); }).join('');
+      }
+      return h + '<p class="note">Nama pemimpin lain ialah watak simulasi (bukan individu sebenar). Hanya jawatan Ketua sayap boleh dipegang oleh pemain.</p>';
+    }
+    var pr = modal({ tajuk: 'Struktur Organisasi', isi: isi() });
+    $('modal-isi').addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-org]');
+      if (b) { tab = b.getAttribute('data-org'); $('modal-isi').innerHTML = isi(); }
+    });
+    return pr;
+  }
+
   async function bersaraAwal() {
     var p0 = S.loadPlayer();
     if (!p0 || p0.tamat || !HY) { return; }
@@ -1185,6 +1217,7 @@
 
   $('btn-tahun').addEventListener('click', lanjutBulan);
   $('btn-reset').addEventListener('click', reset);
+  if ($('btn-struktur')) { $('btn-struktur').addEventListener('click', paparStruktur); }
   if ($('btn-bersara')) { $('btn-bersara').addEventListener('click', bersaraAwal); }
   $('btn-simpan').addEventListener('click', simpan);
 

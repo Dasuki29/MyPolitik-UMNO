@@ -40,6 +40,13 @@
     wanita: { kod: 'wanita', nama: 'Wanita',        ikon: '🛡️', ringkas: 'Stabil dan tenang', kelebihan: ['Kerugian akar umbi -30%', 'Susutan akar umbi pemegang jawatan -1', 'Beban Stress -20%, pulih +1'], syarat: 'Perempuan berumur 36 hingga 59 tahun.' }
   };
 
+  /** Isu fokus golongan setiap sayap (v6.0). Digunakan pada Struktur Organisasi dan Mesyuarat Sayap (meeting.js). */
+  var ISU = {
+    pemuda: { golongan: 'lelaki muda', isu: ['Pekerjaan dan gaji permulaan', 'Rumah pertama', 'Kos sara hidup belia', 'Ekonomi gig dan digital'] },
+    puteri: { golongan: 'perempuan muda', isu: ['Keselamatan dan gangguan', 'Gaji dan kerjaya setara', 'Usahawan muda', 'Kesihatan mental'] },
+    wanita: { golongan: 'perempuan dewasa dan warga emas', isu: ['Penjagaan keluarga dan warga emas', 'Kos isi rumah', 'Kesihatan wanita', 'Ibu tunggal dan usahawan mikro'] }
+  };
+
   function sah(k) { return SENARAI.indexOf(k) >= 0; }
 
   /** Kategori demografi (sama dengan Data.kategoriMengikutUmur): pemuda | puteri | wanita | biasa | veteran | null. */
@@ -98,7 +105,7 @@
   function kurangSusutAkarUmbi(p) { return (CONFIG[kod(p)] || {}).susutAkarUmbiKurang || 0; }
 
   return {
-    SENARAI: SENARAI, SAYAP: SAYAP, CONFIG: CONFIG, INFO: INFO, sah: sah, kategori: kategori, cadangan: cadangan, kelayakan: kelayakan,
+    SENARAI: SENARAI, SAYAP: SAYAP, CONFIG: CONFIG, INFO: INFO, ISU: ISU, sah: sah, kategori: kategori, cadangan: cadangan, kelayakan: kelayakan,
     kod: kod, sayapJawatan: sayapJawatan, info: info, sesuaikan: sesuaikan, bebanStres: bebanStres, pemulihanStres: pemulihanStres, kurangSusutAkarUmbi: kurangSusutAkarUmbi
   };
 });

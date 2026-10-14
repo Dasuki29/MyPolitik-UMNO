@@ -62,7 +62,7 @@
       { kod: 'akar_umbi', mula: 1, tamat: 3, tajuk: 'Awal Tahun', ringkas: 'Khidmat Akar Umbi & Pendaftaran Ahli',
         fokus: ['Ziarah dan gotong-royong', 'Bina pengaruh dan kesetiaan akar umbi', 'Kumpul isu tempatan'] },
       { kod: 'cawangan', mula: 4, tamat: 6, tajuk: 'Musim Cawangan', ringkas: 'Musim Mesyuarat & Pemilihan Cawangan (Cawangan & Sayap)',
-        fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Pemilihan jawatan Cawangan dan Sayap Cawangan', 'Pemilihan Perwakilan ke Bahagian'] },
+        fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Mesyuarat Sayap (bulan 5-6) sebelum Bahagian', 'Pemilihan jawatan Cawangan dan Sayap Cawangan', 'Pemilihan Perwakilan ke Bahagian'] },
       { kod: 'bahagian', mula: 7, tamat: 7, tajuk: 'Musim Bahagian', ringkas: 'Musim Mesyuarat & Pemilihan Bahagian (Bahagian & Sayap)',
         fokus: ['Mesyuarat Bahagian', 'Pemilihan jawatan Bahagian dan Sayap Bahagian', 'Pemilihan Perwakilan ke PAU'] },
       { kod: 'pau', mula: 8, tamat: 8, tajuk: 'Perhimpunan Agung', ringkas: 'Perhimpunan Agung UMNO (PAU) & Pemilihan Pusat',
@@ -74,6 +74,7 @@
     /* Tetingkap setiap mesyuarat / pengundian. 'pusat' dalam election.js dipetakan kepada 'pau'. */
     TETINGKAP: {
       cawangan: { mula: 4, tamat: 6, nama: 'Mesyuarat Cawangan' },
+      sayap:    { mula: 5, tamat: 6, nama: 'Mesyuarat Sayap' },            // v6.0: sebelum Mesyuarat Bahagian (laluan sayap sahaja)
       bahagian: { mula: 7, tamat: 7, nama: 'Mesyuarat Bahagian' },
       pau:      { mula: 8, tamat: 8, nama: 'Perhimpunan Agung UMNO (PAU)' }
     }
@@ -186,7 +187,7 @@
       fasa: fasa, bonusAkarUmbi: fasa.kod === 'akar_umbi' ? CONFIG.BONUS_AKAR_UMBI : 0,
       bulanSeterusnya: tahunBaharu ? 1 : bulan + 1, tahunSeterusnya: tahunBaharu ? p.tahun + 1 : p.tahun,
       tahunBaharuSeterusnya: tahunBaharu,
-      tetingkap: { cawangan: getTetingkap('cawangan', bulan), bahagian: getTetingkap('bahagian', bulan), pau: getTetingkap('pau', bulan) },
+      tetingkap: { cawangan: getTetingkap('cawangan', bulan), sayap: getTetingkap('sayap', bulan), bahagian: getTetingkap('bahagian', bulan), pau: getTetingkap('pau', bulan) },
       jadual: jadual
     };
   }
@@ -227,7 +228,7 @@
         if (r.ok) { out.push({ jenis: 'mesyuarat_ditutup_auto', mesej: t.nama + ' ditutup secara automatik kerana musim tamat. ' + r.mesej }); (r.peristiwa || []).forEach(function (e) { out.push(e); }); }
       } else if (lv.status === 'boleh_mula') {
         out.push({ jenis: 'mesyuarat_terlepas', mesej: t.nama + ' tahun ' + p.tahun + ' terlepas kerana tidak dihadiri.' });
-        if (E) {
+        if (E && k !== 'sayap') {
           (E.jalankanPemilihanPeringkat(k === 'pau' ? 'pusat' : k) || []).forEach(function (x) {
             if (x.ok) { out.push({ jenis: 'pemilihan_auto', mesej: 'Pengundian dijalankan oleh urus setia. ' + x.mesej }); (x.peristiwa || []).forEach(function (e) { out.push(e); }); }
           });

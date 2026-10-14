@@ -899,6 +899,7 @@
 
     // penjana
     createRng: createRng,
+    janaNama: janaNama,
     createGameSeed: createGameSeed,
     generateAhliCawangan: generateAhliCawangan,
 
