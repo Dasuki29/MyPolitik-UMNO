@@ -1,0 +1,104 @@
+/* ==========================================================================
+   Nusa Politik — css/tema.css   (v7.0)
+   Gaya "Poster Berani" (sempadan tebal, bayang keras, kuning terang).
+   Dua skema: <html data-skema="cerah|gelap">. "Auto" dipilih oleh js/tema.js
+   mengikut tetapan peranti, lalu ditukar kepada cerah/gelap.
+   ========================================================================== */
+
+/* ---------- Asas bersama ---------- */
+html[data-tema="poster"] {
+  --radius-sm: 4px; --radius: 6px; --radius-lg: 10px;
+  --red: #E4002B; --red-dark: #B30022; --red-light: #FF2A4D;
+  --success: #14994F; --danger: #D3162F; --info: #1F7BE0; --warning: #D99A00;
+}
+html[data-tema="poster"] h1, html[data-tema="poster"] h2, html[data-tema="poster"] h3,
+html[data-tema="poster"] .modal__title { font-weight: 900; text-transform: uppercase; letter-spacing: .3px; }
+html[data-tema="poster"] .app-header::after { display: none; }
+html[data-tema="poster"] .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--garis) !important; }
+html[data-tema="poster"] .btn--primary { --btn-fg: #fff; }
+html[data-tema="poster"] ::selection { color: #fff; }
+
+/* ---------- CERAH ---------- */
+html[data-tema="poster"][data-skema="cerah"] {
+  color-scheme: light;
+  --garis: #111111;
+  --bg: #FFE45C; --bg-elev-1: #FFFFFF; --bg-elev-2: #FFFDF0; --bg-elev-3: #FFF2A8;
+  --border: #111111; --border-soft: #111111;
+  --white: #111111; --text: #111111; --text-muted: #3A3A3A; --text-dim: #5C5C5C;
+  --shadow-sm: 4px 4px 0 #111; --shadow: 6px 6px 0 #111;
+  --shadow-red: 4px 4px 0 #111; --shadow-gold: 4px 4px 0 #111;
+}
+html[data-tema="poster"][data-skema="cerah"] body {
+  background-color: #FFE45C;
+  background-image: radial-gradient(rgba(17, 17, 17, .14) 1.4px, transparent 1.6px);
+  background-size: 16px 16px;
+}
+html[data-tema="poster"][data-skema="cerah"] .app-header { background: #fff; }
+html[data-tema="poster"][data-skema="cerah"] .bottom-nav { background: #fff; }
+html[data-tema="poster"][data-skema="cerah"] .card { background: #fff; }
+html[data-tema="poster"][data-skema="cerah"] .btn--ghost { background: #fff; }
+html[data-tema="poster"][data-skema="cerah"] .btn--danger { --btn-bg: #FFE3E6; }
+html[data-tema="poster"][data-skema="cerah"] .banner { background: rgba(242, 183, 5, .2); }
+html[data-tema="poster"][data-skema="cerah"] .badge--gold { background: rgba(242, 183, 5, .3); color: #6B4A00; }
+html[data-tema="poster"][data-skema="cerah"] .badge--red  { background: rgba(200, 16, 46, .12); color: var(--red-dark); }
+html[data-tema="poster"][data-skema="cerah"] .lagu-btn svg { color: #0E9F49; width: 16px; height: 16px; }
+
+/* ---------- GELAP (poster malam: hitam pekat + garis & bayang kuning) ---------- */
+html[data-tema="poster"][data-skema="gelap"] {
+  color-scheme: dark;
+  --garis: #FFE45C;
+  --bg: #15151B; --bg-elev-1: #1F1F27; --bg-elev-2: #25252F; --bg-elev-3: #30303D;
+  --border: #FFE45C; --border-soft: #FFE45C;
+  --white: #FFFFFF; --text: #F7F4E8; --text-muted: #C9C5B3; --text-dim: #9A9684;
+  --gold: #FFE45C; --gold-light: #FFF08A;
+  --success: #3EE08A; --danger: #FF5468; --info: #63B3FF; --warning: #FFE45C;
+  --shadow-sm: 4px 4px 0 #FFE45C; --shadow: 6px 6px 0 #FFE45C;
+  --shadow-red: 4px 4px 0 #FFE45C; --shadow-gold: 4px 4px 0 #FFE45C;
+}
+html[data-tema="poster"][data-skema="gelap"] body {
+  background-color: #15151B;
+  background-image: radial-gradient(rgba(255, 228, 92, .14) 1.4px, transparent 1.6px);
+  background-size: 16px 16px;
+}
+html[data-tema="poster"][data-skema="gelap"] .app-header { background: #15151B; }
+html[data-tema="poster"][data-skema="gelap"] .bottom-nav { background: #15151B; }
+html[data-tema="poster"][data-skema="gelap"] .card { background: #1F1F27; }
+html[data-tema="poster"][data-skema="gelap"] .btn--ghost { background: #1F1F27; }
+html[data-tema="poster"][data-skema="gelap"] .btn--danger { --btn-bg: #3A1218; }
+html[data-tema="poster"][data-skema="gelap"] .btn--primary { --btn-fg: #fff; }
+
+/* ---------- Komponen poster (kedua-dua skema) ---------- */
+html[data-tema="poster"] .app-header { border-bottom: 4px solid var(--garis); }
+html[data-tema="poster"] .bottom-nav { border-top: 4px solid var(--garis); }
+html[data-tema="poster"] .card { border: 3px solid var(--garis); }
+html[data-tema="poster"] .card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--garis); }
+html[data-tema="poster"] .btn { border: 2px solid var(--garis); box-shadow: 3px 3px 0 var(--garis); font-weight: 800; }
+html[data-tema="poster"] .modal, html[data-tema="poster"] .modal__dialog { border: 3px solid var(--garis); box-shadow: 8px 8px 0 var(--garis); }
+
+/* ---------- Panel "Paparan" (butang 🎨 di header) ---------- */
+#btn-tema { white-space: nowrap; }
+@media (max-width: 520px) { #btn-tema .tema-teks { display: none; } }
+.paparan-pop { position: fixed; z-index: 70; top: 64px; right: 12px; width: min(300px, calc(100vw - 24px)); padding: 14px; }
+.paparan-pop[hidden] { display: none; }
+.paparan-pop h3 { margin: 0 0 10px; font-size: .95rem; }
+.paparan-pop .pilih { display: grid; gap: 8px; }
+.paparan-pop label { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; font-weight: 700;
+  background: var(--bg-elev-2); border: 2px solid var(--garis, var(--border)); border-radius: 6px; }
+.paparan-pop label small { display: block; font-weight: 500; color: var(--text-muted); font-size: .75rem; }
+.paparan-pop input { accent-color: var(--red); width: 18px; height: 18px; flex: none; }
+.paparan-pop label:has(input:checked) { background: var(--gold); color: #111; box-shadow: 3px 3px 0 var(--garis, #111); }
+.paparan-pop label:has(input:checked) small { color: #333; }
+
+/* ---------- Header mobil: butang tidak menindih jenama ---------- */
+@media (max-width: 600px) {
+  .app-header .brand { flex-shrink: 0; }
+  .app-header .header-actions { min-width: 0; overflow-x: auto; scrollbar-width: none; padding: 4px 2px; }
+  .app-header .header-actions::-webkit-scrollbar { display: none; }
+  .app-header .header-actions > * { flex-shrink: 0; }
+}
+
+/* Lencana laluan sayap pada skema cerah: kontras lebih jelas */
+html[data-tema="poster"][data-skema="cerah"] .badge-sayap { color: #111; background: #fff; border: 2px solid #111; font-weight: 800; }
+html[data-tema="poster"][data-skema="cerah"] .badge-sayap--pemuda { background: #FFD84D; }
+html[data-tema="poster"][data-skema="cerah"] .badge-sayap--wanita { background: #FFC2D1; }
+html[data-tema="poster"][data-skema="cerah"] .badge-sayap--puteri { background: #D9C7FF; }
