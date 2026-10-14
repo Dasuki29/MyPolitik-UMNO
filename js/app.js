@@ -367,7 +367,8 @@
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
       I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, ST = W.MyPolitikStres, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
   var SYP = W.MyPolitikSayap, BLK = W.MyPolitikBlok, MIS = W.MyPolitikMisi;
-  function PUIh(p) { var u = W.NusaPRU_UI; return u && u.kad ? u.kad(p) : ''; }                      // v7.3: kad PRU/PRN & Kabinet (js/pru-ui.js)                          // v6.5/v6.6 (Dashboard)
+  function PUIh(p, jenis) { var u = W.NusaPRU_UI; return u && u.kad ? u.kad(p, jenis) : ''; }
+  function musimPR(p) { var u = W.NusaPRU_UI; return !!(u && u.musim && u.musim(p)); }                    // v7.10: tab khas Pilihan Raya                      // v7.3: kad PRU/PRN & Kabinet (js/pru-ui.js)                          // v6.5/v6.6 (Dashboard)
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -380,7 +381,7 @@
   }
   function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-  var TABS = ['peta', 'tindakan', 'pemilihan', 'mesyuarat'];
+  var TABS = ['peta', 'tindakan', 'pemilihan', 'mesyuarat', 'pilihanraya'];
   var state = {
     tab: 'peta', kodSimulasi: '', anggaran: {}, mesej: {},
     peta: { status: 'kosong', instance: null, data: null }, renderTerjadual: false
@@ -713,7 +714,7 @@
     if (!mod) { return '<div class="card"><p class="empty">Modul tindakan tidak dimuatkan.</p></div>'; }
     var senarai = mod.senaraiTindakan(p), h = '';
     var tkb = K ? K.getTakwim(p) : null;
-    h += PUIh(p) + bannerDisiplin(p) + bannerUndiTP(p) + kadMisi(p) + kadSayap(p);
+    h += PUIh(p, 'tindakan') + bannerDisiplin(p) + bannerUndiTP(p) + kadMisi(p) + kadSayap(p);
     if (tkb && tkb.bonusAkarUmbi) {
       h += '<div class="banner banner--gold"><strong>Musim Akar Umbi (bulan 1-3)</strong>Setiap tindakan memberi bonus +' + Math.round(tkb.bonusAkarUmbi * 100) + '% IP dan kesetiaan. Manfaatkan sebelum musim mesyuarat bermula pada bulan 4.</div>';
     }
@@ -871,7 +872,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += PUIh(p) + bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
+    h += PUIh(p, 'pemilihan') + bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
@@ -997,15 +998,21 @@
     var id = state.tab, el = $('panel-' + id);
     if (id === 'peta') { return; }
     var fk = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute('data-fk') : null;
-    el.innerHTML = id === 'tindakan' ? panelTindakan(p) : id === 'pemilihan' ? panelPemilihan(p) : panelMesyuarat(p);
+    el.innerHTML = id === 'tindakan' ? panelTindakan(p) : id === 'pemilihan' ? panelPemilihan(p) : id === 'pilihanraya' ? PUIh(p, 'pilihanraya') : panelMesyuarat(p);
     if (fk) { var f = el.querySelector('[data-fk="' + fk.replace(/"/g, '\\"') + '"]'); if (f && !f.disabled) { f.focus({ preventScroll: true }); } }
   }
 
   function renderTabs(p) {
+    var musim = musimPR(p);                                                       // v7.10: tab Pilihan Raya hanya muncul semasa musim pilihan raya (PRU/PRN/PRK)
+    if (musim && !state.musimLalu) { state.tab = 'pilihanraya'; }
+    if (!musim && state.tab === 'pilihanraya') { state.tab = 'tindakan'; }
+    state.musimLalu = musim;
+    $('tab-pilihanraya').hidden = !musim; $('nav-pilihanraya').hidden = !musim;
     TABS.forEach(function (t) {
       var b = $('tab-' + t), a = t === state.tab;
       b.setAttribute('aria-selected', String(a)); b.tabIndex = a ? 0 : -1;
       $('panel-' + t).hidden = !a;
+      if (a && t === 'pilihanraya' && b.scrollIntoView && !b.hidden) { try { b.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { /* abaikan */ } }
     });
     Array.prototype.forEach.call($('bottom-nav').querySelectorAll('button'), function (b) { b.classList.toggle('is-active', b.getAttribute('data-tab') === state.tab); });
     var tp = $('tab-pemilihan'); tp.innerHTML = '🗳️ Pemilihan &amp; Kempen' + (adalahTahunPemilihan(p.tahun) ? '<span class="dot" title="Tahun pemilihan"></span>' : '');
@@ -1328,10 +1335,11 @@
 
   $('tab-peta').parentNode.addEventListener('keydown', function (ev) {                    // navigasi papan kekunci tab
     var t = ev.target; if (!t.getAttribute || t.getAttribute('role') !== 'tab') { return; }
-    var i = TABS.indexOf(t.getAttribute('data-tab')), n = -1;
-    if (ev.key === 'ArrowRight') { n = (i + 1) % TABS.length; } else if (ev.key === 'ArrowLeft') { n = (i + TABS.length - 1) % TABS.length; }
-    else if (ev.key === 'Home') { n = 0; } else if (ev.key === 'End') { n = TABS.length - 1; }
-    if (n >= 0) { ev.preventDefault(); setTab(TABS[n], true); }
+    var TN = TABS.filter(function (x) { return !$('tab-' + x).hidden; });                 // langkau tab yang disembunyikan
+    var i = TN.indexOf(t.getAttribute('data-tab')), n = -1;
+    if (ev.key === 'ArrowRight') { n = (i + 1) % TN.length; } else if (ev.key === 'ArrowLeft') { n = (i + TN.length - 1) % TN.length; }
+    else if (ev.key === 'Home') { n = 0; } else if (ev.key === 'End') { n = TN.length - 1; }
+    if (n >= 0) { ev.preventDefault(); setTab(TN[n], true); }
   });
 
   $('btn-tahun').addEventListener('click', lanjutBulan);

@@ -115,6 +115,9 @@
     .tab:hover { color: var(--text); }
     .tab[aria-selected="true"] { background: linear-gradient(135deg, var(--red), var(--red-dark)); color: #fff; box-shadow: var(--shadow-red); }
     .tab:focus-visible, .bottom-nav button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .tab[hidden], .bottom-nav button[hidden] { display: none !important; }
+    .tab--khas:not([aria-selected="true"]) { color: var(--red); box-shadow: inset 0 0 0 2px var(--red); }
+    .nav--khas { color: var(--red) !important; font-weight: 700; }
     .tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); margin-left: 6px; vertical-align: middle; }
     .bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: none; border: 0; font: inherit; font-size: .68rem; color: var(--text-dim); cursor: pointer; }
     .bottom-nav button .icon { font-size: 1.3rem; line-height: 1; }
@@ -281,6 +284,7 @@
       <button class="tab" role="tab" id="tab-tindakan" data-tab="tindakan" aria-controls="panel-tindakan" aria-selected="false" tabindex="-1">⚡ Tindakan Pemain</button>
       <button class="tab" role="tab" id="tab-pemilihan" data-tab="pemilihan" aria-controls="panel-pemilihan" aria-selected="false" tabindex="-1">🗳️ Pemilihan &amp; Kempen</button>
       <button class="tab" role="tab" id="tab-mesyuarat" data-tab="mesyuarat" aria-controls="panel-mesyuarat" aria-selected="false" tabindex="-1">📜 Mesyuarat &amp; Usul</button>
+      <button class="tab tab--khas" role="tab" id="tab-pilihanraya" data-tab="pilihanraya" aria-controls="panel-pilihanraya" aria-selected="false" tabindex="-1" hidden>📣 Pilihan Raya<span class="dot" title="Musim pilihan raya"></span></button>
     </div>
 
     <div class="dashboard-layout">
@@ -291,6 +295,7 @@
         <section class="panel" id="panel-tindakan" role="tabpanel" aria-labelledby="tab-tindakan" hidden></section>
         <section class="panel" id="panel-pemilihan" role="tabpanel" aria-labelledby="tab-pemilihan" hidden></section>
         <section class="panel" id="panel-mesyuarat" role="tabpanel" aria-labelledby="tab-mesyuarat" hidden></section>
+        <section class="panel" id="panel-pilihanraya" role="tabpanel" aria-labelledby="tab-pilihanraya" hidden></section>
       </div>
 
       <aside class="dashboard-layout__side side-stack" aria-label="Status pemain">
@@ -315,6 +320,7 @@
     <button type="button" data-tab="tindakan"><span class="icon" aria-hidden="true">⚡</span>Tindakan</button>
     <button type="button" data-tab="pemilihan"><span class="icon" aria-hidden="true">🗳️</span>Pemilihan</button>
     <button type="button" data-tab="mesyuarat"><span class="icon" aria-hidden="true">📜</span>Mesyuarat</button>
+    <button type="button" data-tab="pilihanraya" id="nav-pilihanraya" class="nav--khas" hidden><span class="icon" aria-hidden="true">📣</span>Pilihan Raya</button>
   </nav>
 
   <!-- Modal pengesahan / acara -->
