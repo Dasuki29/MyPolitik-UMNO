@@ -99,7 +99,9 @@
      ------------------------------------------------------------------------ */
   var GELARAN = [
     { kod: 'presiden', ikon: '\uD83C\uDFDB\uFE0F', nama: 'Presiden Parti', huraian: 'Mencapai kerusi tertinggi parti.', semak: function (c) { return /^Presiden$/i.test(c.jawatan || ''); } },
+    { kod: 'menteri', ikon: '\uD83D\uDCBC', nama: 'Menteri / EXCO', huraian: 'Pernah dilantik memegang portfolio kerajaan.', semak: function (c) { return (c.bilKabinet || 0) > 0; } },
     { kod: 'tokoh_pusat', ikon: '\u2B50', nama: 'Tokoh Pusat', huraian: 'Pernah memimpin di peringkat Pusat.', semak: function (c) { return c.pangkat >= 10; } },
+    { kod: 'wakil_rakyat', ikon: '\uD83D\uDDF3\uFE0F', nama: 'Wakil Rakyat', huraian: 'Pernah memenangi kerusi ADUN atau Ahli Parlimen.', semak: function (c) { return (c.bilMenang || 0) > 0; } },
     { kod: 'pemimpin_bahagian', ikon: '\uD83D\uDDFA\uFE0F', nama: 'Pemimpin Bahagian', huraian: 'Disegani di peringkat Bahagian.', semak: function (c) { return c.pangkat >= 7 && c.pangkat < 10; } },
     { kod: 'tokoh_veteran', ikon: '\uD83C\uDF96\uFE0F', nama: 'Tokoh Veteran', huraian: 'Berkhidmat lama hingga usia lanjut.', semak: function (c) { return c.umur >= 65 && c.tahunBerkhidmat >= 10; } },
     { kod: 'akar_umbi', ikon: '\uD83C\uDF31', nama: 'Pemimpin Akar Umbi', huraian: 'Sokongan akar umbi kekal kukuh.', semak: function (c) { return c.akarUmbi >= 70; } },
@@ -125,9 +127,30 @@
     return 'Anda mencapai usia ' + umur + ' tahun, had umur permainan ini. Perjalanan politik anda ditutup dengan penuh kehormatan.';
   }
 
+  /* v7.11: rekod pilihan raya, kerusi wakil rakyat & jawatan kerajaan untuk Rumusan Kerjaya.
+     Sumber: p.pru.sejarah / p.pru.status, p.prk.sejarah, p.kabinet (sejarah ialah 10 rekod terakhir sahaja). */
+  function rekodPilihanRaya(p) {
+    var pru = p && p.pru || {}, prk = p && p.prk || {}, kab = p && p.kabinet || {};
+    var sj = Array.isArray(pru.sejarah) ? pru.sejarah : [], kj = Array.isArray(prk.sejarah) ? prk.sejarah : [], kb = Array.isArray(kab.sejarah) ? kab.sejarah : [];
+    var jenisNama = function (j) { return j === 'DUN' ? 'ADUN' : j === 'PARLIMEN' ? 'Ahli Parlimen' : (j || '?'); };
+    var pm = sj.filter(function (r) { return r.hasil === 'menang'; });
+    var pk = kj.filter(function (r) { return r.hasil === 'menang' || r.hasil === 'kalah'; });
+    var km = pk.filter(function (r) { return r.hasil === 'menang'; });
+    var kerusi = pm.map(function (r) { return { t: r.tahun, b: r.bulan || 0, x: jenisNama(r.jenis) + ' ' + (r.kerusi || '') + ' (' + r.tahun + ')' }; })
+      .concat(km.map(function (r) { return { t: r.tahun, b: r.bulan || 0, x: jenisNama(r.jenis) + ' ' + (r.kerusi || '') + ' (PRK ' + r.tahun + ')' }; }))
+      .sort(function (u, v) { return (u.t - v.t) || (u.b - v.b); }).map(function (o) { return o.x; });
+    var dilantik = kb.filter(function (r) { return r.hasil === 'dilantik'; }).map(function (r) { return r.nama; });
+    var uniq = dilantik.filter(function (n, i) { return dilantik.indexOf(n) === i; });
+    var st = pru.status ? jenisNama(pru.status.jenis) + (pru.status.kerusi ? ' ' + pru.status.kerusi : '') : null;
+    return { bertanding: sj.filter(function (r) { return r.hasil !== 'tidak_bertanding'; }).length + pk.length, menang: pm.length + km.length,
+      kalah: sj.filter(function (r) { return r.hasil === 'kalah'; }).length + pk.filter(function (r) { return r.hasil === 'kalah'; }).length,
+      prkBertanding: pk.length, prkMenang: km.length, kerusi: kerusi, statusSemasa: st, jawatanKerajaan: uniq,
+      kabinetSemasa: kab.hasGovernmentRole ? (kab.portfolioName || null) : null };
+  }
+
   function bina(p, sebab) {
     var umur = umurSemasa(p), top = p.jawatanTertinggi || jawatanTertinggiSemasa(p) || { jawatan: 'Ahli Biasa', pangkat: 0 };
-    var semasa = jawatanTertinggiSemasa(p);
+    var semasa = jawatanTertinggiSemasa(p), pr = rekodPilihanRaya(p);
     if (semasa && semasa.pangkat > (top.pangkat || 0)) { top = semasa; }
     var w = null, et = null, ET = Et(), WK = W();
     try { w = WK && WK.tentukan ? WK.tentukan(p) : null; } catch (e) { w = null; }
@@ -135,7 +158,8 @@
     var akarUmbi = p.kesetiaan && isFinite(Number(p.kesetiaan.akarUmbi)) ? Number(p.kesetiaan.akarUmbi) : 0;
     var statusDisiplin = et ? et.status : 'baik', salah = et ? et.salah : 0, modal = et ? et.modal : 50;
     var gelarList = anugerahGelaran({ umur: umur, tahunBerkhidmat: Math.max(0, p.tahun - CONFIG.TAHUN_MULA), pangkat: top.pangkat || 0, jawatan: top.jawatan,
-      akarUmbi: akarUmbi, reputasi: p.reputasi || 0, modal: modal, salah: salah, status: statusDisiplin, myr: p.myr || 0 });
+      akarUmbi: akarUmbi, reputasi: p.reputasi || 0, modal: modal, salah: salah, status: statusDisiplin, myr: p.myr || 0,
+      bilMenang: pr.menang, bilKabinet: pr.jawatanKerajaan.length + (pr.kabinetSemasa && pr.jawatanKerajaan.indexOf(pr.kabinetSemasa) < 0 ? 1 : 0) });
     return {
       kesetiaanAkarUmbi: akarUmbi, statusDisiplin: statusDisiplin, gelarList: gelarList,
       sebab: sebab, tajuk: TAJUK_SEBAB[sebab] || 'Penamat Kerjaya', mesej: mesejSebab(sebab, umur),
@@ -145,7 +169,8 @@
       jawatanAkhir: p.jawatan, jawatanTertinggi: top.jawatan, pangkatTertinggi: top.pangkat || 0, gelaran: gelaranPangkat(top.pangkat || 0),
       gaya: w ? w.nama : null, gayaHuraian: w ? w.huraian : null,
       ip: p.ip, myr: p.myr, reputasi: p.reputasi, bilTindakan: p.bilTindakan || 0,
-      modalSosial: et ? et.modal : null, hukumanDisiplin: et ? et.salah : 0
+      modalSosial: et ? et.modal : null, hukumanDisiplin: et ? et.salah : 0,
+      pilihanRaya: pr
     };
   }
 

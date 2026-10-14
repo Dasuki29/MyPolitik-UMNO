@@ -1043,6 +1043,13 @@
       ['Sokongan akar umbi (akhir)', (t.kesetiaanAkarUmbi === undefined ? '\u2013' : t.kesetiaanAkarUmbi + '%')],
       ['Status disiplin', (DISIPLIN[t.statusDisiplin] || 'Baik') + (t.hukumanDisiplin ? ' \u00B7 ' + t.hukumanDisiplin + ' hukuman' : '')],
       ['Gaya kepimpinan', t.gaya || '\u2013'], ['Pengaruh (IP)', fmt(t.ip)], ['Reputasi Parti', t.reputasi + '%']];
+    var pr = t.pilihanRaya;                                                   // v7.11: rekod pilihan raya & jawatan kerajaan
+    if (pr) {
+      baris.push(['Rekod pilihan raya', pr.bertanding ? pr.bertanding + ' kali bertanding \u00B7 ' + pr.menang + ' menang \u00B7 ' + pr.kalah + ' kalah' + (pr.prkBertanding ? ' (termasuk ' + pr.prkBertanding + ' PRK)' : '') : 'Tidak pernah bertanding']);
+      if (pr.kerusi.length) { baris.push(['Kerusi dimenangi', pr.kerusi.join('; ')]); }
+      if (pr.statusSemasa) { baris.push(['Kerusi semasa', pr.statusSemasa]); }
+      if (pr.jawatanKerajaan.length || pr.kabinetSemasa) { baris.push(['Jawatan kerajaan', (pr.jawatanKerajaan.length ? pr.jawatanKerajaan : [pr.kabinetSemasa]).join('; ')]); }
+    }
     l.setAttribute('role', 'dialog'); l.setAttribute('aria-modal', 'true'); l.setAttribute('aria-label', 'Rumusan Kerjaya');
     l.innerHTML = '<div class="legasi__kepala"><p class="legasi__kecil">Rumusan Kerjaya \u00B7 ' + esc(t.tajuk) + '</p><h1>' + esc(p.nama) + '</h1><p class="legasi__gelaran">' + esc(gel[0].nama) + '</p></div>' +
       '<p class="legasi__mesej">' + esc(t.mesej) + '</p>' +
