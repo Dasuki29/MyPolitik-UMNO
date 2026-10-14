@@ -172,6 +172,20 @@
     .side-stack { display: grid; gap: var(--space-4); }
     .empty { color: var(--text-muted); font-size: .9rem; margin: 0; }
     .loading { padding: var(--space-6) var(--space-4); text-align: center; color: var(--text-muted); }
+    /* v7.16: tetingkap Menu */
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-3); }
+    .menu-grid .btn { justify-content: flex-start; text-align: left; }
+    .menu-grid .tema-teks { display: inline !important; }
+    .menu-grid #btn-tema::before { content: 'Rupa: '; font-weight: 700; }
+    .menu-sub { margin: var(--space-3) 0 var(--space-2); font-size: .95rem; }
+    .menu-slot { display: grid; gap: var(--space-2); }
+    .menu-baris { display: flex; align-items: center; gap: var(--space-2); padding: 8px 10px; border: 2px solid var(--border, #2E333F); border-radius: 10px; }
+    .menu-baris.is-aktif { border-color: var(--gold, #F2B705); }
+    .menu-baris__teks { flex: 1; min-width: 0; font-size: .85rem; line-height: 1.35; }
+    .menu-baris__teks b { display: block; }
+    .menu-baris__teks small { color: var(--text-muted); }
+    .menu-kaki { margin-top: var(--space-3); display: flex; justify-content: flex-end; }
+    @media (max-width: 380px) { .menu-grid { grid-template-columns: 1fr; } }
     .modal__body p { margin: 0 0 var(--space-3); color: var(--text-muted); }
     .modal__body ul { margin: 0 0 var(--space-3); padding-left: 1.2rem; color: var(--text-muted); }
     .modal__body li { margin-bottom: 4px; }
@@ -195,13 +209,9 @@
       <span>Nusa Politik <span class="brand__sub">UMNO</span></span>
     </a>
     <div class="header-actions">
-      <button type="button" class="btn btn--ghost btn--sm" id="btn-menu" title="Kembali ke menu utama (kemajuan disimpan)" aria-label="Menu utama">🏠<span class="plb-btn-teks"> Menu</span></button>
-      <button type="button" class="btn btn--ghost btn--sm" id="btn-tema" title="Tukar rupa paparan">🎨</button>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-menu" title="Menu: rupa, struktur, perlembagaan, simpanan &amp; tukar watak" aria-label="Menu" aria-haspopup="dialog">🏠<span class="plb-btn-teks"> Menu</span></button>
       <button type="button" class="btn btn--ghost btn--sm lagu-btn" id="btn-lagu" aria-expanded="false" aria-controls="kad-lagu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Lagu</span></button>
-      <button type="button" class="btn btn--ghost btn--sm" data-perlembagaan title="Perlembagaan Parti" aria-label="Perlembagaan Parti">📜<span class="plb-btn-teks"> Perlembagaan</span></button>
       <button type="button" class="btn btn--ghost btn--sm" data-kopi title="Belanja kopi (sokong pembangun)" aria-label="Belanja kopi">☕</button>
-      <button type="button" class="btn btn--ghost btn--sm" id="btn-struktur" title="Struktur organisasi Induk dan Sayap">Struktur</button>
-      <button type="button" class="btn btn--ghost btn--sm" id="btn-simpan">Simpan</button>
       <button type="button" class="btn btn--ghost btn--sm" id="btn-bersara" title="Bersara awal dan lihat rumusan kerjaya">Bersara</button>
       <button type="button" class="btn btn--danger btn--sm" id="btn-reset">Reset</button>
     </div>
@@ -324,6 +334,27 @@
     <button type="button" data-tab="pilihanraya" id="nav-pilihanraya" class="nav--khas" hidden><span class="icon" aria-hidden="true">📣</span>Pilihan Raya</button>
   </nav>
 
+  <!-- v7.16: Tetingkap Menu (rupa, struktur, perlembagaan, simpan, tukar watak) -->
+  <div class="modal-overlay" id="menu-win" aria-hidden="true">
+    <div class="modal modal--gold" role="dialog" aria-modal="true" aria-labelledby="menu-tajuk">
+      <div class="modal__header">
+        <h2 class="modal__title" id="menu-tajuk">Menu</h2>
+        <button type="button" class="modal__close" id="menu-tutup" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="modal__body">
+        <div class="menu-grid">
+          <button type="button" class="btn btn--ghost" id="btn-tema" title="Tukar rupa paparan">🎨 Rupa / Kecerahan</button>
+          <button type="button" class="btn btn--ghost" id="btn-struktur" title="Struktur organisasi Induk dan Sayap">🏛️ Struktur</button>
+          <button type="button" class="btn btn--ghost" data-perlembagaan title="Perlembagaan Parti" aria-label="Perlembagaan Parti">📜 Perlembagaan</button>
+          <button type="button" class="btn btn--ghost" id="btn-simpan">💾 Simpan</button>
+        </div>
+        <h3 class="menu-sub">Simpanan Permainan</h3>
+        <div id="menu-slot" class="menu-slot"></div>
+        <div class="menu-kaki"><button type="button" class="btn btn--primary" id="btn-menu-utama">🏠 Menu Utama</button></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal pengesahan / acara -->
   <div class="modal-overlay" id="modal" aria-hidden="true">
     <div class="modal modal--gold" role="dialog" aria-modal="true" aria-labelledby="modal-tajuk">
@@ -365,6 +396,7 @@
   <script src="js/events.js"></script>
   <script src="js/geo.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/slot.js"></script>
   <script src="js/latihan.js"></script>
   <script src="js/tutorial.js"></script>
   <script src="js/lagu.js"></script>

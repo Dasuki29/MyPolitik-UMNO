@@ -1352,7 +1352,37 @@
 
   $('btn-tahun').addEventListener('click', lanjutBulan);
   $('btn-reset').addEventListener('click', reset);
-  if ($('btn-menu')) { $('btn-menu').addEventListener('click', function () { W.location.assign(INDEX_URL); }); }   // v7.15: kembali ke menu utama tanpa reset (kemajuan sudah disimpan automatik)
+  /* ----- v7.16: tetingkap Menu (rupa, struktur, perlembagaan, simpan, tukar watak tanpa ke menu utama) ----- */
+  var SLT = W.MyPolitikSlot;
+  function renderSlotMenu() {
+    var h = $('menu-slot'); if (!h) { return; }
+    if (LAT && LAT.aktif()) { h.innerHTML = '<p class="note">Latihan Amir sedang berjalan. Tamatkan atau keluar latihan dahulu untuk menukar watak.</p>'; return; }
+    if (!SLT) { h.innerHTML = '<p class="note">Simpanan berbilang tidak tersedia.</p>'; return; }
+    h.innerHTML = SLT.senarai().map(function (x) {
+      var r = x.ringkas;
+      if (!r) { return '<div class="menu-baris"><div class="menu-baris__teks"><b>Slot ' + x.no + '</b><small>(kosong)</small></div><button type="button" class="btn btn--ghost btn--sm" data-slot-baharu="' + x.no + '">Watak baharu</button></div>'; }
+      return '<div class="menu-baris' + (x.aktif ? ' is-aktif' : '') + '"><div class="menu-baris__teks"><b>' + esc(r.nama) + (r.tamat ? ' (tamat)' : '') + '</b><small>' + esc(r.jawatan) + ' · ' + esc(r.cawangan) + ' · ' + r.tahun + ' B' + r.bulan + '</small></div>' +
+        (x.aktif ? '<span class="note">Dimainkan</span>' : '<button type="button" class="btn btn--gold btn--sm" data-slot-main="' + x.no + '">Main</button>') + '</div>';
+    }).join('');
+  }
+  function bukaMenu() { var o = $('menu-win'); if (!o) { return; } renderSlotMenu(); o.classList.add('is-open'); o.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-open'); var b = $('menu-tutup'); if (b) { b.focus(); } }
+  function tutupMenu() { var o = $('menu-win'); if (!o || !o.classList.contains('is-open')) { return; } o.classList.remove('is-open'); o.setAttribute('aria-hidden', 'true'); document.body.classList.remove('modal-open'); var b = $('btn-menu'); if (b) { b.focus(); } }
+  if ($('btn-menu')) {
+    $('btn-menu').addEventListener('click', bukaMenu);
+    $('menu-tutup').addEventListener('click', tutupMenu);
+    $('menu-win').addEventListener('click', function (ev) {
+      if (ev.target === $('menu-win')) { tutupMenu(); return; }
+      var t = ev.target.closest ? ev.target.closest('button') : null; if (!t) { return; }
+      if (t.id === 'btn-menu-utama') { W.location.assign(INDEX_URL); return; }
+      if (t.hasAttribute('data-slot-main')) { var r = SLT.aktifkan(parseInt(t.getAttribute('data-slot-main'), 10)); if (r.ok) { W.location.reload(); } else { toast(r.ralat || 'Gagal menukar watak.', 'ralat'); } return; }
+      if (t.hasAttribute('data-slot-baharu')) { var r2 = SLT.aktifkan(parseInt(t.getAttribute('data-slot-baharu'), 10)); if (r2.ok) { W.location.assign(INDEX_URL + '#daftar'); } else { toast(r2.ralat || 'Gagal membuka slot.', 'ralat'); } return; }
+    });
+    $('menu-win').addEventListener('click', function (ev) {       // fasa tangkap: butang tema menghentikan perambatan klik
+      var t = ev.target.closest ? ev.target.closest('button') : null;
+      if (t && (t.id === 'btn-tema' || t.id === 'btn-struktur' || t.id === 'btn-simpan' || t.hasAttribute('data-perlembagaan'))) { setTimeout(tutupMenu, 0); }   // panel/modal masing-masing dibuka selepas tetingkap ditutup
+    }, true);
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { tutupMenu(); } });
+  }
   if ($('btn-struktur')) { $('btn-struktur').addEventListener('click', paparStruktur); }
   if ($('btn-bersara')) { $('btn-bersara').addEventListener('click', bersaraAwal); }
   $('btn-simpan').addEventListener('click', simpan);
