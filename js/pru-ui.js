@@ -113,7 +113,11 @@
     }
     if (!k.hasGovernmentRole) { return ''; }
     h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🏛️ ' + esc(k.portfolioName) + '</h2><p class="note">' + esc(k.tahapNama) + ' · ' + k.bulanBerjawatan + ' bulan berkhidmat · elaun +RM ' + fmt(k.elaun.myr) + ' &amp; +' + k.elaun.ip + ' IP sebulan.</p>';
-    h += bar('Penarafan Tadbir Urus', k.governanceRating, k.governanceRating < 30) + bar('Tekanan politik', k.tekananPolitik, k.tekananPolitik >= 70);
+    var arah = k.arah > 0 ? ' ▲ +' + k.arah : k.arah < 0 ? ' ▼ ' + k.arah : ' ▬';
+    h += bar('KPI Portfolio · ' + k.kpiLabel + arah, k.governanceRating, k.governanceRating < 30) + bar('Tekanan politik', k.tekananPolitik, k.tekananPolitik >= 70) +
+      bar('Populariti nasional', k.popularitiNasional, k.popularitiNasional < 30) + bar('Risiko rombakan kabinet', k.risikoRombak, k.risikoRombak >= 60);
+    h += '<p class="note" style="margin:6px 0 4px"><b>🏗️ Peruntukan Projek (CDF)</b> · baki RM ' + fmt(k.cdfBaki) + ' · digunakan ' + k.cdfBulan + '/' + k.cdfHad + ' bulan ini. Salur ke kawasan sendiri untuk IP; jumlah besar menjejaskan KPI.</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
+      k.cdfPilihan.map(function (x) { return '<button type="button" class="btn btn--sm" data-pru="cdf" data-jumlah="' + x.jumlah + '"' + (x.boleh ? '' : ' disabled title="' + esc(x.sebab) + '"') + '>RM ' + fmt(x.jumlah) + ' → +' + x.ip + ' IP</button>'; }).join('') + '</div>';
     if (k.ratingRendah > 0) { h += '<div class="banner banner--warn" role="alert"><strong>Amaran rombakan</strong>Penarafan di bawah 30% sudah ' + k.ratingRendah + ' bulan. Satu bulan lagi anda digugurkan.</div>'; }
     if (k.acara) { h += '<button type="button" class="btn btn--primary btn--block" data-pru="acara">⚠️ Isu kementerian menunggu: ' + esc(k.acara.tajuk) + '</button>'; }
     return h + '</section>';
@@ -317,7 +321,7 @@
     var p = S.loadPlayer(), a = KB.acaraSemasa(p);
     if (!a) { return; }
     function teks(c) {
-      function r(x) { var t = []; if (!x) { return ''; } if (x.rating) { t.push('Tadbir Urus ' + tanda(x.rating) + '%'); } if (x.tekanan) { t.push('Tekanan ' + tanda(x.tekanan)); } if (x.myr) { t.push('Dana ' + (x.myr > 0 ? '+' : '−') + 'RM ' + fmt(Math.abs(x.myr))); } if (x.ip) { t.push('IP ' + tanda(x.ip)); } if (x.stress) { t.push('Stress ' + tanda(x.stress)); } if (x.rep) { t.push('Reputasi ' + tanda(x.rep)); } return t.join(' · '); }
+      function r(x) { var t = []; if (!x) { return ''; } if (x.rating) { t.push('Tadbir Urus ' + tanda(x.rating) + '%'); } if (x.tekanan) { t.push('Tekanan ' + tanda(x.tekanan)); } if (x.myr) { t.push('Dana ' + (x.myr > 0 ? '+' : '−') + 'RM ' + fmt(Math.abs(x.myr))); } if (x.ip) { t.push('IP ' + tanda(x.ip)); } if (x.stress) { t.push('Stress ' + tanda(x.stress)); } if (x.rep) { t.push('Reputasi ' + tanda(x.rep)); } if (x.pop) { t.push('Populariti ' + tanda(x.pop)); } if (x.rombak) { t.push('Risiko rombakan ' + tanda(x.rombak)); } return t.join(' · '); }
       return c.rawak ? 'Berjaya ' + Math.round(c.rawak.p * 100) + '%: ' + r(c.rawak.jaya) + ' · Gagal: ' + r(c.rawak.gagal) : r(c.kesan);
     }
     var id = await modal({
@@ -329,6 +333,10 @@
     var r = KB.jawabAcara(id);
     if (!r.ok) { toast(r.ralat, 'ralat'); return; }
     toast(r.mesej + (r.rating ? ' Tadbir Urus ' + tanda(r.rating) + '%.' : ''), r.rating < 0 ? 'ralat' : 'ok'); segarkan();
+  }
+  async function salurCDF(jumlah) {
+    var r = KB.salurCDF(jumlah);
+    toast(r.ok ? r.mesej : r.ralat, r.ok ? 'ok' : 'ralat'); segarkan();
   }
   async function majuJanji(id) {
     var r = PRU.majukanJanji(id);
@@ -346,7 +354,7 @@
     if (!t || t.disabled) { return; }
     var a = t.getAttribute('data-pru');
     if (a === 'buka') { alir(); } else if (a === 'tindak') { tindak(t.getAttribute('data-id')); } else if (a === 'kejutan') { sibuk = true; kejutan().then(function () { sibuk = false; segarkan(); }, function () { sibuk = false; }); }
-    else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
+    else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
   });
 
   W.NusaPRU_UI = { kad: kad, lencana: lencana, selepasBulan: selepasBulan, alir: alir, kejutan: kejutan, keputusan: keputusan, lobi: lobi, acara: acara, selesai: selesai };

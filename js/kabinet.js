@@ -1,11 +1,13 @@
 /* ==========================================================================
-   Nusa Politik — js/kabinet.js   (v7.4)
+   Nusa Politik — js/kabinet.js   (v7.5)
    Sistem Pembentukan Kabinet & EXCO Negeri:
      1. State p.kabinet: hasGovernmentRole, roleLevel ('NONE'|'EXCO_NEGERI'|'TIMBALAN_MENTERI'|'MENTERI_PENUH'),
         portfolioName, governanceRating (0-100) dan tekananPolitik.
      2. Lobi Portfolio selepas menang kerusi (DUN -> EXCO; Parlimen -> Timbalan Menteri / Menteri Penuh),
         menggunakan Pengaruh (IP) dan Dana. Hanya dibuka jika parti membentuk kerajaan (diputuskan oleh pru.js).
-     3. Acara pentadbiran bulanan: elaun (Dana & IP), isu kementerian, penarafan tadbir urus dan tekanan politik.
+     3. v2.0: KPI Portfolio (label & arah), Dilema Menteri/EXCO (Tindakan Tegas vs Jalan Pintas Politik) yang menjejaskan
+        populariti nasional dan risiko rombakan, serta Peruntukan Projek Pembangunan (CDF) ke kawasan sendiri -> IP.
+     4. Acara pentadbiran bulanan: elaun (Dana & IP), isu kementerian, penarafan tadbir urus dan tekanan politik.
         Penarafan di bawah 30% dua bulan berturut-turut = rombakan kabinet (jawatan hilang).
    Andaian (laras dalam CONFIG): semua nilai ialah anggaran permainan. Tiada sistem kerajaan sebenar;
    jawatan kerajaan hanya memberi elaun dan acara pentadbiran.
@@ -37,7 +39,12 @@
     RATING_RENDAH: 30, BULAN_RENDAH_ROMBAK: 2,
     TEKANAN_TINGGI: 80, TEKANAN_SUSUT: 2,
     PELUANG_ACARA: 0.7,
-    ROMBAK: { reputasi: -5 }
+    ROMBAK: { reputasi: -5 },
+    POP_AWAL: 50, POP_RENDAH: 30, POP_IP_BAGI: 10, POP_IP_MIN: -3, POP_IP_MAKS: 5,       // populariti nasional -> bonus IP bulanan
+    ROMBAK_AMBANG: 60, ROMBAK_SUSUT: 3, ROMBAK_POP_RENDAH: 4, ROMBAK_PELUANG_MIN: 0.1, ROMBAK_PELUANG_MAKS: 0.6,
+    DILEMA_PELUANG: 0.5,                                                                  // sebahagian acara bulanan ialah dilema
+    CDF: { BULANAN: { EXCO_NEGERI: 3000, TIMBALAN_MENTERI: 5000, MENTERI_PENUH: 8000 }, TOPI_BULAN: 2, HAD_KALI: 2, RM_SEIP: 200,
+           PILIHAN: [2000, 5000, 10000], KECIL: 2000, RATING_BESAR: -2, TEKANAN_BESAR: 3, ROMBAK_BESAR: 4, TERSADAI_RATING: -2 }
   };
 
   var TAHAP = {
@@ -108,13 +115,35 @@
       pilihan: [
         { id: 'sokong', label: 'Terima & sumbang peruntukan', kesan: { myr: -1500, rating: 5, rep: 1 } },
         { id: 'terima', label: 'Terima tanpa peruntukan', kesan: { rating: 2 } },
-        { id: 'tolak', label: 'Tolak kerjasama', kesan: { rating: -2 } }] }
+        { id: 'tolak', label: 'Tolak kerjasama', kesan: { rating: -2 } }] },
+    /* --- DILEMA v2.0: pop = populariti nasional, rombak = risiko rombakan kabinet --- */
+    { id: 'dilema_subsidi', dilema: true, ikon: '⚖️', tajuk: 'Dilema: Subsidi Tidak Tepat Sasaran', huraian: 'Kajian dalaman mendapati sebahagian subsidi kementerian dinikmati golongan berkemampuan. Menyusunnya semula pasti mengundang rungutan.',
+      pilihan: [
+        { id: 'tegas', label: 'Tindakan Tegas: sasarkan semula subsidi', kesan: { myr: 3000, rating: 7, pop: -6, rombak: 6, tekanan: 4 } },
+        { id: 'pintas', label: 'Jalan Pintas Politik: kekalkan subsidi demi undi', kesan: { myr: -3000, rating: -5, pop: 5, rombak: -3 } }] },
+    { id: 'dilema_kontraktor', dilema: true, ikon: '⚖️', tajuk: 'Dilema: Projek Terbengkalai', huraian: 'Sebuah projek kementerian lewat berbulan-bulan. Kontraktornya mempunyai hubungan rapat dengan pemimpin kanan parti.',
+      pilihan: [
+        { id: 'tegas', label: 'Tindakan Tegas: saman & ambil alih projek', kesan: { rating: 9, pop: 3, rombak: 10, tekanan: 5, stress: 4 } },
+        { id: 'pintas', label: 'Jalan Pintas Politik: beri lanjutan tanpa denda', kesan: { rating: -6, pop: -2, rombak: -3 } }] },
+    { id: 'dilema_kroni', dilema: true, ikon: '⚖️', tajuk: 'Dilema: Arahan Pelantikan', huraian: 'Seorang pemimpin kanan "mencadangkan" seorang rakan rapat dilantik mengetuai agensi di bawah anda, walaupun calon lain lebih layak.',
+      pilihan: [
+        { id: 'tegas', label: 'Tindakan Tegas: lantik mengikut merit', kesan: { rating: 6, pop: 5, rombak: 12, tekanan: 6 } },
+        { id: 'pintas', label: 'Jalan Pintas Politik: lantik rakan pemimpin itu', rawak: { p: 0.6, jaya: { rating: -2, rombak: -8 }, gagal: { rating: -10, pop: -10, rombak: 15, tekanan: 6 } } }] },
+    { id: 'dilema_keselamatan', dilema: true, ikon: '⚖️', tajuk: 'Dilema: Insiden Keselamatan Awam', huraian: 'Satu kes keselamatan awam di bawah selia kementerian mula dihidu media. Mendedahkannya segera boleh memalukan kerajaan.',
+      pilihan: [
+        { id: 'tegas', label: 'Tindakan Tegas: umum terbuka & ambil tindakan', kesan: { myr: -1000, rating: 6, pop: 4, rombak: 5, stress: 4 } },
+        { id: 'pintas', label: 'Jalan Pintas Politik: tutup cerita senyap-senyap', rawak: { p: 0.5, jaya: { rating: -2, rombak: -3 }, gagal: { rating: -12, pop: -12, rombak: 18, tekanan: 8 } } }] },
+    { id: 'dilema_lebihan', dilema: true, ikon: '⚖️', tajuk: 'Dilema: Peruntukan Lebihan', huraian: 'Terdapat lebihan peruntukan hujung tahun. Perbendaharaan mahu ia dipulangkan; penyokong anda mahu ia disalurkan ke kawasan sendiri.',
+      pilihan: [
+        { id: 'tegas', label: 'Tindakan Tegas: pulangkan ke Perbendaharaan', kesan: { rating: 5, pop: 2, rombak: -2 } },
+        { id: 'pintas', label: 'Jalan Pintas Politik: salur ke kawasan sendiri', kesan: { ip: 30, rating: -5, pop: -3, rombak: 6, tekanan: 3 } }] }
   ];
   function acaraId(id) { for (var i = 0; i < ACARA.length; i++) { if (ACARA[i].id === id) { return ACARA[i]; } } return null; }
 
   function dasar() {
     return { hasGovernmentRole: false, roleLevel: 'NONE', portfolioName: '', portfolioId: '', governanceRating: CONFIG.RATING_AWAL, tekananPolitik: CONFIG.TEKANAN_AWAL,
-      bulanBerjawatan: 0, ratingRendah: 0, lobi: null, acara: null, sejarah: [] };
+      bulanBerjawatan: 0, ratingRendah: 0, lobi: null, acara: null, sejarah: [],
+      popularitiNasional: CONFIG.POP_AWAL, risikoRombak: 0, ratingLalu: CONFIG.RATING_AWAL, cdfBaki: 0, cdfBulan: 0, cdfJumlah: 0 };
   }
   function getKabinet(p) {
     var b = dasar(), k = p && p.kabinet && typeof p.kabinet === 'object' ? p.kabinet : {};
@@ -162,6 +191,7 @@
       kes = { ip: -d.ip, myr: -d.myr };
       k.hasGovernmentRole = true; k.roleLevel = d.tahap; k.portfolioName = d.nama; k.portfolioId = d.id; k.governanceRating = CONFIG.RATING_AWAL; k.tekananPolitik = CONFIG.TEKANAN_AWAL;
       k.bulanBerjawatan = 0; k.ratingRendah = 0; k.lobi = null; k.acara = null;
+      k.popularitiNasional = CONFIG.POP_AWAL; k.risikoRombak = 0; k.ratingLalu = CONFIG.RATING_AWAL; k.cdfBaki = CONFIG.CDF.BULANAN[d.tahap]; k.cdfBulan = 0; k.cdfJumlah = 0;
       k.sejarah = (k.sejarah || []).concat([{ tahun: p.tahun, bulan: p.bulan, nama: d.nama, hasil: 'dilantik' }]).slice(-10);
       var res = simpan(k, kes, { log: { tindakan: 'lobi_jaya', nama: 'Dilantik: ' + d.nama, peringkat: 'ahli' } });
       if (!res.ok) { return { ok: false, ralat: res.ralat }; }
@@ -206,7 +236,18 @@
   function jana(k, o) {
     var r = rng(o);
     if (r() > CONFIG.PELUANG_ACARA) { return null; }
-    return { id: ACARA[Math.floor(r() * ACARA.length)].id };
+    var dilema = ACARA.filter(function (a) { return a.dilema; }), biasa = ACARA.filter(function (a) { return !a.dilema; });
+    var kolam = r() < CONFIG.DILEMA_PELUANG ? dilema : biasa;
+    return { id: kolam[Math.floor(r() * kolam.length)].id };
+  }
+  /* ---------- KPI ---------- */
+  function labelKPI(n) { return n >= 80 ? 'Cemerlang' : n >= 60 ? 'Baik' : n >= 40 ? 'Sederhana' : n >= CONFIG.RATING_RENDAH ? 'Lemah' : 'Kritikal'; }
+  function gugurkan(p, k, sebab) {
+    var nama = k.portfolioName;
+    k.sejarah = (k.sejarah || []).concat([{ tahun: p.tahun, bulan: p.bulan, nama: nama, hasil: 'digugurkan' }]).slice(-10);
+    k.hasGovernmentRole = false; k.roleLevel = 'NONE'; k.portfolioName = ''; k.portfolioId = ''; k.bulanBerjawatan = 0; k.ratingRendah = 0; k.acara = null; k.risikoRombak = 0; k.cdfBaki = 0; k.cdfBulan = 0;
+    simpan(k, { reputasi: CONFIG.ROMBAK.reputasi }, { log: { tindakan: 'rombakan', nama: 'Rombakan kabinet: digugurkan daripada ' + nama, peringkat: 'ahli' } });
+    return { jenis: 'kabinet_rombak', mesej: 'Rombakan kabinet! ' + sebab + ' Anda digugurkan daripada ' + nama + '. Elaun dihentikan dan Reputasi -5.' };
   }
   function prosesBulan(o) {
     var p = S() && S().loadPlayer(), ev = [];
@@ -214,7 +255,13 @@
     var k = getKabinet(p);
     if (!k.hasGovernmentRole) { return { peristiwa: ev }; }
     var tahap = TAHAP[k.roleLevel], kes = { myr: tahap.elaun.myr, ip: tahap.elaun.ip };
-    k.bulanBerjawatan += 1;
+    var cdf = CONFIG.CDF, cdfHad = cdf.BULANAN[k.roleLevel] * cdf.TOPI_BULAN;
+    k.bulanBerjawatan += 1; k.ratingLalu = k.governanceRating; k.cdfBulan = 0;
+    if (k.cdfBaki >= cdfHad) { k.governanceRating = clamp(k.governanceRating + cdf.TERSADAI_RATING, 0, 100); ev.push({ jenis: 'kabinet', mesej: 'Peruntukan projek (CDF) tersadai tanpa digunakan (Tadbir Urus ' + cdf.TERSADAI_RATING + '%).' }); }
+    else { k.cdfBaki = Math.min(cdfHad, k.cdfBaki + cdf.BULANAN[k.roleLevel]); }
+    k.popularitiNasional = k.popularitiNasional + Math.sign(CONFIG.POP_AWAL - k.popularitiNasional);          // populariti beransur pulih ke 50
+    k.risikoRombak = clamp(k.risikoRombak - CONFIG.ROMBAK_SUSUT + (k.popularitiNasional < CONFIG.POP_RENDAH ? CONFIG.ROMBAK_POP_RENDAH : 0), 0, 100);
+    kes.ip += clamp(Math.round((k.popularitiNasional - CONFIG.POP_AWAL) / CONFIG.POP_IP_BAGI), CONFIG.POP_IP_MIN, CONFIG.POP_IP_MAKS);
     if (k.acara) {                                                   // acara bulan lepas tidak dijawab: dianggap berdiam diri
       k.governanceRating = clamp(k.governanceRating - 6, 0, 100); k.tekananPolitik = clamp(k.tekananPolitik + 10, 0, 100);
       ev.push({ jenis: 'kabinet', mesej: 'Isu kementerian tidak dijawab: dianggap berdiam diri (Tadbir Urus -6%, Tekanan +10).' });
@@ -224,13 +271,14 @@
     if (k.tekananPolitik >= CONFIG.TEKANAN_TINGGI) { k.governanceRating = clamp(k.governanceRating - 3, 0, 100); ev.push({ jenis: 'kabinet', mesej: 'Tekanan politik tinggi menjejas penarafan anda (-3%).' }); }
     if (k.governanceRating < CONFIG.RATING_RENDAH) { k.ratingRendah += 1; } else { k.ratingRendah = 0; }
     if (k.ratingRendah >= CONFIG.BULAN_RENDAH_ROMBAK) {
-      var nama = k.portfolioName;
-      k.sejarah = (k.sejarah || []).concat([{ tahun: p.tahun, bulan: p.bulan, nama: nama, hasil: 'digugurkan' }]).slice(-10);
-      k.hasGovernmentRole = false; k.roleLevel = 'NONE'; k.portfolioName = ''; k.portfolioId = ''; k.bulanBerjawatan = 0; k.ratingRendah = 0; k.acara = null;
-      simpan(k, { reputasi: CONFIG.ROMBAK.reputasi }, { log: { tindakan: 'rombakan', nama: 'Rombakan kabinet: digugurkan daripada ' + nama, peringkat: 'ahli' } });
-      ev.push({ jenis: 'kabinet_rombak', mesej: 'Rombakan kabinet! Penarafan tadbir urus terlalu rendah; anda digugurkan daripada ' + nama + '. Elaun dihentikan dan Reputasi -5.' });
+      ev.push(gugurkan(p, k, 'Penarafan tadbir urus terlalu rendah.'));
       return { peristiwa: ev };
     }
+    if (k.risikoRombak >= CONFIG.ROMBAK_AMBANG && rng(o)() < clamp((k.risikoRombak - 50) / 100, CONFIG.ROMBAK_PELUANG_MIN, CONFIG.ROMBAK_PELUANG_MAKS)) {
+      ev.push(gugurkan(p, k, 'Risiko rombakan memuncak akibat keputusan politik anda.'));
+      return { peristiwa: ev };
+    }
+    else if (k.risikoRombak >= CONFIG.ROMBAK_AMBANG) { ev.push({ jenis: 'kabinet', mesej: 'Desas-desus rombakan kabinet semakin kuat (risiko ' + Math.round(k.risikoRombak) + '%).' }); }
     k.acara = jana(k, o);
     var ipE = kes.ip; delete kes.ip;
     var res = simpan(k, kes, { patch: { ip: Math.max(0, (Number(p.ip) || 0) + ipE) }, log: { tindakan: 'elaun_kerajaan', nama: 'Elaun ' + tahap.nama + ': +RM ' + tahap.elaun.myr + ', +' + tahap.elaun.ip + ' IP', peringkat: 'bulan' } });
@@ -259,26 +307,53 @@
     if (x.rep) { kes.reputasi = x.rep; }
     k.governanceRating = clamp(k.governanceRating + (x.rating || 0), 0, 100);
     k.tekananPolitik = clamp(k.tekananPolitik + (x.tekanan || 0), 0, 100);
+    k.popularitiNasional = clamp(k.popularitiNasional + (x.pop || 0), 0, 100);
+    k.risikoRombak = clamp(k.risikoRombak + (x.rombak || 0), 0, 100);
     if (c.etika) { var Et = ET(); if (Et && Et.selepasAcara) { var eo = Et.selepasAcara(p, c.etika, { rng: r }); patch.etika = eo.etika; if (eo.mesej) { mesej += eo.mesej; } } }
     k.acara = null;
     if (ipX) { patch.ip = Math.max(0, (Number(p.ip) || 0) + ipX); }
     var res = simpan(k, kes, { patch: patch, log: { tindakan: 'acara_kabinet', nama: d.tajuk + ': ' + c.label, peringkat: 'ahli' } });
     if (!res.ok) { return { ok: false, ralat: res.ralat }; }
     if (x.stress) { var s = ST(); if (s && s.laras) { s.laras({ stress: x.stress }); } }
-    return { ok: true, mesej: mesej, rating: x.rating || 0, tekanan: x.tekanan || 0, jaya: jaya };
+    return { ok: true, mesej: mesej, rating: x.rating || 0, tekanan: x.tekanan || 0, pop: x.pop || 0, rombak: x.rombak || 0, jaya: jaya };
+  }
+
+  /* ---------- Peruntukan Projek Pembangunan (CDF) ---------- */
+  function pilihanCDF(p) {
+    var k = getKabinet(p), c = CONFIG.CDF;
+    return c.PILIHAN.map(function (n) {
+      var sebab = !k.hasGovernmentRole ? 'Tiada jawatan kerajaan.' : k.cdfBulan >= c.HAD_KALI ? 'Had ' + c.HAD_KALI + ' kali sebulan dicapai.' : n > k.cdfBaki ? 'Baki peruntukan tidak cukup.' : '';
+      return { jumlah: n, ip: Math.round(n / c.RM_SEIP), besar: n > c.KECIL, boleh: !sebab, sebab: sebab };
+    });
+  }
+  function salurCDF(jumlah, o) {
+    var p = S().loadPlayer(), k = getKabinet(p), c = CONFIG.CDF, pil = pilihanCDF(p).filter(function (x) { return x.jumlah === Number(jumlah); })[0];
+    if (!pil) { return { ok: false, ralat: 'Jumlah tidak sah.' }; }
+    if (!pil.boleh) { return { ok: false, ralat: pil.sebab }; }
+    k.cdfBaki -= pil.jumlah; k.cdfBulan += 1; k.cdfJumlah = (k.cdfJumlah || 0) + pil.jumlah;
+    var kes = {}, mesej = 'RM ' + pil.jumlah.toLocaleString('ms-MY') + ' disalurkan ke kawasan anda: IP +' + pil.ip + '.';
+    if (pil.besar) {
+      k.governanceRating = clamp(k.governanceRating + c.RATING_BESAR, 0, 100); k.tekananPolitik = clamp(k.tekananPolitik + c.TEKANAN_BESAR, 0, 100); k.risikoRombak = clamp(k.risikoRombak + c.ROMBAK_BESAR, 0, 100);
+      mesej += ' Peruntukan besar menjolok mata (Tadbir Urus ' + c.RATING_BESAR + '%, risiko rombakan +' + c.ROMBAK_BESAR + ').';
+    }
+    var res = simpan(k, kes, { patch: { ip: Math.max(0, (Number(p.ip) || 0) + pil.ip) }, log: { tindakan: 'cdf_salur', nama: 'Peruntukan CDF RM ' + pil.jumlah + ' ke kawasan: +' + pil.ip + ' IP', peringkat: 'ahli' } });
+    if (!res.ok) { return { ok: false, ralat: res.ralat }; }
+    return { ok: true, mesej: mesej, ip: pil.ip, jumlah: pil.jumlah };
   }
 
   function ringkasan(p) {
     var k = getKabinet(p), t = TAHAP[k.roleLevel] || null;
     return { hasGovernmentRole: k.hasGovernmentRole, roleLevel: k.roleLevel, tahapNama: t ? t.nama : '', portfolioName: k.portfolioName, governanceRating: k.governanceRating,
       tekananPolitik: k.tekananPolitik, elaun: t ? t.elaun : null, bulanBerjawatan: k.bulanBerjawatan, ratingRendah: k.ratingRendah, lobi: k.lobi, acara: acaraSemasa(p),
-      sejarah: k.sejarah, portfolio: senaraiPortfolio(p) };
+      sejarah: k.sejarah, portfolio: senaraiPortfolio(p),
+      kpiLabel: labelKPI(k.governanceRating), ratingLalu: k.ratingLalu, arah: k.governanceRating - k.ratingLalu, popularitiNasional: k.popularitiNasional, risikoRombak: k.risikoRombak,
+      cdfBaki: k.cdfBaki, cdfBulan: k.cdfBulan, cdfHad: CONFIG.CDF.HAD_KALI, cdfPilihan: pilihanCDF(p) };
   }
 
   return {
     CONFIG: CONFIG, TAHAP: TAHAP, PORTFOLIO: PORTFOLIO, ACARA: ACARA,
     setRng: function (f) { rngLalai = f || Math.random; },
-    getKabinet: getKabinet, bukaLobi: bukaLobi, senaraiPortfolio: senaraiPortfolio, lobiPortfolio: lobiPortfolio, lepaskanLobi: lepaskanLobi,
+    getKabinet: getKabinet, bukaLobi: bukaLobi, senaraiPortfolio: senaraiPortfolio, lobiPortfolio: lobiPortfolio, lepaskanLobi: lepaskanLobi, salurCDF: salurCDF, pilihanCDF: pilihanCDF, labelKPI: labelKPI,
     laras: laras, tamatPenggal: tamatPenggal, prosesBulan: prosesBulan, acaraSemasa: acaraSemasa, jawabAcara: jawabAcara, ringkasan: ringkasan
   };
 });
