@@ -1,0 +1,19 @@
+/* Nusa Politik — css/tema-index.css (v7.2): gaya Poster Berani untuk index (menu kertas undi + borang). Skema ikut html[data-skema]. */
+html[data-tema="poster"] #menu.menu { background-image: radial-gradient(var(--titik) 1.4px, transparent 1.6px) !important; background-size: 16px 16px !important; background-color: var(--bg) !important; }
+html[data-tema="poster"][data-skema="cerah"] { --titik: rgba(17,17,17,.14); }
+html[data-tema="poster"][data-skema="gelap"] { --titik: rgba(255,228,92,.14); }
+html[data-tema="poster"] .kertas { --dakwat: var(--garis); --merah: #E4002B; --kertas: var(--bg-elev-1); background-image: none; border: 3px solid var(--garis); border-radius: 8px; transform: none; box-shadow: 8px 8px 0 var(--garis); color: var(--text); }
+html[data-tema="poster"] .kertas__jalur { border-radius: 4px 4px 0 0; height: 14px; border-bottom: 3px solid var(--garis); margin-bottom: 16px; }
+html[data-tema="poster"] .kertas__kepala { border-bottom: 4px solid var(--garis); }
+html[data-tema="poster"] .kertas__logo { box-shadow: 0 0 0 3px var(--garis); }
+html[data-tema="poster"] .kertas__tajuk, html[data-tema="poster"] .baris__teks b { color: var(--text); }
+html[data-tema="poster"] .kertas__kecil, html[data-tema="poster"] .kertas__arahan, html[data-tema="poster"] .baris__teks small, html[data-tema="poster"] .kertas__nota-kaki { color: var(--text-muted); }
+html[data-tema="poster"] .kertas__cop { border: 3px solid #E4002B; opacity: 1; background: var(--bg-elev-1); }
+html[data-tema="poster"] .baris { border-bottom: 2px solid var(--garis); }
+html[data-tema="poster"] .baris:hover, html[data-tema="poster"] .baris:focus-visible { background: #FFE45C; }
+html[data-tema="poster"] .baris:hover .baris__teks b, html[data-tema="poster"] .baris:hover .baris__teks small { color: #111; }
+html[data-tema="poster"] .baris__kotak { border: 3px solid var(--garis); background: var(--bg-elev-1); border-radius: 4px; }
+html[data-tema="poster"] .kertas__kerat { border-top: 3px dashed var(--garis); }
+html[data-tema="poster"] .kertas__nota { background: #FFE45C; color: #111; border: 3px solid var(--garis); transform: none; box-shadow: 4px 4px 0 var(--garis); }
+html[data-tema="poster"] .kertas__nota ul { color: #111; }
+html[data-tema="poster"] .baris--sambung { background: rgba(228,0,43,.12); }
