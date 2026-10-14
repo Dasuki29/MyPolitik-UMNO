@@ -12,7 +12,7 @@
         profil.pangkatUtamaLalu = pangkat utama yang dilepaskan demi sayap (untuk syarat tangga jawatan utama).
         profil.jawatan sentiasa = nama jawatan berpangkat tertinggi (sandaran untuk modul lama).
    2. Jawatan mengikut sayap
-        Sayap pemain = profil.avatar (pemuda | puteri | wanita). 'biasa' dan 'veteran' tiada sayap. Kategori bertukar mengikut umur pada tahun baharu (hayat.js); jawatan sayap lama kekal sehingga pemilihan seterusnya.
+        v5.9: Sayap pemain = profil.sayap ('utama' = tiada sayap | pemuda | puteri | wanita), dipilih semasa pendaftaran (lihat sayap.js). Simpanan lama mengikut avatar. Kategori bertukar mengikut umur pada tahun baharu (hayat.js); jawatan sayap lama kekal sehingga pemilihan seterusnya.
         Hanya jawatan sayap yang sepadan dibuka. Jawatan utama dibuka kepada semua.
    3. Mandat perwakilan (sah tahun semasa SAHAJA)
         profil.perwakilan = { cawangan: <tahun menang>|0, bahagian: <tahun menang>|0 }
@@ -106,7 +106,9 @@
 
   /** Sayap pemain: pemuda | puteri | wanita | null (veteran / ahli biasa). */
   function sayapPemain(p) {
-    var a = p && p.avatar ? p.avatar : (p && p.demografik ? p.demografik.kategoriKod : null);
+    if (p && (p.sayap === 'utama')) { return null; }                            // v5.9: laluan Utama / Induk tiada sayap
+    if (p && SAYAP.indexOf(p.sayap) >= 0) { return p.sayap; }                   // v5.9: laluan sayap dipilih semasa pendaftaran
+    var a = p && p.avatar ? p.avatar : (p && p.demografik ? p.demografik.kategoriKod : null);   // simpanan lama
     return SAYAP.indexOf(a) >= 0 ? a : null;
   }
 

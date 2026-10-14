@@ -195,6 +195,8 @@
      ------------------------------------------------------------------------ */
   var NAMA_KATEGORI = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita', biasa: 'Biasa', veteran: 'Veteran' };
 
+  function root_sayap() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikSayap) { return g.MyPolitikSayap; } try { return typeof require === 'function' ? require('./sayap.js') : null; } catch (e) { return null; } }
+
   function kategoriSepatutnya(p) {
     var D = Dt(), u = umurSemasa(p);
     if (!D || !D.kategoriMengikutUmur || u === null || !p.demografik) { return null; }
@@ -210,10 +212,14 @@
 
     var patch = { demografik: Object.assign({}, p.demografik, { kategoriKod: baru, kategori: NAMA_KATEGORI[baru] }) };
     var ikutAvatar = !p.avatar || p.avatar === lama;
+    var SYm = root_sayap(), sayapLama = SYm ? SYm.kod(p) : null;
+    var SAYAP_KAT = ['pemuda', 'puteri', 'wanita'];
+    var ikutSayap = !!sayapLama && sayapLama === lama;                          // v5.9: laluan sayap mengikut kategori; laluan Utama tidak berubah
+    if (ikutSayap) { patch.sayap = SAYAP_KAT.indexOf(baru) >= 0 ? baru : 'utama'; }
     var mesej = 'Memasuki tahun ' + p.tahun + ', umur anda ' + umurSemasa(p) + ' tahun, jadi kategori keahlian anda bertukar daripada ' + NAMA_KATEGORI[lama] + ' kepada ' + NAMA_KATEGORI[baru] + '.';
     var extra = '';
-    if (ikutAvatar) {
-      patch.avatar = baru;
+    if (ikutAvatar) { patch.avatar = baru; }
+    if (ikutSayap) {
       var punyaSayap = (Array.isArray(p.jawatanList) ? p.jawatanList : []).some(function (j) { return j.kumpulan === 'sayap'; });
       if (punyaSayap) { extra += ' Jawatan sayap yang anda pegang kekal sehingga pemilihan seterusnya, tetapi anda tidak lagi layak mempertahankannya.'; }
       if (p.pemilihan && p.pemilihan.daftar) {
@@ -223,10 +229,11 @@
         });
         if (batal) { patch.pemilihan = pm; extra += ' Pendaftaran pertandingan sayap yang belum selesai dibatalkan.'; }
       }
-      extra += (baru === 'biasa' || baru === 'veteran') ? ' Kategori ini tiada jawatan sayap.' : ' Anda kini layak bertanding jawatan sayap ' + NAMA_KATEGORI[baru] + '.';
+      extra += (baru === 'biasa' || baru === 'veteran') ? ' Kategori ini tiada jawatan sayap, jadi laluan anda kini Utama / Induk.' : ' Laluan sayap anda kini ' + NAMA_KATEGORI[baru] + ' dan anda layak bertanding jawatan sayap itu.';
     } else {
-      extra = ' Avatar pilihan anda dikekalkan.';
+      extra = sayapLama === 'utama' ? ' Laluan Utama / Induk anda tidak berubah.' : ' Laluan sayap pilihan anda dikekalkan.';
     }
+    if (!ikutAvatar) { extra += ' Avatar pilihan anda dikekalkan.'; }
     var r = s.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: 'kategori', nama: 'Kategori ' + NAMA_KATEGORI[lama] + ' → ' + NAMA_KATEGORI[baru], peringkat: 'hayat' } });
     if (!r || !r.ok) { return kosong; }
     return { berubah: true, daripada: lama, kepada: baru, peristiwa: [{ jenis: 'kategori_bertukar', mesej: mesej + extra }] };

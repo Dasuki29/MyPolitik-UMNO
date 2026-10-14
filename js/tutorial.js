@@ -136,7 +136,7 @@
      klik    : true -> pemain mesti menekan elemen yang disorot untuk menyambung
      ------------------------------------------------------------------------ */
   function langkah(p) {
-    var kod = p && (p.avatar || (p.demografik && p.demografik.kategoriKod)) || null, sy = SAYAP[kod] || null;
+    var kod = p && (SAYAP[p.sayap] ? p.sayap : (p.avatar || (p.demografik && p.demografik.kategoriKod))) || null, sy = (p && p.sayap === 'utama') ? { nama: 'Utama / Induk', huraian: 'laluan jawatan utama, tiada jawatan sayap', jawatan: null } : (SAYAP[kod] || null);
     var sayapTeks = sy
       ? (sy.jawatan
           ? 'Anda dalam kategori <b>' + esc(sy.nama) + '</b> (' + esc(sy.huraian) + '). Selepas mencapai <b>50 IP</b>, anda boleh bertanding <b>' + esc(sy.jawatan) + '</b> pada tab ini.'
@@ -286,7 +286,7 @@
   }
 
   function topikTopik(p) {
-    var kod = p && (p.avatar || (p.demografik && p.demografik.kategoriKod)) || null, sy = SAYAP[kod] || null;
+    var kod = p && (SAYAP[p.sayap] ? p.sayap : (p.avatar || (p.demografik && p.demografik.kategoriKod))) || null, sy = (p && p.sayap === 'utama') ? { nama: 'Utama / Induk', huraian: 'laluan jawatan utama, tiada jawatan sayap', jawatan: null } : (SAYAP[kod] || null);
     return [
       { id: 'asas', tajuk: 'Asas Permainan', html:
         '<h3>Asas Permainan</h3><p>Anda ialah ahli biasa sebuah cawangan UMNO. Tujuan: kumpul <b>Pengaruh (IP)</b>, menang pemilihan, dan mendaki hierarki: Cawangan → Bahagian → Pusat.</p>' +
@@ -315,6 +315,9 @@
           ['Wanita', 'Perempuan 36–59', 'Ketua Wanita Cawangan'], ['Biasa', 'Lelaki 41–59', 'Tiada (sayap)'], ['Veteran', 'Lelaki atau perempuan 60+', 'Tiada (sayap)']]) +
         '<h4>Peralihan kategori mengikut umur</h4><ul><li>Lelaki: <b>Pemuda → Biasa → Veteran</b>. Perempuan: <b>Puteri → Wanita → Veteran</b>.</li><li>Contoh: pemain Pemuda berumur 40 tahun pada 2026 akan berumur 41 tahun pada 2027, lalu menjadi <b>Biasa</b> apabila tahun baharu bermula. Dia menjadi <b>Veteran</b> apabila mencapai 60 tahun.</li><li>Apabila kategori bertukar, avatar mengikut kategori baharu. Jawatan yang anda pegang <b>tidak gugur</b>; ia kekal sehingga pemilihan seterusnya, tetapi anda tidak lagi layak mempertahankan jawatan sayap kategori lama. Pendaftaran pertandingan sayap yang belum selesai dibatalkan.</li><li>Jika anda sengaja memilih avatar yang berbeza daripada kategori semasa mendaftar, avatar dan sayap anda dikekalkan.</li><li>Kategori Biasa dan Veteran tiada jawatan sayap; jawatan utama (AJK Cawangan, Bahagian, MKT dan seterusnya) tetap dibuka.</li></ul>' +
         (sy ? '<div class="tut-kotak"><b>Kategori anda: ' + esc(sy.nama) + '</b> (' + esc(sy.huraian) + ').' + (sy.jawatan ? ' Anda boleh bertanding <b>' + esc(sy.jawatan) + '</b> apabila IP mencapai 50.' : ' Fokus pada AJK Cawangan dan Perwakilan.') + '</div>' : '') +
+        '<h4>Pilih laluan sayap semasa pendaftaran</h4><p>Semasa mendaftar anda memilih laluan: <b>Utama / Induk</b>, <b>Pemuda</b>, <b>Puteri</b> atau <b>Wanita</b>. Sayap dicadangkan mengikut jantina dan umur; hanya laluan yang layak boleh dipilih. Lencana laluan dipaparkan pada profil anda. Setiap laluan ada kelebihan:</p>' +
+        jadual([['Laluan', 'Kelebihan', 'Harga'], ['Utama / Induk', '+10% Dana masuk', 'Tiada jawatan sayap'], ['Pemuda', '+20% kenaikan IP', 'Beban Stress +10%'], ['Puteri', '+25% kesetiaan AJK dan Perwakilan, +25% Reputasi Parti', 'Hanya jawatan sayap Puteri'], ['Wanita', 'Kerugian akar umbi -30%, susutan akar umbi pemegang jawatan -1, beban Stress -20%, pulih Stress +1', 'Hanya jawatan sayap Wanita']]) +
+        '<ul><li>Jika umur anda melepasi had kategori, laluan sayap bertukar mengikut kategori baharu (Pemuda → Utama, Puteri → Wanita, Wanita → Utama). Laluan <b>Utama</b> tidak berubah sepanjang kerjaya.</li><li>Avatar hanyalah paparan watak; laluan sayap menentukan jawatan sayap dan kelebihan anda.</li></ul>' +
         '<h4>Mengapa sayap penting?</h4><ul><li>Hanya jawatan sayap <b>sayap anda</b> dibuka di setiap peringkat: Cawangan, Bahagian dan Pusat (Ketua Pemuda / Puteri / Wanita).</li><li>Anda mendapat bonus kekuatan dalam pertandingan sayap sendiri. Pemain kategori Biasa dan Veteran tiada jawatan sayap.</li><li>Jawatan sayap dan jawatan utama berkongsi <b>satu kerusi bagi setiap peringkat</b>: contohnya Ketua Bahagian dan Ketua Pemuda Bahagian tidak boleh dipegang serentak.</li><li>Ketua Sayap Cawangan tidak lagi hadir Bahagian secara automatik; menangi Perwakilan Cawangan tahun itu.</li></ul>' },
       { id: 'pemilihan', tajuk: 'Strategi Pemilihan', html:
         '<h3>Strategi Pemilihan</h3><h4>Langkah</h4><ol><li>Kumpul IP yang diperlukan: AJK/Sayap Cawangan <b>50</b>, Ketua Cawangan <b>95</b>, AJK Bahagian 140, Naib Ketua Bahagian 185, Ketua Bahagian 220, Ahli MKT 250, Naib Presiden 300, Timbalan Presiden 350 dan Presiden <b>420</b>. Ketua Sayap: Cawangan 50, Bahagian 160, Pusat 280.</li><li>Pada tab Pemilihan, <b>daftar</b> sebagai calon sebelum atau semasa tetingkap peringkat itu (Cawangan bulan 4–6, Bahagian bulan 7, Pusat bulan 8).</li><li>Jalankan <b>kempen</b> untuk menambah mata kempen.</li><li>Pengundian berlaku apabila anda menekan Hari Mengundi (dalam tetingkap) atau apabila mesyuarat ditutup.</li></ol>' +

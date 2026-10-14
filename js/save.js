@@ -67,12 +67,14 @@
   }
 
   var SENARAI_AVATAR = ['pemuda', 'puteri', 'wanita', 'biasa', 'veteran'];
+  var SY = root.MyPolitikSayap || (typeof module === 'object' && typeof require === 'function' ? (function () { try { return require('./sayap.js'); } catch (e) { return null; } })() : null);   // v5.9
   function avatarSah(k) { return SENARAI_AVATAR.indexOf(k) >= 0; }
 
   /** Lengkapkan medan yang tiada (profil lama daripada versi 1) dan hadkan nilai. */
   function normalisasi(p) {
     if (!sah(p)) { return p; }
     if (!avatarSah(p.avatar)) { p.avatar = avatarSah(p.demografik && p.demografik.kategoriKod) ? p.demografik.kategoriKod : 'pemuda'; }
+    if (SY && !SY.sah(p.sayap)) { p.sayap = SY.kod(p); }          // v5.9: laluan sayap (simpanan lama mengikut avatar/kategori)
     p.versi = VERSI;
     var bln = parseInt(p.bulan, 10);                 // Bulan 1 hingga 12 (sistem masa bulanan)
     p.bulan = isFinite(bln) ? Math.max(1, Math.min(12, bln)) : DEFAULTS.bulan;
@@ -154,6 +156,7 @@
         bawah40: c.bawah40, atas40: c.atas40
       },
       avatar: avatarSah(input.avatar) ? input.avatar : (avatarSah(d.kod) ? d.kod : 'pemuda'),   // pilihan watak (kosmetik)
+      sayap: SY && SY.sah(input.sayap) && (input.sayap === 'utama' || input.sayap === d.kod) ? input.sayap : (SY ? SY.cadangan(d.jantina, d.umur) : 'utama'),   // v5.9: laluan kerjaya (Utama / Pemuda / Puteri / Wanita)
       jawatan: DEFAULTS.jawatan,
       ip: DEFAULTS.ip,
       myr: DEFAULTS.myr,
@@ -245,11 +248,16 @@
       }
     }
 
-    p.ap = ap; p.myr = myr;
     var tambahIp = kesan.ip || 0;
     if (tambahIp > 0) { tambahIp = Math.max(1, Math.round(tambahIp * clamp(1 - p.ip / REDAMAN_IP.k, REDAMAN_IP.lantai, 1))); }   // v3.8
+    var tambahRep = kesan.reputasi || 0;
+    if (SY) {                                                                       // v5.9: kelebihan sayap (Utama / Pemuda / Puteri / Wanita)
+      var sy = SY.sesuaikan(p, { ip: tambahIp, myr: kesan.myr || 0, reputasi: tambahRep, kesetiaan: kes });
+      tambahIp = sy.ip; tambahRep = sy.reputasi; kes = sy.kesetiaan; myr = p.myr + sy.myr;
+    }
+    p.ap = ap; p.myr = myr;
     p.ip = Math.max(0, p.ip + tambahIp);
-    p.reputasi = clamp(p.reputasi + (kesan.reputasi || 0), 0, 100);
+    p.reputasi = clamp(p.reputasi + tambahRep, 0, 100);
     for (var j in kes) { p.kesetiaan[j] = clamp(p.kesetiaan[j] + kes[j], 0, 100); }
     if (kesan.isu) { p.isu.unshift(kesan.isu); p.isu = p.isu.slice(0, MAKS_ISU); }
     if (opts.kiraTindakan !== false) { p.bilTindakan += 1; }

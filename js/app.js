@@ -184,7 +184,57 @@
     kemaskiniPratonton();
   }
   binaPemilihAvatar();
-  try { var um0 = window.sessionStorage.getItem('myPolitik_umurMula'); if (um0 && el.umur) { el.umur.value = um0; window.sessionStorage.removeItem('myPolitik_umurMula'); cadangkanAvatar(); } } catch (e) { /* abaikan */ }   // v5.2: Main Semula bermula umur 18
+
+  /* ---------- Pilihan sayap / laluan kerjaya (v5.9) ---------- */
+  var SYP = window.MyPolitikSayap;
+  var sayapState = { kod: 'utama', manual: false };
+
+  function sayapTerpilih() {
+    var r = el.form.querySelector('input[name="sayap"]:checked');
+    return r ? r.value : sayapState.kod;
+  }
+
+  function pilihSayap(kod, manual) {
+    sayapState.kod = kod; if (manual) { sayapState.manual = true; }
+    var r = el.form.querySelector('input[name="sayap"][value="' + kod + '"]');
+    if (r) { r.checked = true; }
+    Array.prototype.forEach.call(document.querySelectorAll('#sayap-grid .sy'), function (l) {
+      l.classList.toggle('is-saran', !sayapState.manual && l.getAttribute('data-kod') === kod);
+    });
+    setError('sayap');
+  }
+
+  /** Kemas kini kelayakan setiap laluan mengikut jantina dan umur; cadangkan laluan lalai. */
+  function kemaskiniSayap() {
+    if (!SYP || !$('sayap-grid')) { return; }
+    var j = el.form.querySelector('input[name="jantina"]:checked'), u = parseInt(el.umur.value, 10);
+    var ok = !!j && isFinite(u) && u >= 18 && u <= 100, kel = ok ? SYP.kelayakan(j.value, u) : SYP.kelayakan('', 0);
+    Array.prototype.forEach.call(document.querySelectorAll('#sayap-grid .sy'), function (l) {
+      var k = l.getAttribute('data-kod'), inp = l.querySelector('input'), sy = l.querySelector('.sy__syarat');
+      inp.disabled = !kel[k].boleh; sy.textContent = kel[k].boleh ? '' : kel[k].sebab;
+    });
+    if (!(kel[sayapState.kod] && kel[sayapState.kod].boleh)) { sayapState.manual = false; }       // pilihan manual tidak lagi sah selepas jantina/umur diubah
+    if (!sayapState.manual) { pilihSayap(ok ? SYP.cadangan(j.value, u) : 'utama', false); }
+  }
+
+  function escS(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function binaPemilihSayap() {
+    var grid = $('sayap-grid');
+    if (!grid || !SYP) { if (grid && grid.parentNode) { grid.parentNode.hidden = true; } return; }
+    grid.innerHTML = SYP.SENARAI.map(function (k) {
+      var i = SYP.INFO[k];
+      return '<label class="sy" data-kod="' + k + '"><input type="radio" name="sayap" value="' + k + '"' + (k === sayapState.kod ? ' checked' : '') + '>' +
+        '<span class="sy__box"><span class="sy__ikon" aria-hidden="true">' + i.ikon + '</span><span class="sy__nama">' + escS(i.nama) + '</span><span class="sy__desc">' + escS(i.ringkas) + '</span>' +
+        '<ul class="sy__buff">' + i.kelebihan.map(function (b) { return '<li>' + escS(b) + '</li>'; }).join('') + '</ul>' +
+        '<span class="sy__syarat"></span><span class="sy__saran">Dicadangkan</span></span></label>';
+    }).join('');
+    grid.addEventListener('click', function (ev) { if (ev.target && ev.target.name === 'sayap' && !ev.target.disabled) { pilihSayap(ev.target.value, true); } });
+    Array.prototype.forEach.call(el.form.querySelectorAll('input[name="jantina"]'), function (r) { r.addEventListener('change', kemaskiniSayap); });
+    el.umur.addEventListener('input', kemaskiniSayap);
+    kemaskiniSayap();
+  }
+  binaPemilihSayap();
+  try { var um0 = window.sessionStorage.getItem('myPolitik_umurMula'); if (um0 && el.umur) { el.umur.value = um0; window.sessionStorage.removeItem('myPolitik_umurMula'); cadangkanAvatar(); kemaskiniSayap(); } } catch (e) { /* abaikan */ }   // v5.2: Main Semula bermula umur 18
 
   /* ---------- Muat data ---------- */
   function ringkasan(h) {
@@ -259,7 +309,7 @@
     if (!demografik) { setError('umur', 'Umur dan jantina tidak sah.'); el.umur.focus(); return; }
 
     var ahliEl = document.getElementById('s-ahli');
-    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan, avatar: avatarTerpilih(), tahunAhli: ahliEl ? ahliEl.value : 0 });
+    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan, avatar: avatarTerpilih(), sayap: sayapTerpilih(), tahunAhli: ahliEl ? ahliEl.value : 0 });
     var hasil = S.savePlayer(profil);
     if (!hasil.ok) { el.formError.textContent = hasil.ralat; return; }
 
@@ -456,6 +506,15 @@
         return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + '</span>'; }).join(' ') : '';
       jl.hidden = semua.length <= 1;
     }
+    var sb = $('p-sayap'), SYd = W.MyPolitikSayap;                                       // v5.9: lencana laluan sayap
+    if (sb && SYd) {
+      var si = SYd.info(p);
+      sb.className = 'badge-sayap badge-sayap--' + si.kod;
+      sb.textContent = si.ikon + ' Laluan ' + si.nama;
+      sb.title = si.ringkas + '. Kelebihan: ' + si.kelebihan.join('; ');
+      sb.setAttribute('aria-label', 'Laluan kerjaya ' + si.nama + '. Kelebihan: ' + si.kelebihan.join(', '));
+      sb.hidden = false;
+    }
     var um = $('p-umur');                                                                // v5.0: umur sentiasa dipaparkan
     if (um) {
       var hr = HY ? HY.ringkasan(p) : null;
@@ -476,7 +535,7 @@
         var kelas = function (l) { return l === 'Kritikal' ? 'is-kritikal' : l === 'Tinggi' || l === 'Lemah' ? 'is-tinggi' : l === 'Sederhana' ? 'is-sederhana' : ''; };
         $('m-stress').style.width = stm.stress + '%'; $('m-stress').className = kelas(stm.labelStress);
         $('m-stress-teks').textContent = stm.stress + ' · ' + stm.labelStress;
-        $('m-stress-info').textContent = 'Beban ' + (stm.bilJawatan > 1 ? stm.bilJawatan + ' jawatan ' : 'jawatan ') + '+' + stm.beban + ', pulih -' + ST.CONFIG.PEMULIHAN + ' sebulan' + (stm.pecahan && stm.pecahan.length > 1 ? ' (' + stm.pecahan.map(function (x) { return '+' + x.beban; }).join(' ') + ')' : '');
+        $('m-stress-info').textContent = 'Beban ' + (stm.bilJawatan > 1 ? stm.bilJawatan + ' jawatan ' : 'jawatan ') + '+' + stm.beban + ', pulih -' + (stm.pulih || ST.CONFIG.PEMULIHAN) + ' sebulan' + (stm.pecahan && stm.pecahan.length > 1 ? ' (' + stm.pecahan.map(function (x) { return '+' + x.beban; }).join(' ') + ')' : '');
         var kl = stm.labelKesihatan === 'Kritikal' ? 'is-kritikal' : stm.labelKesihatan === 'Lemah' ? 'is-tinggi' : stm.labelKesihatan === 'Sederhana' ? 'is-sederhana' : '';
         $('m-kes').style.width = stm.kesihatan + '%'; $('m-kes').className = kl;
         $('m-kes-teks').textContent = stm.kesihatan + '% · ' + stm.labelKesihatan;
@@ -637,7 +696,7 @@
     }
     var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Jawatan &amp; Mandat Anda</h2>';
     h += '<p class="note">Anda boleh memegang jawatan di <b>peringkat berbeza</b> serentak (Cawangan + Bahagian + Pusat), tetapi hanya <b>satu jawatan bagi setiap peringkat</b>. Setiap jawatan menambah Stress bulanan; terlalu banyak jawatan mencetus cemburu dan sabotaj akar umbi. ' +
-      (J.sayapPemain(p) ? 'Sayap anda: <b>' + esc(J.NAMA_SAYAP[J.sayapPemain(p)]) + '</b>.' : 'Kategori anda (Biasa / Veteran) tiada sayap, jadi jawatan sayap tidak dibuka.') + '</p>';
+      (J.sayapPemain(p) ? 'Laluan anda: <b>Sayap ' + esc(J.NAMA_SAYAP[J.sayapPemain(p)]) + '</b>.' : 'Laluan anda: <b>Utama / Induk</b>, jadi jawatan sayap tidak dibuka.') + '</p>';
     h += senarai.length ? '<div class="btn-group" style="flex-wrap:wrap;margin-bottom:10px">' + senarai.map(function (j) {
       return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + ' &middot; ' + esc(j.label) + '</span>'; }).join('') + '</div>'
       : '<p class="empty">Belum memegang sebarang jawatan.</p>';

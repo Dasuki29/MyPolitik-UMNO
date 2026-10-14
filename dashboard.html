@@ -71,6 +71,12 @@
     .meter__track i.is-sederhana { background: var(--warning); } .meter__track i.is-tinggi { background: #FF8A3D; } .meter__track i.is-kritikal { background: var(--danger); }
     .meter small { display: block; font-size: .72rem; color: var(--text-muted); }
     #p-jawatan-lain { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+    .badge-sayap { display: inline-flex; align-items: center; gap: 6px; padding: .2rem .7rem; border-radius: 999px; font-size: .74rem; font-weight: 800; letter-spacing: .02em; border: 1px solid transparent; cursor: help; }
+    .badge-sayap[hidden] { display: none !important; }
+    .badge-sayap--utama { color: #E9EDF5; background: rgba(120,130,160,.22); border-color: rgba(160,170,200,.45); }
+    .badge-sayap--pemuda { color: #FFE9A8; background: rgba(242,183,5,.16); border-color: rgba(242,183,5,.6); }
+    .badge-sayap--puteri { color: #FFC8DC; background: rgba(236,90,150,.16); border-color: rgba(236,90,150,.6); }
+    .badge-sayap--wanita { color: #C9F1E0; background: rgba(40,170,120,.16); border-color: rgba(40,170,120,.6); }
     .badge-office[hidden], #p-jawatan-lain[hidden] { display: none !important; }   /* v5.5: lencana kosong tidak dipaparkan */
     .dash-profile { display: grid; gap: var(--space-4); }
     .dash-profile__top { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
@@ -206,6 +212,7 @@
             <span id="p-jawatan-lain" hidden></span>
             <span class="year-pill" id="p-tahun" data-fasa="">2026</span>
           </div>
+          <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px"><span class="badge-sayap" id="p-sayap" tabindex="0" hidden></span></div>
           <ul class="dash-loc" aria-label="Lokasi">
             <li><b>Negeri</b><span id="p-negeri">–</span></li>
             <li><b>Bahagian</b><span id="p-bahagian">–</span></li>
@@ -315,6 +322,7 @@
   </script>
   <!-- Susunan penting: data > save > modul tindakan > pemilihan > mesyuarat > peta > pengawal -->
   <script src="js/data.js"></script>
+  <script src="js/sayap.js"></script>
   <script src="js/save.js"></script>
   <script src="js/calendar.js"></script>
   <script src="js/avatar.js"></script>

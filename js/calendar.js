@@ -147,7 +147,10 @@
     var p = profil || S.loadPlayer(), d = pendapatanBulanan(p);
     var susut = {};                                                    // v3.8: susutan kesetiaan bulanan
     Object.keys(CONFIG.SUSUT_BULANAN).forEach(function (k) { susut[k] = -CONFIG.SUSUT_BULANAN[k]; });
-    if (peringkatDipegang(p).length) { susut.akarUmbi -= CONFIG.SUSUT_PEMEGANG_JAWATAN; }
+    if (peringkatDipegang(p).length) {
+      var syKurang = (root.MyPolitikSayap && root.MyPolitikSayap.kurangSusutAkarUmbi) ? root.MyPolitikSayap.kurangSusutAkarUmbi(p) : 0;   // v5.9: Wanita
+      susut.akarUmbi -= Math.max(0, CONFIG.SUSUT_PEMEGANG_JAWATAN - syKurang);
+    }
     return { ap: CONFIG.AP_BULANAN - p.ap, apBaharu: CONFIG.AP_BULANAN, myr: d.jumlah, butiran: d.butiran, kesetiaan: susut };
   }
 
