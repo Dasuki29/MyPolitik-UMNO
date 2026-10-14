@@ -123,8 +123,23 @@
     if (k.acara) { h += '<button type="button" class="btn btn--primary btn--block" data-pru="acara">⚠️ Isu kementerian menunggu: ' + esc(k.acara.tajuk) + '</button>'; }
     return h + '</section>';
   }
-  function kad(p) {
-    try { return kadPRK(p) + kadPRU(p) + kadJanji(p) + kadKabinet(p); } catch (e) { return ''; }
+  /** Musim pilihan raya aktif (PRU/PRN atau PRK): tab khas Pilihan Raya dipaparkan. */
+  function musim(p) { return !!((PRU.getPRU(p).aktif) || (PK && PK.getPRK(p).aktif)); }
+  function bannerMusim(p) {
+    var prk = PK && PK.getPRK(p).aktif, a = prk || PRU.getPRU(p).aktif;
+    if (!a) { return ''; }
+    return '<div class="banner banner--gold"><strong>📣 Musim pilihan raya sedang berlangsung' + (prk ? ' (PRK)' : '') + '</strong>Urus pencalonan, kempen dan keputusan di tab <b>Pilihan Raya</b>. <button type="button" class="btn btn--sm btn--gold" data-tab="pilihanraya">Buka tab Pilihan Raya</button></div>';
+  }
+  /**
+   * jenis: 'pilihanraya' = kad kempen/pencalonan (tab khas); 'pemilihan' = pengira masa PRU atau banner musim;
+   * 'tindakan' (lalai) = janji manifesto, kabinet dan banner musim.
+   */
+  function kad(p, jenis) {
+    try {
+      if (jenis === 'pilihanraya') { return musim(p) ? kadPRK(p) + (PRU.getPRU(p).aktif ? kadPRU(p) : '') : '<div class="banner"><strong>Bukan musim pilihan raya</strong>Tab ini hanya aktif semasa PRU/PRN atau PRK.</div>'; }
+      if (jenis === 'pemilihan') { return musim(p) ? bannerMusim(p) : kadPRU(p); }
+      return bannerMusim(p) + kadJanji(p) + kadKabinet(p);
+    } catch (e) { return ''; }
   }
   function lencana(p) {
     var h = '', pru = PRU.getPRU(p), kb = KB ? KB.getKabinet(p) : null;
@@ -440,5 +455,5 @@
     else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'prk-buka') { alirPRK(); } else if (a === 'prk-tindak') { tindakPRK(t.getAttribute('data-id')); } else if (a === 'prk-selesai') { selesaiPRK(); } else if (a === 'prk-keputusan') { keputusanPRK(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
   });
 
-  W.NusaPRU_UI = { kad: kad, lencana: lencana, selepasBulan: selepasBulan, alir: alir, kejutan: kejutan, keputusan: keputusan, lobi: lobi, acara: acara, selesai: selesai };
+  W.NusaPRU_UI = {  musim: musim, kad: kad, lencana: lencana, selepasBulan: selepasBulan, alir: alir, kejutan: kejutan, keputusan: keputusan, lobi: lobi, acara: acara, selesai: selesai };
 })(window);

@@ -50,8 +50,8 @@
   var CONFIG = {
     BULAN_NAMA: ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'],
     AP_BULANAN: 5,                       // AP ditetapkan kepada nilai ini setiap bulan
-    DANA_ASAS: 450,                      // elaun bulanan semua pemain (MYR)
-    DANA_JAWATAN: { cawangan: 300, bahagian: 800, pusat: 2000 },   // tambahan bagi pemegang jawatan
+    DANA_ASAS: 150,                      // elaun bulanan semua pemain (MYR); v7.9: dikurangkan (dahulu 450)
+    DANA_JAWATAN: { cawangan: 200, bahagian: 500, pusat: 1200 },   // tambahan bagi pemegang jawatan
     // v3.8: sokongan susut setiap bulan jika tidak dijaga. Pemegang jawatan menanggung susutan Akar Umbi tambahan.
     SUSUT_BULANAN: { akarUmbi: 3, ajk: 2, perwakilan: 3 },       // ketuaCawangan tidak disusutkan: pemegang jawatan tiada tindakan untuk memulihkannya
     SUSUT_PEMEGANG_JAWATAN: 2,           // tambahan susutan Akar Umbi bagi pemegang jawatan
