@@ -260,6 +260,7 @@
         terbuka: !exBhg.sah && !ketuaSy,
         sebab: ketuaSy ? 'Anda hadir Mesyuarat ' + NS + ' Bahagian secara automatik sebagai Ketua ' + NS + ' Cawangan.' : (exBhg.sah ? 'Anda hadir Mesyuarat ' + NS + ' Bahagian secara automatik sebagai ' + exBhg.sumber + '.' : '')
       });
+      var ketuaSyB = J.pegang(p, 'sayap_bahagian_' + sy);                       // Ketua sayap Bahagian hadir Perhimpunan Sayap Pusat automatik
       var layakB = swSah || exBhg.sah || ketuaSy;
       tambah({
         kod: 'perwakilan_sayap_g10', jenis: 'perwakilan', jawatan: 'G10 ' + NS + ': 10 wakil ke Mesyuarat Bahagian', peringkat: 'sayap_bahagian', kumpulan: 'perwakilan', sayap: sy,
@@ -270,8 +271,8 @@
       tambah({
         kod: 'perwakilan_sayap_g2', jenis: 'perwakilan', jawatan: 'G2 ' + NS + ': 2 wakil ke Perhimpunan ' + NS + ' Pusat', peringkat: 'sayap_bahagian', kumpulan: 'perwakilan', sayap: sy,
         kerusi: CONFIG.SAYAP_G2, kesukaran: 0,
-        terbuka: layakB && !exPau.sah,
-        sebab: exPau.sah ? 'Anda hadir Perhimpunan ' + NS + ' Pusat secara automatik sebagai ' + exPau.sumber + '.' : (layakB ? '' : 'Menjadi wakil ' + NS + ' Cawangan tahun ' + p.tahun + ' dahulu.')
+        terbuka: layakB && !exPau.sah && !ketuaSyB,
+        sebab: ketuaSyB ? 'Anda hadir Perhimpunan ' + NS + ' Pusat secara automatik sebagai Ketua ' + NS + ' Bahagian.' : exPau.sah ? 'Anda hadir Perhimpunan ' + NS + ' Pusat secara automatik sebagai ' + exPau.sumber + '.' : (layakB ? '' : 'Menjadi wakil ' + NS + ' Cawangan tahun ' + p.tahun + ' dahulu.')
       });
     }
 

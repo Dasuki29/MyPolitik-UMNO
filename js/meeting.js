@@ -245,8 +245,8 @@
         return (pws.sayapCawangan === p.tahun || gs.exB.sah || (J && J.pegang && J.pegang(p, 'sayap_cawangan_' + sayapPemain(p)))) ? { ok: true }
           : { ok: false, sebab: 'Hanya wakil ' + N + ' Cawangan tahun ' + p.tahun + ' yang terpilih, Ketua ' + N + ' Cawangan dan pemegang jawatan Bahagian/Pusat boleh hadir Mesyuarat ' + N + ' Bahagian.' };
       }
-      return (pws.g2 === p.tahun || gs.exP.sah) ? { ok: true }               // sayap_pau: G2 tahun ini atau pemegang jawatan ex-officio
-        : { ok: false, sebab: 'Hanya G2 ' + N + ' (2 wakil Bahagian) tahun ' + p.tahun + ', Ketua Bahagian dan pemegang jawatan Pusat boleh hadir Perhimpunan ' + N + ' Pusat.' };
+      return (pws.g2 === p.tahun || gs.exP.sah || (J && J.pegang && J.pegang(p, 'sayap_bahagian_' + sayapPemain(p)))) ? { ok: true }               // sayap_pau: G2 tahun ini atau pemegang jawatan ex-officio
+        : { ok: false, sebab: 'Hanya G2 ' + N + ' (2 wakil Bahagian) tahun ' + p.tahun + ', Ketua ' + N + ' Bahagian, Ketua Bahagian dan pemegang jawatan Pusat boleh hadir Perhimpunan ' + N + ' Pusat.' };
     }
     var g = pegangan(p);
     if (peringkat === 'bahagian') {
