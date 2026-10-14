@@ -63,7 +63,7 @@
     HAD_BONUS: 30,                          // had mata bonus setiap kawasan
     KESAN_BONUS_BAHAGIAN_KE_CAWANGAN: 0.6,  // bonus bahagian meresap ke cawangan di bawahnya
     KESAN_BONUS_NEGERI_KE_CAWANGAN: 0.3,
-    GAUN_RUMAH: 0.4,                        // kawasan sendiri: campur dengan kesetiaan akar umbi
+    GAUN_RUMAH: 0.4,                        // kawasan sendiri: campur dengan sokongan akar umbi
     AMBANG: [35, 48, 60, 75],               // sempadan lima tahap
     UNIT_PADDING: 0.04,                     // ruang kosong sekeliling peta (nisbah)
     JARAK_TIMUR: 500,                       // jarak antara Semenanjung dan Sabah/Sarawak (unit peta)
@@ -95,7 +95,7 @@
     { kod: 'sabah',     nama: 'Sabah',               pendek: 'SBH', pos: [6, 2] }
   ];
 
-  /** Tindakan pada kawasan. kos/bonus/ip/kesetiaan mengikut peringkat. */
+  /** Tindakan pada kawasan. kos/bonus/ip/sokongan mengikut peringkat. */
   var TINDAKAN = {
     lobi: {
       nama: 'Lobi Kawasan Ini',

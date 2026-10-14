@@ -3,12 +3,12 @@
    Modul Pemegang Jawatan (jawatan pemain bukan 'Ahli Biasa').
 
    1. Tindakan Pentadbiran dan Kepimpinan
-        Anjur Mesyuarat AJK        +10 Kesetiaan AJK, -MYR 300, -1 AP
-        Agih Peruntukan Kebajikan  +15 Kesetiaan Akar Umbi, -MYR 1,000, -1 AP
-        Lobi Perwakilan            +8 Kesetiaan Perwakilan PAU, -MYR 500, -1 AP
-        Terbit Kenyataan Media     +15 IP, -10 Kesetiaan Penentang/Atas Pagar, -1 AP
-   2. Sistem Amaran Kesetiaan
-        Jika Kesetiaan Akar Umbi < 40%, amaran dicetuskan dan satu kejadian rawak
+        Anjur Mesyuarat AJK        +10 Sokongan AJK, -MYR 300, -1 AP
+        Agih Peruntukan Kebajikan  +15 Sokongan Akar Umbi, -MYR 1,000, -1 AP
+        Lobi Perwakilan            +8 Sokongan Perwakilan PAU, -MYR 500, -1 AP
+        Terbit Kenyataan Media     +15 IP, -10 Sokongan Atas Pagar, -1 AP
+   2. Sistem Amaran Sokongan
+        Jika Sokongan Akar Umbi < 40%, amaran dicetuskan dan satu kejadian rawak
         boleh berlaku: penentang mencabar jawatan pemain.
 
    Setiap tindakan terus mengemas kini profil dalam localStorage melalui
@@ -32,7 +32,7 @@
 
   var CONFIG = {
     JAWATAN_BIASA: 'Ahli Biasa',
-    AMBANG_AMARAN: 40,             // Kesetiaan Akar Umbi di bawah nilai ini mencetuskan amaran
+    AMBANG_AMARAN: 40,             // Sokongan Akar Umbi di bawah nilai ini mencetuskan amaran
     AMBANG_KRITIKAL: 25,           // di bawah nilai ini amaran menjadi kritikal
     KEBARANGKALIAN_ASAS: 0.25,     // peluang kejadian rawak pada 39%
     KEBARANGKALIAN_MAKS: 0.75,     // peluang pada 0%
@@ -126,7 +126,7 @@
 
   /**
    * Jalankan satu tindakan dan simpan hasilnya terus ke localStorage.
-   * Selepas itu semakan amaran kesetiaan dijalankan secara automatik.
+   * Selepas itu semakan amaran sokongan dijalankan secara automatik.
    * opts: { rng } untuk ujian.
    * Pulangan: { ok, mesej, perubahan, profil, amaran, peristiwa:[] } atau { ok:false, kod, ralat }
    */
@@ -191,10 +191,10 @@
   function cabaranAktif(p) { return p && p.cabaran && p.cabaran.status === 'aktif' ? p.cabaran : null; }
 
   /**
-   * Semak Kesetiaan Akar Umbi pemegang jawatan.
+   * Semak Sokongan Akar Umbi pemegang jawatan.
    * opts: { profil, rng, paksa:true }  (paksa mencetuskan cabaran, untuk ujian dan UI)
    * Pulangan:
-   *   { ok, amaran:false, akarUmbi }                       jika kesetiaan sihat
+   *   { ok, amaran:false, akarUmbi }                       jika sokongan sihat
    *   { ok, amaran:true, tahap:'amaran'|'kritikal', akarUmbi, ambang, mesej, kebarangkalian,
    *     cabaranBaru:{...}|null, cabaranAktif:{...}|null }  jika di bawah 40%
    * Amaran berstatus dan cabaran baharu disimpan dalam localStorage.
@@ -218,7 +218,7 @@
     var rng = opts.rng || Math.random;
     var hasil = {
       ok: true, amaran: true, tahap: tahap, akarUmbi: k, ambang: ambang, kebarangkalian: kemungkinan,
-      mesej: 'Kesetiaan Akar Umbi tinggal ' + k + '% (di bawah ' + ambang + '%). Penentang mula bergerak dan jawatan ' + p.jawatan + ' anda berisiko dicabar.',
+      mesej: 'Sokongan Akar Umbi tinggal ' + k + '% (di bawah ' + ambang + '%). Penentang mula bergerak dan jawatan ' + p.jawatan + ' anda berisiko dicabar.',
       cabaranBaru: null, cabaranAktif: aktif
     };
 

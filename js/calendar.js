@@ -4,7 +4,7 @@
 
    Takwim (v3.0):
      Bulan 1-3   Akar umbi         Aktiviti akar umbi dan membina pengaruh
-                                    (bonus +25% IP dan kesetiaan positif bagi tindakan)
+                                    (bonus +25% IP dan sokongan positif bagi tindakan)
      Bulan 4-6   Musim Cawangan    Mesyuarat dan Pemilihan Cawangan (Cawangan dan Sayap)
      Bulan 7     Musim Bahagian    Mesyuarat dan Pemilihan Bahagian (Bahagian dan Sayap)
      Bulan 8     PAU               Perhimpunan Agung UMNO dan Pemilihan Pusat
@@ -52,15 +52,15 @@
     AP_BULANAN: 5,                       // AP ditetapkan kepada nilai ini setiap bulan
     DANA_ASAS: 450,                      // elaun bulanan semua pemain (MYR)
     DANA_JAWATAN: { cawangan: 300, bahagian: 800, pusat: 2000 },   // tambahan bagi pemegang jawatan
-    // v3.8: kesetiaan susut setiap bulan jika tidak dijaga. Pemegang jawatan menanggung susutan Akar Umbi tambahan.
+    // v3.8: sokongan susut setiap bulan jika tidak dijaga. Pemegang jawatan menanggung susutan Akar Umbi tambahan.
     SUSUT_BULANAN: { akarUmbi: 3, ajk: 2, perwakilan: 3 },       // ketuaCawangan tidak disusutkan: pemegang jawatan tiada tindakan untuk memulihkannya
     SUSUT_PEMEGANG_JAWATAN: 2,           // tambahan susutan Akar Umbi bagi pemegang jawatan
-    BONUS_AKAR_UMBI: 0.25,               // bulan 1-3: tambahan pada IP dan kesetiaan positif
+    BONUS_AKAR_UMBI: 0.25,               // bulan 1-3: tambahan pada IP dan sokongan positif
 
     /* Fasa takwim (bulan mula-tamat, termasuk). */
     FASA: [
       { kod: 'akar_umbi', mula: 1, tamat: 3, tajuk: 'Awal Tahun', ringkas: 'Khidmat Akar Umbi & Pendaftaran Ahli',
-        fokus: ['Ziarah dan gotong-royong', 'Bina pengaruh dan kesetiaan akar umbi', 'Kumpul isu tempatan'] },
+        fokus: ['Ziarah dan gotong-royong', 'Bina pengaruh dan sokongan akar umbi', 'Kumpul isu tempatan'] },
       { kod: 'cawangan', mula: 4, tamat: 6, tajuk: 'Musim Cawangan', ringkas: 'Musim Mesyuarat & Pemilihan Cawangan (Cawangan & Sayap)',
         fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Mesyuarat Sayap (bulan 5-6) sebelum Bahagian', 'Pemilihan jawatan Cawangan dan Sayap Cawangan', 'Pemilihan Perwakilan ke Bahagian'] },
       { kod: 'bahagian', mula: 7, tamat: 7, tajuk: 'Musim Bahagian', ringkas: 'Musim Mesyuarat & Pemilihan Bahagian (Bahagian & Sayap)',
@@ -148,7 +148,7 @@
   /** Perubahan AP dan MYR pada permulaan bulan baharu. */
   function regenerasi(profil) {
     var p = profil || S.loadPlayer(), d = pendapatanBulanan(p);
-    var susut = {};                                                    // v3.8: susutan kesetiaan bulanan
+    var susut = {};                                                    // v3.8: susutan sokongan bulanan
     Object.keys(CONFIG.SUSUT_BULANAN).forEach(function (k) { susut[k] = -CONFIG.SUSUT_BULANAN[k]; });
     if (peringkatDipegang(p).length) {
       var syKurang = (root.MyPolitikSayap && root.MyPolitikSayap.kurangSusutAkarUmbi) ? root.MyPolitikSayap.kurangSusutAkarUmbi(p) : 0;   // v5.9: Wanita
@@ -159,7 +159,7 @@
   }
 
   /**
-   * Bulan 1-3 (akar umbi): tambah IP dan kesetiaan positif. Pulang salinan `kesan`.
+   * Bulan 1-3 (akar umbi): tambah IP dan sokongan positif. Pulang salinan `kesan`.
    * Dipanggil oleh ordinaryMember.js dan incumbent.js sebelum applyEffects().
    */
   function skalaKesan(profil, kesan) {
@@ -200,7 +200,7 @@
      ------------------------------------------------------------------------ */
   function mesejMasuk(bulan, tahun, tahunBaharu) {
     var f = getFasa(bulan), nb = namaBulan(bulan), out = [];
-    if (bulan === 1) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 1 (' + nb + ' ' + tahun + '): ' + f.tajuk + '. ' + f.ringkas + '. Bonus +' + Math.round(CONFIG.BONUS_AKAR_UMBI * 100) + '% IP dan kesetiaan bagi tindakan sehingga bulan 3. Mandat perwakilan tahun lalu telah tamat; bertanding semula di Cawangan (bulan 4-6).' }); }
+    if (bulan === 1) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 1 (' + nb + ' ' + tahun + '): ' + f.tajuk + '. ' + f.ringkas + '. Bonus +' + Math.round(CONFIG.BONUS_AKAR_UMBI * 100) + '% IP dan sokongan bagi tindakan sehingga bulan 3. Mandat perwakilan tahun lalu telah tamat; bertanding semula di Cawangan (bulan 4-6).' }); }
     else if (bulan === 4) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 4 (' + nb + '): Musim Mesyuarat & Pemilihan Cawangan dan Sayap dibuka (bulan 4-6).' }); }
     else if (bulan === 7) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 7 (' + nb + '): Mesyuarat & Pemilihan Bahagian dan Sayap dibuka. Hanya bulan ini.' }); }
     else if (bulan === 8) { out.push({ jenis: 'fasa_bulan', mesej: 'Bulan 8 (' + nb + '): Perhimpunan Agung UMNO (PAU) dan Pemilihan Pusat di WTC Kuala Lumpur (Menara Dato\' Onn). Hanya bulan ini.' }); }
@@ -247,7 +247,16 @@
   function pratonton(profil) {
     var p = profil || S.loadPlayer();
     if (!p) { return null; }
-    var tk = getTakwim(p), rg = regenerasi(p), amaran = [];
+    var tk = getTakwim(p), amaran = [], pRg = p;
+    if (tk.tahunBaharuSeterusnya) {                                   // v6.8: pratonton elaun selepas jawatan tamat penggal dibuang
+      var JWp = muat('MyPolitikJawatan', 'jawatan.js');
+      try {
+        var klon = JSON.parse(JSON.stringify(p)); klon.tahun = p.tahun + 1;
+        var sp = JWp && JWp.semakPenggalTamat ? JWp.semakPenggalTamat(klon) : null;
+        if (sp) { klon.jawatanList = sp.patch.jawatanList; pRg = klon; amaran.push('Jawatan tamat penggal akan luput: ' + sp.dibuang.map(function (x) { return x.jawatan; }).join(', ') + '.'); }
+      } catch (e) { pRg = p; }
+    }
+    var rg = regenerasi(pRg);
     var M = muat('MyPolitikMeeting', 'meeting.js');
     if (M) {
       var ms = M.getKeadaanMesyuarat(p);
@@ -286,6 +295,8 @@
       r = E.majuTahun({ pulihAP: true });                 // tahun + 1, bulan = 1, AP dipulihkan, kitaran dikemas kini
       if (!r.ok) { return r; }
       peristiwa = peristiwa.concat(r.peristiwa || []);
+      var JW0 = muat('MyPolitikJawatan', 'jawatan.js');                                      // v6.8: jawatan yang tidak dipertahankan luput SEBELUM elaun dikira
+      if (JW0 && JW0.kemaskiniPenggal) { peristiwa = peristiwa.concat(JW0.kemaskiniPenggal().peristiwa || []); rg = regenerasi(S.loadPlayer()); }
       r = S.applyEffects({ myr: rg.myr, kesetiaan: rg.kesetiaan }, { kiraTindakan: false, log: { tindakan: 'regenerasi', nama: 'Elaun bulan ' + bulan + ' ' + tahun, peringkat: 'bulan' } });
     } else {
       r = S.applyEffects({ ap: rg.ap, myr: rg.myr, kesetiaan: rg.kesetiaan }, {
@@ -298,6 +309,8 @@
     var STR = muat('MyPolitikStres', 'stress.js');                                              // v5.6: stress dan kesihatan bulanan
     if (STR) { peristiwa = peristiwa.concat(STR.prosesBulan().peristiwa || []); }
 
+    var JW = muat('MyPolitikJawatan', 'jawatan.js');                                           // v6.8: penggal tamat (jawatan tidak dipertahankan luput)
+    if (JW && JW.kemaskiniPenggal) { peristiwa = peristiwa.concat(JW.kemaskiniPenggal().peristiwa || []); }
     var MIS = muat('MyPolitikMisi', 'misi.js');                                                 // v6.7: Undi Tidak Percaya sayap
     if (MIS && MIS.prosesBulan) { peristiwa = peristiwa.concat(MIS.prosesBulan().peristiwa || []); }
 
@@ -320,7 +333,7 @@
       fasa: getFasa(bulan), regenerasi: rg,
       perubahan: { ip: akhir.ip - asal.ip, myr: akhir.myr - asal.myr, ap: akhir.ap - asal.ap, reputasi: akhir.reputasi - asal.reputasi },
       peristiwa: peristiwa,
-      mesej: 'Bulan ' + bulan + ' (' + namaBulan(bulan) + ') ' + tahun + ': AP ' + CONFIG.AP_BULANAN + ', elaun +MYR ' + rg.myr.toLocaleString('ms-MY') + '. Kesetiaan susut jika tidak dijaga.',
+      mesej: 'Bulan ' + bulan + ' (' + namaBulan(bulan) + ') ' + tahun + ': AP ' + CONFIG.AP_BULANAN + ', elaun +MYR ' + rg.myr.toLocaleString('ms-MY') + '. Sokongan susut jika tidak dijaga.',
       profil: akhir
     };
   }

@@ -95,7 +95,7 @@
     }
 
     var sebab = [];
-    if (kod === 'akar_umbi') { sebab.push('Kesetiaan Akar Umbi ' + akar + '%.'); }
+    if (kod === 'akar_umbi') { sebab.push('Sokongan Akar Umbi ' + akar + '%.'); }
     if (kod === 'jentera') { sebab.push('Perwakilan ' + perw + '% dan AJK ' + ajk + '%.'); }
     if (kod === 'sayap') { sebab.push('Anda memegang ' + sayap.length + ' jawatan sayap.'); }
     if (kod === 'pelobi') { sebab.push('Perwakilan ' + perw + '% jauh melebihi Akar Umbi ' + akar + '%.'); }
