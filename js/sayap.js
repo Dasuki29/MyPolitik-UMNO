@@ -268,7 +268,7 @@
   return {
     SENARAI: SENARAI, SAYAP: SAYAP, CONFIG: CONFIG, INFO: INFO, ISU: ISU, sah: sah, kategori: kategori, cadangan: cadangan, kelayakan: kelayakan,
     kod: kod, sayapJawatan: sayapJawatan, info: info, sesuaikan: sesuaikan, bebanStres: bebanStres, pemulihanStres: pemulihanStres, kurangSusutAkarUmbi: kurangSusutAkarUmbi,
-    TINDAKAN_SAYAP: TINDAKAN_SAYAP, TRANSISI: TRANSISI, WARISAN: WARISAN, senaraiTindakanSayap: senaraiTindakanSayap, jalankanTindakanSayap: jalankanTindakanSayap,
+    TINDAKAN_SAYAP: TINDAKAN_SAYAP, TS_CONFIG: TS_CONFIG, TRANSISI: TRANSISI, WARISAN: WARISAN, senaraiTindakanSayap: senaraiTindakanSayap, jalankanTindakanSayap: jalankanTindakanSayap,
     bonusKuota: bonusKuota, sokonganDilindungi: sokonganDilindungi, notisTransisi: notisTransisi, bentukWarisan: bentukWarisan, bonusWarisan: bonusWarisan, ringkasWarisan: ringkasWarisan, kiraBonusWarisan: kiraBonusWarisan
   };
 });

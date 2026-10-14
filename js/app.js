@@ -366,7 +366,7 @@
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
       I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, ST = W.MyPolitikStres, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
-  var SYP = W.MyPolitikSayap, BLK = W.MyPolitikBlok;                          // v6.5/v6.6 (Dashboard)
+  var SYP = W.MyPolitikSayap, BLK = W.MyPolitikBlok, MIS = W.MyPolitikMisi;                          // v6.5/v6.6 (Dashboard)
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -441,7 +441,7 @@
     var penting = { disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
-                    kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', blok_janji_mungkir: 'Janji Kuota Dimungkiri' };
+                    kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', transisi_rasmi: 'Upacara Graduasi Sayap', transisi_amaran: 'Notis Rasmi Transisi', undi_tp_amaran: 'Amaran Undi Tidak Percaya', undi_tp_kalah: 'Kalah Undi Tidak Percaya', undi_tp_menang: 'Selamat Undi Tidak Percaya', blok_janji_mungkir: 'Janji Kuota Dimungkiri' };
     for (var i = 0; i < (senarai || []).length; i++) {
       var e = senarai[i];
       if (!e || !e.mesej) { continue; }
@@ -607,6 +607,29 @@
     var n = SYP && SYP.notisTransisi ? SYP.notisTransisi(p) : null;
     return n ? '<div class="banner banner--warn" role="alert"><strong>' + esc(n.tajuk) + ' (umur ' + n.umur + '/' + n.had + ')</strong>' + esc(n.mesej) + '</div>' : '';
   }
+  /* ---------- v6.7: Misi bulanan sayap dan amaran Undi Tidak Percaya ---------- */
+  function bannerUndiTP(p) {
+    var a = MIS && MIS.amaranUndi ? MIS.amaranUndi(p) : null;
+    return a ? '<div class="banner banner--warn" role="alert"><strong>' + (a.tahap === 'kritikal' ? 'Undi Tidak Percaya Menghampiri' : 'Amaran Sokongan Sayap') + '</strong>' + esc(a.mesej) + '</div>' : '';
+  }
+  function kadMisi(p) {
+    var m = MIS && MIS.getMisi ? MIS.getMisi(p) : null;
+    if (!m) { return ''; }
+    var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Misi Bulanan Sayap ' + esc(SYP.INFO[m.sayap].nama) + '</h2>' +
+      '<p class="note">Satu misi baharu setiap bulan. Rentetan <b>' + m.rentetan + '/' + m.sasaranRentetan + '</b> bulan berturut-turut memberi bonus. Bulan terlepas hanya memutuskan rentetan.</p><div class="choice-list">' +
+      '<button type="button" class="choice" data-act="misi-sayap" data-id="' + esc(m.id) + '" data-fk="ms:' + esc(m.id) + '"' + (m.boleh ? '' : ' disabled') + '>' +
+      '<span class="choice__title">' + esc(m.ikon) + ' ' + esc(m.nama) + (m.selesai ? ' (selesai bulan ini)' : '') + '</span><span class="choice__desc">' + esc(m.penerangan) + '</span>' +
+      '<span class="choice__fx">' + fx(m.ringkas) + '</span>' + (m.boleh ? '' : '<span class="choice__desc" style="color:var(--danger)">' + esc(m.sebab) + '</span>') + '</button></div>' +
+      (state.mesej.misi ? '<p class="result" style="margin-top:12px">' + esc(state.mesej.misi) + '</p>' : '') + '</section>';
+    return h;
+  }
+  async function misiSayap(id) {
+    var r = MIS.jalankanMisi(id);
+    state.mesej.misi = r.ok ? r.mesej : '';
+    render(); await lapor(r);
+    if (r.ok && EV) { await tunjukAcara(EV.selepasAktiviti()); }
+  }
+
   function kadSayap(p) {
     var h = bannerTransisi(p), lw = SYP && SYP.ringkasWarisan ? SYP.ringkasWarisan(p) : null;
     if (lw) {
@@ -687,7 +710,7 @@
     if (!mod) { return '<div class="card"><p class="empty">Modul tindakan tidak dimuatkan.</p></div>'; }
     var senarai = mod.senaraiTindakan(p), h = '';
     var tkb = K ? K.getTakwim(p) : null;
-    h += bannerDisiplin(p) + kadSayap(p);
+    h += bannerDisiplin(p) + bannerUndiTP(p) + kadMisi(p) + kadSayap(p);
     if (tkb && tkb.bonusAkarUmbi) {
       h += '<div class="banner banner--gold"><strong>Musim Akar Umbi (bulan 1-3)</strong>Setiap tindakan memberi bonus +' + Math.round(tkb.bonusAkarUmbi * 100) + '% IP dan kesetiaan. Manfaatkan sebelum musim mesyuarat bermula pada bulan 4.</div>';
     }
@@ -845,7 +868,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += bannerDisiplin(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
+    h += bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
@@ -1258,7 +1281,8 @@
     if (act === 'ringkasan') { tunjukRingkasan(M.getRingkasan(lvl)); return; }
     if (act === 'bulan') { lanjutBulan(); return; }
     if (act === 'acara-buka') { bukaAcaraTertunggak(); return; }
-    if (act === 'blok-runding') { rundingBlok(t.getAttribute('data-calon'), t.getAttribute('data-tuntut')); }
+    if (act === 'misi-sayap') { misiSayap(t.getAttribute('data-id')); }
+    else if (act === 'blok-runding') { rundingBlok(t.getAttribute('data-calon'), t.getAttribute('data-tuntut')); }
     else if (act === 'tindakan-sayap') { tindakanSayap(t.getAttribute('data-id')); }
     else if (act === 'tindakan') { tindakan(t.getAttribute('data-id')); }
     else if (act === 'ke-tab') { setTab(t.getAttribute('data-v')); }

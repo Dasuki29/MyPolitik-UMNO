@@ -221,7 +221,7 @@
     if (ikutAvatar) { patch.avatar = baru; }
     if (ikutSayap) {
       var punyaSayap = (Array.isArray(p.jawatanList) ? p.jawatanList : []).some(function (j) { return j.kumpulan === 'sayap'; });
-      if (punyaSayap) { extra += ' Jawatan sayap yang anda pegang kekal sehingga pemilihan seterusnya, tetapi anda tidak lagi layak mempertahankannya.'; }
+      if (punyaSayap && !(SYm && SYm.TRANSISI && SYm.TRANSISI[sayapLama])) { extra += ' Jawatan sayap yang anda pegang kekal sehingga pemilihan seterusnya, tetapi anda tidak lagi layak mempertahankannya.'; }
       if (p.pemilihan && p.pemilihan.daftar) {
         var pm = JSON.parse(JSON.stringify(p.pemilihan)), batal = 0;
         Object.keys(pm.daftar).forEach(function (k) {
@@ -238,9 +238,18 @@
       patch.warisan = SYm.bentukWarisan(p, sayapLama);
       if (patch.warisan.bonus > 0) { extra += ' Transisi ke Dewan Induk: Legacy Loyalty +' + patch.warisan.bonus + ' kekuatan undi dalam pertandingan Induk (susut beransur selama ' + SYm.WARISAN.TAHUN + ' tahun), hasil IP dan kesetiaan akar umbi yang anda pupuk di ' + NAMA_KATEGORI[sayapLama] + '.'; }
     }
+    var transisiRasmi = null;
+    if (ikutSayap && SYm && SYm.TRANSISI && SYm.TRANSISI[sayapLama] && patch.sayap !== sayapLama) {       // v6.7: upacara graduasi, jawatan sayap lama dilepaskan
+      var semua = Array.isArray(p.jawatanList) ? p.jawatanList : [], lepas = semua.filter(function (j) { return j.kumpulan === 'sayap' && j.sayap === sayapLama; });
+      var baki = semua.filter(function (j) { return lepas.indexOf(j) < 0; }).sort(function (x, y) { return (y.pangkat || 0) - (x.pangkat || 0); });
+      if (lepas.length) { patch.jawatanList = baki; patch.jawatan = baki.length ? baki[0].jawatan : 'Ahli Biasa'; }
+      transisiRasmi = { jenis: 'transisi_rasmi', mesej: 'Upacara Graduasi Sayap ' + NAMA_KATEGORI[sayapLama] + ': anda mencapai had umur ' + SYm.TRANSISI[sayapLama].had + ' tahun dan dengan rasminya bertransisi ke Dewan Induk parti.' +
+        (lepas.length ? ' Jawatan ' + lepas.map(function (j) { return j.jawatan; }).join(', ') + ' dilepaskan kepada penerus sayap.' : '') + ' Anda kini bertanding jawatan Induk bermula di Cawangan.' + (patch.warisan && patch.warisan.bonus > 0 ? ' Legacy Loyalty +' + patch.warisan.bonus + ' dibawa bersama.' : '') };
+    }
     var r = s.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: 'kategori', nama: 'Kategori ' + NAMA_KATEGORI[lama] + ' → ' + NAMA_KATEGORI[baru], peringkat: 'hayat' } });
     if (!r || !r.ok) { return kosong; }
-    return { berubah: true, daripada: lama, kepada: baru, peristiwa: [{ jenis: 'kategori_bertukar', mesej: mesej + extra }] };
+    var pw = [{ jenis: 'kategori_bertukar', mesej: mesej + extra }]; if (transisiRasmi) { pw.push(transisiRasmi); }
+    return { berubah: true, daripada: lama, kepada: baru, peristiwa: pw };
   }
 
   /** Tamatkan kerjaya dengan sebab tertentu dan simpan Legacy Summary. */

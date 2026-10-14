@@ -298,6 +298,9 @@
     var STR = muat('MyPolitikStres', 'stress.js');                                              // v5.6: stress dan kesihatan bulanan
     if (STR) { peristiwa = peristiwa.concat(STR.prosesBulan().peristiwa || []); }
 
+    var MIS = muat('MyPolitikMisi', 'misi.js');                                                 // v6.7: Undi Tidak Percaya sayap
+    if (MIS && MIS.prosesBulan) { peristiwa = peristiwa.concat(MIS.prosesBulan().peristiwa || []); }
+
     var HY = tahunBaharu ? muat('MyPolitikHayat', 'hayat.js') : null;                       // v5.0: umur +1 dan semakan kesihatan
     if (HY) {
       var ht = HY.prosesTahunBaharu();
@@ -305,6 +308,8 @@
       if (!ht.tamat && HY.prosesPeralihanKategori) { peristiwa = peristiwa.concat(HY.prosesPeralihanKategori().peristiwa || []); }   // v5.1: kategori bertukar mengikut umur pada tahun baharu
     }
 
+    var MIS2 = tahunBaharu ? muat('MyPolitikMisi', 'misi.js') : null;                        // v6.7: notis rasmi transisi umur
+    if (MIS2 && MIS2.prosesTahunBaharu) { peristiwa = peristiwa.concat(MIS2.prosesTahunBaharu().peristiwa || []); }
     var BLK = tahunBaharu ? muat('MyPolitikBlok', 'blok.js') : null;                        // v6.6: Penetapan Calon, janji kuota sayap
     if (BLK && BLK.prosesTahunBaharu) { peristiwa = peristiwa.concat(BLK.prosesTahunBaharu().peristiwa || []); }
 

@@ -59,7 +59,7 @@
   SAYAP.forEach(function (w) {
     var N = NAMA_SAYAP[w];
     tambah({ kod: 'sayap_cawangan_' + w, jawatan: 'Ketua ' + N + ' Cawangan', peringkat: 'cawangan', kumpulan: 'sayap', sayap: w, pangkat: 2, ipMin: 50, kesukaran: 3 });
-    tambah({ kod: 'sayap_bahagian_' + w, jawatan: 'Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 5, ipMin: 160, pangkatMin: 2, perluBahagian: true, kesukaran: 12, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    tambah({ kod: 'sayap_bahagian_' + w, jawatan: 'Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 5, ipMin: 160, pangkatMin: 2, perluBahagian: true, perluSayapCawangan: true, kesukaran: 12, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
     tambah({ kod: 'sayap_pusat_' + w,    jawatan: 'Ketua ' + N,             peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 9, ipMin: 280, pangkatMin: 5, perluPAU: true, kesukaran: 22, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
   });
 
@@ -170,6 +170,9 @@
       if (!pg.sah) { return { terbuka: false, sebab: pg.sebab }; }
     }
     if (p.ip < d.ipMin) { return { terbuka: false, sebab: 'Perlukan ' + d.ipMin + ' IP (anda ada ' + p.ip + ').' }; }
+    if (d.perluSayapCawangan && !(pegang(p, 'sayap_cawangan_' + d.sayap) || pegang(p, 'sayap_pusat_' + d.sayap))) {     // v6.7: mesti Ketua Sayap Cawangan dahulu
+      return { terbuka: false, sebab: 'Menangi jawatan Ketua ' + NAMA_SAYAP[d.sayap] + ' Cawangan dahulu (pertandingan menentang calon NPC di Cawangan).' };
+    }
     if (d.perluBahagian && !(perwakilanSah(p, 'cawangan').layak)) {
       return { terbuka: false, sebab: 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu (atau pegang jawatan Bahagian/Pusat).' };
     }
