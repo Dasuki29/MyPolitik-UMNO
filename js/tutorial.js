@@ -289,20 +289,10 @@
   function topikTopik(p) {
     var kod = p && (SAYAP[p.sayap] ? p.sayap : (p.avatar || (p.demografik && p.demografik.kategoriKod))) || null, sy = (p && p.sayap === 'utama') ? { nama: 'Utama / Induk', huraian: 'laluan jawatan utama, tiada jawatan sayap', jawatan: null } : (SAYAP[kod] || null);
     return [
-      { id: 'panduan', tajuk: 'Mula Di Sini: Cara Main Dengan Baik', html:
-        '<h3>Mula Di Sini: Cara Main Dengan Baik</h3><p><b>Matlamat:</b> bermula sebagai ahli biasa cawangan, naik ke jawatan lebih tinggi, bertanding pilihan raya, dan akhirnya jadi menteri atau EXCO. Tiada satu cara yang betul; yang penting kekalkan <b>IP</b>, <b>Dana</b> dan <b>sokongan</b> sihat.</p>' +
-        '<h4>Setiap bulan, buat 3 perkara</h4><ol><li><b>Guna 5 AP</b> di tab <b>Tindakan</b> (contoh: Ziarah Kasih, Gotong-Royong). AP tidak dibawa ke bulan depan.</li><li><b>Semak tab lain</b>: <b>Pemilihan</b> (daftar bertanding), <b>Mesyuarat</b> (bila ada titik kuning) dan <b>Pilihan Raya</b> (muncul sendiri semasa musim pilihan raya).</li><li>Tekan <b>Teruskan ke Bulan Seterusnya</b>. Jika muncul krisis atau dilema, baca pilihan dan jawab.</li></ol>' +
-        '<h4>Contoh: perjalanan Amir (ahli biasa, mula 2026)</h4>' + jadual([['Bila', 'Apa Amir buat', 'Kenapa'],
-          ['Bulan 1-3', 'Ziarah Kasih dan Gotong-Royong setiap bulan', 'Bonus +25% IP dan sokongan; sasaran IP 50'],
-          ['Bulan 4', 'Tab Pemilihan: daftar <b>AJK Cawangan</b> (perlu 50 IP); sertai Mesyuarat Cawangan', 'Jawatan pertama, elaun bulanan bermula'],
-          ['Bulan 5-6', 'Kempen kecil, jaga sokongan Akar Umbi dan AJK', 'Menentukan menang atau kalah undi'],
-          ['Bulan 7-8', 'Jika jadi perwakilan: hadir mesyuarat Bahagian dan PAU', 'Peluang naik ke peringkat lebih tinggi'],
-          ['Bulan 9-12', 'Pulihkan sokongan yang susut, rehat jika Stress tinggi, kumpul Dana', 'Sokongan susut setiap bulan'],
-          ['2029, 2032', 'Naik: Ketua Cawangan (95 IP), Bahagian (140-220 IP)...', 'Pemilihan jawatan setiap 3 tahun'],
-          ['2031', '<b>PRU/PRN pertama</b>: DUN perlu IP 300 + jawatan; Parlimen perlu IP 600 + Ketua Bahagian', 'Menang = IP besar, mungkin EXCO/Menteri']]) +
-        '<h4>Peta perjalanan</h4><p>Ahli biasa &rarr; AJK / Ketua Sayap Cawangan &rarr; Ketua Cawangan &rarr; Jawatan Bahagian &rarr; PAU / MKT &rarr; <b>Calon PRU/PRN</b> &rarr; ADUN / Ahli Parlimen &rarr; <b>EXCO / Timbalan Menteri / Menteri</b>. Kadang-kadang <b>PRK</b> (pilihan raya kecil) muncul pertengahan penggal.</p>' +
-        '<h4>Tujuh petua supaya tidak tersekat</h4><ol><li><b>Habiskan AP</b> setiap bulan; yang tidak digunakan hilang.</li><li>Jangan biar sokongan Akar Umbi atau AJK jatuh bawah <b>40%</b> sebelum musim pemilihan (Bulan 4).</li><li><b>Dana terhad</b>: elaun bulanan kecil. Jangan boros pada jamuan; guna <i>Kerja Sampingan</i> bila perlu. Sebelum PRU, simpan sekurang-kurangnya <b>RM 5,000 hingga RM 10,000</b> untuk kempen.</li><li>Jaga <b>Stress bawah 60%</b>. Stress tinggi menjejas kesihatan dan mencetus krisis.</li><li>Pilih tindakan <b>bersih</b>. Politik wang dan fitnah beri keuntungan pantas, tetapi boleh membawa aduan Tataetika, gantung jawatan, malah kerusi dibatalkan.</li><li>Jangan pegang terlalu banyak jawatan sekali gus; Stress dan cemburu akar umbi meningkat.</li><li>Jangan takut kalah: kalah pemilihan atau pilihan raya hanya kurangkan IP sedikit. Cuba lagi pada musim seterusnya.</li></ol>' +
-        '<div class="tut-kotak"><b>Cara baca skrin:</b> kad <b>kuning</b> = peluang atau pengumuman, kad <b>merah</b> = amaran, butang <b>kelabu</b> = belum layak (sebab dipaparkan). Butang (?) di kiri bawah sentiasa boleh dibuka semula.</div>' },
+      { id: 'panduan', tajuk: 'Latihan Bersama Amir', html:
+        '<h3>Latihan Bersama Amir</h3><p>Cara terbaik belajar ialah dengan bermain. <b>Latihan bersama Amir</b> ialah permainan contoh berpandu (kira-kira 10 minit): daripada ahli biasa cawangan, ke pemilihan, mesyuarat, PRU, Kabinet dan PRK, hingga <b>Rumusan Kerjaya</b>.</p><ul><li>Pemandu menyorot butang yang perlu ditekan. Anda boleh tekan <b>Seterusnya</b> bila-bila masa.</li><li>Kemenangan penting dijamin supaya cerita sampai ke penghujung.</li><li>Simpanan watak anda <b>selamat</b> dan dipulihkan selepas latihan.</li></ul>' +
+        '<p><button type="button" class="tut-btn tut-btn--emas" data-lat-mula="1">Mula Latihan Bersama Amir</button></p>' +
+        '<h4>Ringkasan pantas</h4><ol><li><b>Guna 5 AP</b> setiap bulan di tab Tindakan (AP tidak dibawa ke bulan depan).</li><li><b>Semak</b> tab Pemilihan, Mesyuarat dan 📣 Pilihan Raya (muncul sendiri semasa musim pilihan raya).</li><li>Tekan <b>Teruskan ke Bulan Seterusnya</b>; jawab acara, krisis atau dilema yang muncul.</li></ol>' },
       { id: 'asas', tajuk: 'Asas Permainan', html:
         '<h3>Asas Permainan</h3><p>Anda ialah ahli biasa sebuah cawangan UMNO. Tujuan: kumpul <b>Pengaruh (IP)</b>, menang pemilihan, dan mendaki hierarki: Cawangan → Bahagian → Pusat.</p>' +
         '<h4>Tiga sumber utama</h4>' + jadual([['Sumber', 'Fungsi', 'Pembaharuan'],
@@ -487,6 +477,7 @@
       var b = ev.target.closest ? ev.target.closest('[data-topik]') : null;
       if (b) { cari.value = ''; pilihTopik(b.getAttribute('data-topik')); return; }
       if (ev.target.closest && ev.target.closest('[data-tut-ulang]')) { tutupBantuan(); mula({ paksa: true }); }
+      if (ev.target.closest && ev.target.closest('[data-lat-mula]')) { var LT = root.MyPolitikLatihan; if (LT && LT.mula()) { root.location.assign('dashboard.html'); } else { tutupBantuan(); } }   // v7.13
     });
     cari.addEventListener('input', function () { cariTeks(cari.value); });
     d.addEventListener('keydown', function (ev) {
