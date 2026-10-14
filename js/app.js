@@ -439,7 +439,7 @@
 
   /** Paparkan peristiwa penting (jawatan, cabaran) sebagai modal, selebihnya toast. */
   async function urusPeristiwa(senarai) {
-    var penting = { pru_isytihar: 'Pilihan Raya Diisytiharkan', kabinet_rombak: 'Rombakan Kabinet', janji_nilai: 'Penilaian Manifesto', disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
+    var penting = { pru_isytihar: 'Pilihan Raya Diisytiharkan', prk_isytihar: 'Pilihan Raya Kecil (PRK)', kabinet_rombak: 'Rombakan Kabinet', janji_nilai: 'Penilaian Manifesto', disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
                     kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', transisi_rasmi: 'Upacara Graduasi Sayap', transisi_amaran: 'Notis Rasmi Transisi', undi_tp_amaran: 'Amaran Undi Tidak Percaya', undi_tp_kalah: 'Kalah Undi Tidak Percaya', undi_tp_menang: 'Selamat Undi Tidak Percaya', blok_janji_mungkir: 'Janji Kuota Dimungkiri', penggal_tamat: 'Penggal Jawatan Tamat' };

@@ -13,6 +13,7 @@
   if (!PRU || !S) { return; }
   var BULAN = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
   var sibuk = false;
+  var PK = W.MyPolitikPRK;
 
   function U() { return W.NusaUI; }
   function esc(s) { return U() ? U().esc(s) : String(s); }
@@ -123,7 +124,7 @@
     return h + '</section>';
   }
   function kad(p) {
-    try { return kadPRU(p) + kadJanji(p) + kadKabinet(p); } catch (e) { return ''; }
+    try { return kadPRK(p) + kadPRU(p) + kadJanji(p) + kadKabinet(p); } catch (e) { return ''; }
   }
   function lencana(p) {
     var h = '', pru = PRU.getPRU(p), kb = KB ? KB.getKabinet(p) : null;
@@ -334,6 +335,87 @@
     if (!r.ok) { toast(r.ralat, 'ralat'); return; }
     toast(r.mesej + (r.rating ? ' Tadbir Urus ' + tanda(r.rating) + '%.' : ''), r.rating < 0 ? 'ralat' : 'ok'); segarkan();
   }
+
+  /* ---- PRK (Pilihan Raya Kecil) ---- */
+  function kadPRK(p) {
+    if (!PK) { return ''; }
+    var r = PK.ringkasan(p), a = r.aktif;
+    if (!a) { return ''; }
+    var kenal = (a.jenis === 'DUN' ? 'DUN ' : 'Parlimen ') + esc(a.nama);
+    if (a.fasa === 'kempen') {
+      var ck = PK.keadaanKempen(p), h = '<section class="card pru-kempen"><h2 class="card__title" style="margin:0 0 4px">⚡ Kempen Kilat PRK · ' + kenal + '</h2>';
+      h += '<p class="note">Hari <b>' + ck.hariSemasa + '/7</b> · sentimen nasional <b>' + (ck.sentimen > 0 ? '+' : '') + ck.sentimen + '</b> · lawan: ' + esc(a.lawan) + (a.pertahan ? ' · kerusi dipertahankan' : ' · kerusi lawan') + '</p><div class="pru-hari" aria-hidden="true">';
+      for (var i = 0; i < 7; i++) { h += '<i class="' + (i < ck.hariSemasa ? 'd' : i === ck.hariSemasa ? 'n' : '') + '"></i>'; }
+      h += '</div>' + bar('Sokongan pengundi', a.voterSupport, a.voterSupport < 30) + bar('Dana kempen', Math.min(100, a.campaignFunds / 150), a.campaignFunds < 2500, 'RM ' + fmt(a.campaignFunds)) + bar('Tenaga jentera', a.jentera, a.jentera < 35) + bar('Stress', p.stress || 0, (p.stress || 0) >= 60);
+      if (ck.hariBaki <= 0) { return h + '<button type="button" class="btn btn--primary btn--block" data-pru="prk-selesai">🗳️ Hari Mengundi: Lihat Keputusan</button></section>'; }
+      h += '<div class="choice-list">' + ck.tindakan.map(function (t) {
+        return '<button type="button" class="choice" data-pru="prk-tindak" data-id="' + esc(t.id) + '"' + (t.boleh ? '' : ' disabled') + '><span class="choice__title">' + t.ikon + ' ' + esc(t.nama) + (t.pengganda !== 1 ? ' <span class="badge ' + (t.pengganda > 1 ? 'badge--gold' : 'badge--red') + '">×' + t.pengganda + '</span>' : '') + '</span><span class="choice__fx">' +
+          fx((t.dana ? '−RM ' + fmt(t.dana) + ' · ' : '') + (t.gain[1] ? 'Sokongan +' + t.gain[0] + '–' + t.gain[1] + '% · ' : '') + 'Stress ' + tanda(t.stress)) + '</span>' + (t.boleh ? '' : '<span class="choice__desc" style="color:var(--danger)">' + esc(t.sebab) + '</span>') + '</button>';
+      }).join('') + '</div>';
+      if (a.log && a.log.length) { h += '<ul class="pru-log">' + a.log.slice(0, 3).map(function (l) { return '<li><b>Hari ' + l.hari + ':</b> ' + esc(l.teks) + '</li>'; }).join('') + '</ul>'; }
+      return h + '</section>';
+    }
+    if (a.fasa === 'keputusan') { return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">⚡ Keputusan PRK ' + kenal + '</h2><button type="button" class="btn btn--primary btn--block" data-pru="prk-keputusan">Lihat Keputusan</button></section>'; }
+    return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">⚡ Pilihan Raya Kecil · ' + kenal + '</h2><p class="note">' + esc(r.sebab) + '. Bulan tidak boleh dimajukan sehingga PRK selesai.</p><button type="button" class="btn btn--primary btn--block" data-pru="prk-buka">Teruskan</button></section>';
+  }
+  async function alirPRK() {
+    if (sibuk || !PK) { return; }
+    sibuk = true;
+    try {
+      for (var g = 0; g < 6; g++) {
+        var p = S.loadPlayer(), r = PK.ringkasan(p), a = r.aktif;
+        if (!a || a.fasa === 'kempen' || a.fasa === 'keputusan') { break; }
+        if (a.fasa === 'isytihar') {
+          var kl = r.kelayakan;
+          var j = await modal({
+            tajuk: '⚡ Pilihan Raya Kecil',
+            isi: '<p class="acara__ikon" aria-hidden="true">🗳️</p><p><b>' + esc(r.sebab) + '</b> (kerusi ' + (a.jenis === 'DUN' ? 'DUN ' : 'Parlimen ') + esc(a.nama) + '). Hari mengundi dalam <b>7 hari</b>.</p><p style="font-size:.85rem">Sentimen nasional: <b>' + (r.sentimen > 0 ? '+' : '') + r.sentimen + '</b> · ' + (a.pertahan ? 'Kerusi dipertahankan oleh parti anda (kalah = penalti lebih berat).' : 'Kerusi dimenangi pihak lawan sebelum ini (menang = bonus tambahan).') + '</p><ul class="acara__pil">' +
+              opsi('calon', 'Mohon dicalonkan', 'Syor IP ≥ ' + kl.ipMin + ' · peruntukan minimum RM ' + fmt(kl.minPeruntukan) + '<br>' + (kl.boleh ? 'Peluang diluluskan ± ' + kl.peluang + '%' : esc(kl.sebab.join('; '))), kl.boleh && (Number(p.myr) || 0) >= kl.minPeruntukan) +
+              opsi('tidak', 'Tidak bertanding', 'Tiada risiko kehilangan IP.', true) + '</ul>', butang: [] });
+          if (!j) { break; }
+          if (j === 'tidak') { var t = PK.tidakBertanding(); toast(t.mesej || t.ralat, t.ok ? 'ok' : 'ralat'); segarkan(); break; }
+          var m = PK.mohonCalon(); toast(m.mesej || m.ralat, m.diluluskan ? 'ok' : 'ralat'); segarkan();
+          if (!m.ok || !m.diluluskan) { break; }
+        } else if (a.fasa === 'calon') {
+          var pil = r.peruntukan;
+          var pr = modal({ tajuk: 'Peruntukan Kempen Kilat', isi: '<p>Kempen kilat <b>7 hari</b>: kos tinggi dan Stress naik pantas (+2 sehari selain kos tindakan). Dana anda: <b>RM ' + fmt(p.myr) + '</b>. Baki dipulangkan.</p><div class="pru-pilih" id="pru-dana">' +
+            pil.pilihan.map(function (n, i) { return '<label><input type="radio" name="dana" value="' + n + '"' + (i === 0 ? ' checked' : '') + '><span><b>RM ' + fmt(n) + '</b></span></label>'; }).join('') + '</div>',
+            butang: [{ label: 'Tunda', nilai: false }, { label: 'Mula Kempen 7 Hari', nilai: true, kelas: 'btn--gold' }] });
+          var ya = await pr;
+          if (!ya) { break; }
+          var d = W.document.querySelector('#modal-isi input[name=dana]:checked');
+          var dana = d ? Number(d.value) : pil.min;
+          var kk = PK.byElectionCampaign(dana); if (!kk.ok) { toast(kk.ralat, 'ralat'); break; }
+          segarkan(); toast('Kempen kilat 7 hari bermula!', 'ok');
+        } else { break; }
+      }
+    } finally { sibuk = false; segarkan(); }
+  }
+  async function tindakPRK(id) {
+    if (sibuk) { return; }
+    var r = PK.tindakanKilat(id);
+    if (!r.ok) { toast(r.ralat, 'ralat'); segarkan(); return; }
+    toast(r.mesej, 'ok'); segarkan();
+    if (r.tamat) { await selesaiPRK(); }
+  }
+  async function selesaiPRK() {
+    var r = PK.selesaikan();
+    if (!r.ok) { toast(r.ralat, 'ralat'); segarkan(); return; }
+    segarkan(); await keputusanPRK();
+  }
+  async function keputusanPRK() {
+    var p = S.loadPlayer(), a = PK.getPRK(p).aktif;
+    if (!a || a.fasa !== 'keputusan' || !a.keputusan) { return; }
+    var k = a.keputusan, h = '<div class="pru-menang' + (k.menang ? '' : ' pru-kalah') + '">' + (k.menang ? '🎉 Anda Menang PRK!' : 'Anda Tewas PRK') + '</div>';
+    h += '<p style="text-align:center"><b>' + (k.menang ? (a.jenis === 'DUN' ? 'ADUN ' : 'Ahli Parlimen ') : 'Kerusi ') + esc(a.nama) + '</b></p>';
+    h += pecahHtml([{ nama: 'Anda (UMNO)', nilai: k.anda, ke: 'anda' }, { nama: k.lawanNama, nilai: k.lawan, ke: 'lawan' }]);
+    h += '<div class="kv"><span>Majoriti</span><b>' + (k.menang ? '' : 'kalah ') + fmt(k.majoriti) + ' undi</b></div><div class="kv"><span>Ayunan sentimen nasional</span><b>' + (k.sentimen > 0 ? '+' : '') + k.sentimen + '%</b></div>';
+    h += k.menang ? '<h3 style="margin:12px 0 4px">Ganjaran</h3><div class="kv"><span>Pengaruh (IP)</span><b class="pru-ok">+' + k.bonusIp + '</b></div><div class="kv"><span>Kestabilan</span><b class="pru-ok">' + esc(k.stabil) + '</b></div>'
+      : '<h3 style="margin:12px 0 4px">Penalti</h3><div class="kv"><span>Pengaruh (IP)</span><b class="pru-ng">−' + k.penaltiIp + '</b></div><div class="kv"><span>Kestabilan</span><b class="pru-ng">' + esc(k.stabil) + '</b></div>';
+    await modal({ tajuk: 'Keputusan PRK', isi: h, butang: [{ label: 'Teruskan', nilai: true, kelas: 'btn--gold' }] });
+    PK.tutupKeputusan(); segarkan();
+  }
+
   async function salurCDF(jumlah) {
     var r = KB.salurCDF(jumlah);
     toast(r.ok ? r.mesej : r.ralat, r.ok ? 'ok' : 'ralat'); segarkan();
@@ -345,6 +427,7 @@
 
   async function selepasBulan(peristiwa) {
     var senarai = peristiwa || [];
+    if (senarai.some(function (e) { return e.jenis === 'prk_isytihar'; })) { await alirPRK(); return; }
     if (senarai.some(function (e) { return e.jenis === 'pru_isytihar'; })) { await alir(); return; }
     if (senarai.some(function (e) { return e.jenis === 'kabinet_acara'; })) { await acara(); }
   }
@@ -354,7 +437,7 @@
     if (!t || t.disabled) { return; }
     var a = t.getAttribute('data-pru');
     if (a === 'buka') { alir(); } else if (a === 'tindak') { tindak(t.getAttribute('data-id')); } else if (a === 'kejutan') { sibuk = true; kejutan().then(function () { sibuk = false; segarkan(); }, function () { sibuk = false; }); }
-    else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
+    else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'prk-buka') { alirPRK(); } else if (a === 'prk-tindak') { tindakPRK(t.getAttribute('data-id')); } else if (a === 'prk-selesai') { selesaiPRK(); } else if (a === 'prk-keputusan') { keputusanPRK(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
   });
 
   W.NusaPRU_UI = { kad: kad, lencana: lencana, selepasBulan: selepasBulan, alir: alir, kejutan: kejutan, keputusan: keputusan, lobi: lobi, acara: acara, selesai: selesai };
