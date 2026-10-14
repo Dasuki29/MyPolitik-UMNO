@@ -1352,6 +1352,7 @@
 
   $('btn-tahun').addEventListener('click', lanjutBulan);
   $('btn-reset').addEventListener('click', reset);
+  if ($('btn-menu')) { $('btn-menu').addEventListener('click', function () { W.location.assign(INDEX_URL); }); }   // v7.15: kembali ke menu utama tanpa reset (kemajuan sudah disimpan automatik)
   if ($('btn-struktur')) { $('btn-struktur').addEventListener('click', paparStruktur); }
   if ($('btn-bersara')) { $('btn-bersara').addEventListener('click', bersaraAwal); }
   $('btn-simpan').addEventListener('click', simpan);
