@@ -819,7 +819,7 @@
   function panelMesyuarat(p) {
     if (!M) { return '<div class="card"><p class="empty">Modul mesyuarat tidak dimuatkan.</p></div>'; }
     var k = M.getKeadaanMesyuarat(p), h = '';
-    h += '<div class="banner"><strong>Mesyuarat Tahun ' + p.tahun + '</strong>Mesyuarat berlangsung mengikut urutan: Cawangan, Sayap (jika anda dalam laluan Pemuda, Puteri atau Wanita), Bahagian, kemudian Perhimpunan Agung (PAU). Pilih peranan anda bagi setiap usul: Pembawa, Pembahas atau Pengundi. Setiap pilihan mempengaruhi IP dan Reputasi Parti.</div>';
+    h += '<div class="banner"><strong>Mesyuarat Tahun ' + p.tahun + '</strong>Mesyuarat berlangsung mengikut urutan: Cawangan, Bahagian, kemudian Perhimpunan Agung (PAU). Jika anda dalam laluan Pemuda, Puteri atau Wanita, setiap peringkat didahului mesyuarat sayap anda; mesyuarat utama terkunci sehingga mesyuarat sayap selesai, dan sayap membawa satu usul ke mesyuarat utama. Pilih peranan anda bagi setiap usul: Pembawa, Pembahas atau Pengundi. Setiap pilihan mempengaruhi IP dan Reputasi Parti.</div>';
     var sp = M.getStatusPerwakilan(p);
     function kadPerw(nama, st) {
       var w = st.tetingkap, jarak = w ? (w.status === 'dibuka' ? 'Dibuka sekarang' : w.status === 'belum_tiba' ? 'Dibuka bulan ' + w.label.replace('Bulan ', '') + ' (' + w.jarak + ' bulan lagi)' : 'Musim tahun ini tamat') : '';
@@ -837,7 +837,7 @@
       }
       if (lv.status === 'sedang' || lv.status === 'selesai') {
         (lv.agenda || []).forEach(function (u) {
-          h += '<div class="item" style="margin-top:12px"><div class="item__head"><div class="item__title">' + esc(u.tajuk) + '</div>' +
+          h += '<div class="item" style="margin-top:12px"><div class="item__head"><div class="item__title">' + esc(u.tajuk) + (u.sumber === 'sayap' ? ' <span class="badge badge--gold">Usul Sayap</span>' : '') + '</div>' +
             '<span class="status-chip' + (u.status === 'selesai' ? ' is-done' : '') + '">' + (u.jenis === 'pemilihan' ? 'Pemilihan' : u.jenis === 'ucapan_dasar' ? 'Ucapan Dasar' : u.status === 'selesai' ? 'Diputuskan' : 'Terbuka') + '</span></div>' +
             '<p class="item__desc">' + esc(u.penerangan || '') + '</p>';
           if (u.jenis === 'pemilihan') { h += '<p class="item__desc">Keputusan pemilihan dikira apabila mesyuarat ditutup. Pastikan anda sudah mendaftar bertanding di tab Pemilihan &amp; Kempen.</p>'; }
@@ -1029,7 +1029,9 @@
     h += '<h3>Perubahan Sumber</h3><div class="ring__sumber">' + sel('Pengaruh (IP)', d.ip || 0, b.ip || 0) + sel('Dana (MYR)', d.myr || 0, b.myr || 0, 'RM ') +
       sel('AP', d.ap || 0, b.ap || 0) + sel('Reputasi', d.reputasi || 0, b.reputasi || 0) + '</div>';
     var sp = r.perwakilanStatus;
-    if (sp && r.peringkat !== 'pau') {
+    if (r.usulDibawa) { h += '<div class="banner"><strong>Usul dibawa ke ' + esc(r.usulDibawa.ke) + '</strong>' + esc(r.usulDibawa.tajuk) + '</div>'; }
+    else if (r.usulDibawa === null && r.peringkat && r.peringkat.indexOf('sayap_') === 0) { h += '<div class="banner banner--warn"><strong>Tiada usul dibawa</strong>Tiada usul sayap yang diluluskan, jadi sayap anda tidak membawa usul ke mesyuarat utama.</div>'; }
+    if (sp && r.peringkat !== 'pau' && r.peringkat.indexOf('sayap_') !== 0) {
       var st = r.peringkat === 'cawangan' ? sp.bahagian : sp.pau, nama = r.peringkat === 'cawangan' ? 'Perwakilan Bahagian' : 'Perwakilan PAU';
       h += '<div class="banner' + (st.layak ? '' : ' banner--warn') + '"><strong>' + (st.layak ? '✔ ' + esc(st.lencana || nama) : 'Belum menjadi ' + esc(nama)) + '</strong>' +
         esc(st.layak ? st.sumber : st.sebab) + '</div>';

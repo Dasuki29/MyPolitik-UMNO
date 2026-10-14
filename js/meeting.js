@@ -59,16 +59,22 @@
       pembahas: { padan: 6, tidakPadan: 2 },
       undi: { padan: 2, tidakPadan: 0 }
     },
-    HADIR: { cawangan: null, sayap: null, bahagian: 125, pau: 1500 },
+    HADIR: { cawangan: null, sayap_cawangan: null, sayap_bahagian: 60, sayap_pau: 300, bahagian: 125, pau: 1500 },
     TAHAP_HADIR_SAYAP: 0.2,                           // kehadiran sayap = 20% ahli cawangan, minimum 20 // pengundi simulasi (cawangan = 35% ahli, min 30)
     TAHAP_HADIR_CAWANGAN: 0.35
   };
 
-  var URUTAN = ['cawangan', 'sayap', 'bahagian', 'pau'];
+  // v6.1: setiap peringkat utama didahului mesyuarat sayap yang membawa SATU usul ke mesyuarat utama (laluan sayap sahaja).
+  var URUTAN = ['sayap_cawangan', 'cawangan', 'sayap_bahagian', 'bahagian', 'sayap_pau', 'pau'];
+  var INDUK = { sayap_cawangan: 'cawangan', sayap_bahagian: 'bahagian', sayap_pau: 'pau' };      // sayap -> mesyuarat utama
+  var SAYAP_UNTUK = { cawangan: 'sayap_cawangan', bahagian: 'sayap_bahagian', pau: 'sayap_pau' };
+  function adalahSayap(k) { return !!INDUK[k]; }
 
   var PERINGKAT = {
     cawangan: { kod: 'cawangan', nama: 'Mesyuarat Cawangan', jenisUsul: 'Usul Lokaliti', kesetiaan: ['akarUmbi', 'ketuaCawangan'], perwakilan: { kerusi: 5, ke: 'Bahagian', kod: 'perwakilan_cawangan' } },
-    sayap: { kod: 'sayap', nama: 'Mesyuarat Sayap', jenisUsul: 'Usul Isu Golongan Sayap', kesetiaan: ['akarUmbi', 'ajk'], perwakilan: null, sayapSahaja: true },
+    sayap_cawangan: { kod: 'sayap_cawangan', nama: 'Mesyuarat Sayap Cawangan', jenisUsul: 'Usul Isu Golongan Sayap', kesetiaan: ['akarUmbi', 'ajk'], perwakilan: null, sayapSahaja: true },
+    sayap_bahagian: { kod: 'sayap_bahagian', nama: 'Mesyuarat Sayap Bahagian', jenisUsul: 'Usul Isu Golongan Sayap', kesetiaan: ['perwakilan'], perwakilan: null, sayapSahaja: true },
+    sayap_pau: { kod: 'sayap_pau', nama: 'Perhimpunan Sayap (Pra-PAU)', jenisUsul: 'Usul Isu Golongan Sayap', kesetiaan: ['perwakilan'], perwakilan: null, sayapSahaja: true },
     bahagian: { kod: 'bahagian', nama: 'Mesyuarat Bahagian', jenisUsul: 'Usul Kerusi PRU dan Politik', kesetiaan: ['perwakilan'], perwakilan: { kerusi: 10, ke: 'PAU', kod: 'perwakilan_bahagian' } },
     pau: { kod: 'pau', nama: 'Perhimpunan Agung UMNO (PAU)', jenisUsul: 'Usul Dasar Nasional', kesetiaan: ['perwakilan'], perwakilan: null, pusat: true }
   };
@@ -105,7 +111,7 @@
       { kod: 'cukai_baharu',    tajuk: 'Perkenalkan cukai baharu bagi menampung subsidi', penerangan: 'Cukai baharu dicadang untuk membiayai bantuan, dengan risiko bantahan awam.', populariti: 30, nilai: -3 }
     ],
     /* v6.0: usul isu golongan bagi Mesyuarat Sayap. Setiap sayap membincangkan isu kumpulannya sendiri. */
-    sayap_pemuda: [
+    sayap_cawangan_pemuda: [
       { kod: 'kerja_siswazah',  tajuk: 'Skim penempatan kerja dan gaji permulaan siswazah', penerangan: 'Siswazah muda sukar mendapat pekerjaan setimpal. Sayap mahu skim penempatan dengan gaji permulaan yang adil.', populariti: 70, nilai: 4 },
       { kod: 'rumah_pertama',   tajuk: 'Pembiayaan rumah pertama dengan bayaran muka rendah', penerangan: 'Belia berpendapatan sederhana gagal memiliki rumah pertama akibat harga dan syarat pembiayaan.', populariti: 66, nilai: 3 },
       { kod: 'kemahiran_gig',   tajuk: 'Latihan kemahiran digital dan perlindungan pekerja gig', penerangan: 'Ramai belia bergantung kepada kerja gig tanpa caruman dan perlindungan.', populariti: 64, nilai: 3 },
@@ -113,7 +119,7 @@
       { kod: 'had_umur_pemuda', tajuk: 'Turunkan had umur keahlian Pemuda kepada 35 tahun', penerangan: 'Cadangan yang mengasingkan ramai ahli yang kini berusia 36 hingga 40 tahun.', populariti: 28, nilai: -3 },
       { kod: 'yuran_program',   tajuk: 'Kenakan yuran lebih tinggi untuk program Pemuda', penerangan: 'Yuran dinaikkan bagi menampung kos, walaupun ramai ahli belum bekerja tetap.', populariti: 33, nilai: -2 }
     ],
-    sayap_puteri: [
+    sayap_cawangan_puteri: [
       { kod: 'keselamatan_muda', tajuk: 'Keselamatan dan pencegahan gangguan di tempat kerja dan kampus', penerangan: 'Ahli Puteri mahu saluran aduan yang selamat dan tindakan tegas terhadap gangguan.', populariti: 70, nilai: 4 },
       { kod: 'gaji_setara',     tajuk: 'Perjuangkan gaji dan peluang kerjaya yang setara', penerangan: 'Perempuan muda sering terlepas kenaikan pangkat dan gaji yang sama dengan rakan lelaki.', populariti: 66, nilai: 3 },
       { kod: 'geran_usahawan_puteri', tajuk: 'Geran perniagaan kecil untuk usahawan muda perempuan', penerangan: 'Menyediakan modal permulaan dan latihan untuk usahawan perempuan muda.', populariti: 64, nilai: 3 },
@@ -121,13 +127,55 @@
       { kod: 'kurang_rangkaian', tajuk: 'Kurangkan peruntukan program rangkaian Puteri', penerangan: 'Peruntukan dikurangkan walaupun program rangkaian menjadi nadi sayap.', populariti: 30, nilai: -2 },
       { kod: 'wajib_hadir',     tajuk: 'Wajibkan kehadiran semua aktiviti sayap', penerangan: 'Ahli yang bekerja dan belajar merungut tidak mampu hadir semua program.', populariti: 32, nilai: -2 }
     ],
-    sayap_wanita: [
+    sayap_cawangan_wanita: [
       { kod: 'jagaan_warga',    tajuk: 'Pusat jagaan harian dan elaun penjaga warga emas', penerangan: 'Ramai wanita menjaga ibu bapa dan mentua tanpa sokongan kewangan atau kemudahan jagaan.', populariti: 70, nilai: 4 },
       { kod: 'harga_dapur',     tajuk: 'Kawalan harga barang keperluan dapur', penerangan: 'Kos makanan isi rumah naik dan ibu rumah tangga menanggung bebannya.', populariti: 68, nilai: 4 },
       { kod: 'saringan_wanita', tajuk: 'Saringan kesihatan wanita percuma (payudara dan serviks)', penerangan: 'Saringan awal menyelamatkan nyawa tetapi kosnya membebankan golongan berpendapatan rendah.', populariti: 66, nilai: 3 },
       { kod: 'ibu_tunggal',     tajuk: 'Bantuan modal dan latihan untuk ibu tunggal', penerangan: 'Ibu tunggal memerlukan modal kecil dan kemahiran untuk menjana pendapatan sendiri.', populariti: 64, nilai: 3 },
       { kod: 'kurang_taska',    tajuk: 'Kurangkan subsidi tadika dan taska komuniti', penerangan: 'Subsidi dikurangkan bagi menjimatkan peruntukan, walaupun ibu bekerja bergantung kepadanya.', populariti: 28, nilai: -3 },
       { kod: 'caj_klinik',      tajuk: 'Naikkan caj klinik komuniti', penerangan: 'Caj dinaikkan bagi menampung kos, tetapi warga emas dan isi rumah miskin terkesan.', populariti: 30, nilai: -3 }
+    ],
+    sayap_bahagian_pemuda: [
+      { kod: 'bhg_pemuda_latihan', tajuk: 'Pusat latihan kemahiran belia di setiap DUN', penerangan: 'Bahagian diminta menaja pusat latihan kemahiran untuk belia menganggur di kawasan DUN.', populariti: 68, nilai: 3 },
+      { kod: 'bhg_pemuda_calon', tajuk: 'Beri kuota calon muda dalam senarai calon PRU', penerangan: 'Pemuda mahu sekurang-kurangnya satu pertiga calon bahagian terdiri daripada belia.', populariti: 64, nilai: 4 },
+      { kod: 'bhg_pemuda_sukan', tajuk: 'Dana tetap sukan dan kerja sukarela belia', penerangan: 'Peruntukan tahunan bahagian bagi program sukan dan khidmat komuniti belia.', populariti: 60, nilai: 2 },
+      { kod: 'bhg_pemuda_skim_rumah', tajuk: 'Skim sewa-beli rumah belia di kawasan bahagian', penerangan: 'Bahagian mendesak kerajaan negeri menyediakan rumah mampu milik untuk belia.', populariti: 66, nilai: 3 },
+      { kod: 'bhg_pemuda_potong', tajuk: 'Potong peruntukan aktiviti Pemuda bahagian', penerangan: 'Peruntukan dikurangkan bagi menampung kos jentera pilihan raya.', populariti: 27, nilai: -3 }
+    ],
+    sayap_bahagian_puteri: [
+      { kod: 'bhg_puteri_selamat', tajuk: 'Pusat aduan dan bantuan guaman percuma untuk perempuan muda', penerangan: 'Bahagian menyediakan kaunter aduan gangguan dan bantuan guaman asas.', populariti: 68, nilai: 3 },
+      { kod: 'bhg_puteri_calon', tajuk: 'Kuota calon perempuan muda dalam pilihan raya', penerangan: 'Puteri mahu wakil perempuan muda dalam senarai calon bahagian.', populariti: 63, nilai: 4 },
+      { kod: 'bhg_puteri_biasiswa', tajuk: 'Dana latihan kerjaya dan mentor untuk Puteri', penerangan: 'Program mentor dengan pemimpin wanita untuk perempuan muda bekerjaya.', populariti: 61, nilai: 3 },
+      { kod: 'bhg_puteri_ruang', tajuk: 'Ruang kerja bersama dan taska di pejabat bahagian', penerangan: 'Menyediakan ruang yang mesra keluarga untuk ahli yang bekerja.', populariti: 58, nilai: 2 },
+      { kod: 'bhg_puteri_hapus', tajuk: 'Hapuskan jawatankuasa kebajikan Puteri bahagian', penerangan: 'Jawatankuasa dibubarkan bagi menjimatkan kos pentadbiran.', populariti: 26, nilai: -3 }
+    ],
+    sayap_bahagian_wanita: [
+      { kod: 'bhg_wanita_klinik', tajuk: 'Klinik bergerak untuk warga emas dan ibu mengandung', penerangan: 'Bahagian menaja klinik bergerak ke kampung dan taman perumahan.', populariti: 69, nilai: 3 },
+      { kod: 'bhg_wanita_bantuan', tajuk: 'Dana kecemasan isi rumah untuk ibu tunggal', penerangan: 'Tabung bantuan segera bagi ibu tunggal dan isi rumah berpendapatan rendah.', populariti: 66, nilai: 3 },
+      { kod: 'bhg_wanita_calon', tajuk: 'Kuota calon wanita dalam senarai calon bahagian', penerangan: 'Wanita mahu lebih ramai calon wanita bagi kerusi DUN dan Parlimen.', populariti: 62, nilai: 4 },
+      { kod: 'bhg_wanita_koperasi', tajuk: 'Koperasi dan pasar mini usahawan wanita', penerangan: 'Menyediakan tapak niaga dan koperasi untuk usahawan mikro wanita.', populariti: 60, nilai: 2 },
+      { kod: 'bhg_wanita_yuran', tajuk: 'Naikkan yuran keahlian Wanita bahagian', penerangan: 'Yuran dinaikkan walaupun ramai ahli warga emas berpendapatan tetap.', populariti: 25, nilai: -3 }
+    ],
+    sayap_pau_pemuda: [
+      { kod: 'pau_pemuda_gaji', tajuk: 'Gaji minimum belia dan skim latihan industri kebangsaan', penerangan: 'Pemuda membawa usul dasar gaji permulaan dan latihan industri ke peringkat nasional.', populariti: 70, nilai: 4 },
+      { kod: 'pau_pemuda_umur', tajuk: 'Turunkan umur layak mengundi dan bertanding', penerangan: 'Belia mahu penyertaan politik yang lebih awal.', populariti: 55, nilai: 3 },
+      { kod: 'pau_pemuda_digital', tajuk: 'Dasar ekonomi digital dan perlindungan pekerja gig', penerangan: 'Dasar nasional bagi caruman dan perlindungan sosial pekerja gig.', populariti: 66, nilai: 3 },
+      { kod: 'pau_pemuda_perumahan', tajuk: 'Dasar perumahan belia kebangsaan', penerangan: 'Pembiayaan dan bayaran muka rendah bagi pembeli rumah pertama.', populariti: 65, nilai: 3 },
+      { kod: 'pau_pemuda_hadkan', tajuk: 'Hadkan jawatan Pemuda kepada mereka di bawah 30 tahun', penerangan: 'Usul yang menyingkirkan ramai pemimpin Pemuda yang sedia ada.', populariti: 24, nilai: -4 }
+    ],
+    sayap_pau_puteri: [
+      { kod: 'pau_puteri_undang', tajuk: 'Akta anti-gangguan yang lebih tegas', penerangan: 'Puteri membawa usul pindaan undang-undang gangguan ke peringkat nasional.', populariti: 70, nilai: 4 },
+      { kod: 'pau_puteri_gaji', tajuk: 'Dasar gaji setara dan cuti keluarga', penerangan: 'Dasar nasional bagi pembayaran setara dan cuti keluarga yang adil.', populariti: 66, nilai: 3 },
+      { kod: 'pau_puteri_usahawan', tajuk: 'Dana usahawan perempuan muda kebangsaan', penerangan: 'Dana pembiayaan mudah untuk usahawan perempuan muda.', populariti: 63, nilai: 3 },
+      { kod: 'pau_puteri_mental', tajuk: 'Perkhidmatan kesihatan mental dalam sistem awam', penerangan: 'Kaunseling dan sokongan kesihatan mental di klinik kerajaan.', populariti: 64, nilai: 3 },
+      { kod: 'pau_puteri_kuota', tajuk: 'Kurangkan kuota sayap Puteri dalam MKT', penerangan: 'Usul yang melemahkan perwakilan sayap Puteri dalam Majlis Kerja Tertinggi.', populariti: 22, nilai: -4 }
+    ],
+    sayap_pau_wanita: [
+      { kod: 'pau_wanita_penjaga', tajuk: 'Elaun penjaga dan skim jagaan warga emas nasional', penerangan: 'Wanita membawa usul bantuan penjaga keluarga ke peringkat nasional.', populariti: 70, nilai: 4 },
+      { kod: 'pau_wanita_harga', tajuk: 'Kawalan harga barang asas dan subsidi dapur', penerangan: 'Dasar nasional bagi mengawal kos sara hidup isi rumah.', populariti: 67, nilai: 3 },
+      { kod: 'pau_wanita_saringan', tajuk: 'Saringan kesihatan wanita percuma peringkat nasional', penerangan: 'Saringan kanser payudara dan serviks percuma untuk semua wanita.', populariti: 65, nilai: 3 },
+      { kod: 'pau_wanita_taska', tajuk: 'Subsidi taska dan tadika komuniti nasional', penerangan: 'Mengurangkan beban penjagaan anak bagi ibu bekerja.', populariti: 62, nilai: 3 },
+      { kod: 'pau_wanita_cukai', tajuk: 'Kenakan cukai tambahan ke atas barang keperluan wanita', penerangan: 'Cukai dikenakan bagi menambah hasil negara, tetapi membebankan isi rumah.', populariti: 20, nilai: -4 }
     ]
   };
 
@@ -161,21 +209,23 @@
   var NAMA_SAYAP = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita' };
   /** Namakan Mesyuarat Sayap mengikut sayap pemain. */
   function labelSayap(p) {
-    var s = sayapPemain(p);
-    PERINGKAT.sayap.nama = s ? 'Mesyuarat Sayap ' + NAMA_SAYAP[s] : 'Mesyuarat Sayap';
-    PERINGKAT.sayap.jenisUsul = s ? 'Usul Isu Golongan ' + NAMA_SAYAP[s] : 'Usul Isu Golongan Sayap';
+    var s = sayapPemain(p), N = s ? NAMA_SAYAP[s] : 'Sayap', u = 'Usul Isu Golongan ' + N;
+    PERINGKAT.sayap_cawangan.nama = 'Mesyuarat ' + N + ' Cawangan';
+    PERINGKAT.sayap_bahagian.nama = 'Mesyuarat ' + N + ' Bahagian';
+    PERINGKAT.sayap_pau.nama = 'Perhimpunan ' + N + ' (Pra-PAU)';
+    ['sayap_cawangan', 'sayap_bahagian', 'sayap_pau'].forEach(function (k) { PERINGKAT[k].jenisUsul = u; });
   }
 
   function keadaanMesyuarat(p) {
     var m = p.mesyuarat;
-    if (!m || m.tahun !== p.tahun) { return { tahun: p.tahun, cawangan: null, bahagian: null, pau: null }; }
+    if (!m || m.tahun !== p.tahun) { return { tahun: p.tahun, cawangan: null, bahagian: null, pau: null }; }   // peringkat sayap_* dicipta apabila dimulakan
     return salin(m);
   }
 
   function pemilihanAktif(p) { return !!(E && E.adalahTahunPemilihan(p.tahun)); }
 
   /** Adakah mesyuarat peringkat ini mengadakan pengundian? Perwakilan: setiap tahun. Pusat (PAU): tahun pemilihan sahaja. */
-  function adaPemilihan(p, peringkat) { return !!E && peringkat !== 'sayap' && (peringkat === 'pau' ? pemilihanAktif(p) : true); }
+  function adaPemilihan(p, peringkat) { return !!E && !adalahSayap(peringkat) && (peringkat === 'pau' ? pemilihanAktif(p) : true); }
 
   function pegangan(p) {
     if (J) { return { per: J.peringkatTertinggi(p), pw: J.perwakilanSah(p, 'cawangan'), pp: J.perwakilanSah(p, 'bahagian'), exB: J.exOfficio(p, 'bahagian'), exP: J.exOfficio(p, 'pau') }; }
@@ -187,7 +237,10 @@
   /** Siapa boleh hadir. Bahagian dan PAU: perwakilan TAHUN INI atau pemegang jawatan ex-officio. */
   function bolehHadir(p, peringkat) {
     if (peringkat === 'cawangan') { return { ok: true }; }
-    if (peringkat === 'sayap') { return sayapPemain(p) ? { ok: true } : { ok: false, sebab: 'Mesyuarat Sayap hanya untuk laluan sayap (Pemuda, Puteri atau Wanita). Laluan anda ialah Utama / Induk.' }; }
+    if (adalahSayap(peringkat)) {                                         // v6.1: mesyuarat sayap
+      if (!sayapPemain(p)) { return { ok: false, sebab: 'Mesyuarat sayap hanya untuk laluan sayap (Pemuda, Puteri atau Wanita). Laluan anda ialah Utama / Induk.' }; }
+      return peringkat === 'sayap_cawangan' ? { ok: true } : bolehHadir(p, INDUK[peringkat]);    // sayap bahagian / pau: layak sama seperti mesyuarat utamanya
+    }
     var g = pegangan(p);
     if (peringkat === 'bahagian') {
       return (g.pw.sah || g.exB.sah) ? { ok: true }
@@ -215,6 +268,10 @@
     if (w && w.status === 'tamat') {
       return { status: 'terlepas', sebab: 'Musim ' + PERINGKAT[peringkat].nama + ' (' + w.label.toLowerCase() + ') tahun ' + p.tahun + ' sudah tamat.' };
     }
+    var sy = SAYAP_UNTUK[peringkat];                                            // v6.1: mesyuarat utama terkunci sehingga mesyuarat sayap selesai
+    if (sy && sayapPemain(p) && bolehHadir(p, sy).ok && !(ms[sy] && ms[sy].status === 'selesai')) {
+      return { status: 'terkunci', sebab: 'Mulakan dan selesaikan ' + PERINGKAT[sy].nama + ' dahulu. Sayap anda membawa satu usul ke ' + PERINGKAT[peringkat].nama + '.' };
+    }
     for (var i = 0; !w && i < URUTAN.indexOf(peringkat); i++) {            // tanpa takwim: urutan peringkat dikuatkuasakan
       var sebelum = URUTAN[i], ss = ms[sebelum];
       if (bolehHadir(p, sebelum).ok && !(ss && ss.status === 'selesai')) {
@@ -225,7 +282,7 @@
   }
 
   function bilHadir(p, peringkat) {
-    if (peringkat === 'sayap') {
+    if (peringkat === 'sayap_cawangan') {
       var j2 = p.cawanganInfo && p.cawanganInfo.jumlahAhli ? p.cawanganInfo.jumlahAhli : 100;
       return Math.max(20, Math.round(j2 * CONFIG.TAHAP_HADIR_SAYAP));
     }
@@ -236,12 +293,18 @@
     return CONFIG.HADIR[peringkat];
   }
 
+  /** v6.1: usul yang dibawa oleh sayap ke mesyuarat utama (daripada ringkasan mesyuarat sayap yang selesai), atau null. */
+  function usulDibawa(p, peringkat) {
+    var sk = SAYAP_UNTUK[peringkat], m = p.mesyuarat && p.mesyuarat.tahun === p.tahun ? p.mesyuarat[sk] : null;
+    return m && m.status === 'selesai' && m.ringkasan && m.ringkasan.usulDibawa ? m.ringkasan.usulDibawa : null;
+  }
+
   /* ------------------------------------------------------------------------
      3. AGENDA
      ------------------------------------------------------------------------ */
   function janaAgenda(p, peringkat) {
     var rng = S.rngBerbenih(p.id + '|' + p.tahun + '|mesyuarat|' + peringkat);
-    var agenda = [], pool = (peringkat === 'sayap' ? KOLAM['sayap_' + sayapPemain(p)] : KOLAM[peringkat]).slice(), dipakai = {};
+    var agenda = [], pool = (adalahSayap(peringkat) ? KOLAM[peringkat + '_' + sayapPemain(p)] : KOLAM[peringkat]).slice(), dipakai = {};
 
     // Usul Lokaliti bermula daripada isu tempatan yang dicatat melalui Sembang Warung.
     if (peringkat === 'cawangan') {
@@ -252,6 +315,16 @@
           populariti: clamp(55 + i.tahap * 5, 0, 100), nilai: i.tahap, status: 'terbuka', pilihan: null, keputusan: null
         });
         dipakai['isu_' + i.kod] = true;
+      });
+    }
+
+    // v6.1: usul yang dibawa oleh sayap (lulus dalam mesyuarat sayap) ialah usul pertama dalam mesyuarat utama.
+    var bawa = usulDibawa(p, peringkat);
+    if (bawa) {
+      agenda.push({
+        id: peringkat + '-' + p.tahun + '-sayap-' + bawa.kod, jenis: 'usul', kod: bawa.kod, sumber: 'sayap', sayap: bawa.sayap,
+        tajuk: 'Usul ' + NAMA_SAYAP[bawa.sayap] + ': ' + bawa.tajuk, penerangan: bawa.penerangan + ' (Dibawa oleh sayap ' + NAMA_SAYAP[bawa.sayap] + ' selepas diluluskan dalam mesyuarat sayap.)',
+        populariti: clamp(bawa.populariti + 6, 5, 95), nilai: bawa.nilai, status: 'terbuka', pilihan: null, keputusan: null
       });
     }
 
@@ -362,7 +435,12 @@
           (w ? (w.status === 'dibuka' ? 'Dibuka sekarang (' + w.label.toLowerCase() + ').' : w.status === 'belum_tiba' ? 'Dibuka pada ' + w.label.toLowerCase() + ', ' + w.jarak + ' bulan lagi.' : 'Musim tahun ini sudah tamat.') : ''));
       } else { langkah.push('Anda belum layak hadir ' + nama + '. ' + st.sebab); }
     }
-    if (peringkat === 'cawangan' || peringkat === 'sayap') { buka('bahagian', 'Mesyuarat Bahagian', sp.bahagian); }
+    if (adalahSayap(peringkat)) {                                          // v6.1: selepas mesyuarat sayap, mesyuarat utama dibuka
+      var ut = INDUK[peringkat], db = usulDibawa(p, ut), wu = tetingkap(p, ut);
+      langkah.push(db ? 'Usul "' + db.tajuk + '" diluluskan dan akan dibawa oleh sayap anda ke ' + PERINGKAT[ut].nama + '.' : 'Tiada usul sayap yang diluluskan, jadi tiada usul sayap dibawa ke ' + PERINGKAT[ut].nama + '.');
+      langkah.push('Anda kini boleh memulakan ' + PERINGKAT[ut].nama + (wu && wu.status === 'belum_tiba' ? ' (dibuka pada ' + wu.label.toLowerCase() + ').' : '.'));
+    }
+    else if (peringkat === 'cawangan') { buka('bahagian', 'Mesyuarat Bahagian', sp.bahagian); }
     else if (peringkat === 'bahagian') { buka('pau', 'Perhimpunan Agung (PAU)', sp.pau); }
     else { langkah.push('Perhimpunan Agung tahun ' + p.tahun + ' selesai. Bulan 9 hingga 12 ialah fasa pasca-PAU. Mandat perwakilan anda tamat pada hujung tahun; bertanding semula di Cawangan tahun depan.'); }
     if (K) {
@@ -411,14 +489,14 @@
     var sy = sayapPemain(p);
     return {
       tahun: p.tahun, pemilihan: pemilihanAktif(p),
-      peringkat: URUTAN.filter(function (k) { return k !== 'sayap' || !!sy; }).map(function (k) {
+      peringkat: URUTAN.filter(function (k) { return !adalahSayap(k) || !!sy; }).map(function (k) {
         var st = statusPeringkat(p, ms, k), m = ms[k], agenda = m ? m.agenda : null;
         return {
           kod: k, nama: PERINGKAT[k].nama, jenisUsul: PERINGKAT[k].jenisUsul,
           status: st.status, sebab: st.sebab, tetingkap: tetingkap(p, k),
           bilUsul: agenda ? agenda.filter(function (a) { return a.jenis !== 'pemilihan'; }).length : null,
           bilSelesai: agenda ? agenda.filter(function (a) { return a.jenis !== 'pemilihan' && a.status === 'selesai'; }).length : null,
-          agenda: agenda, ringkasan: m && m.ringkasan ? m.ringkasan : null
+          agenda: agenda, ringkasan: m && m.ringkasan ? m.ringkasan : null, sayap: adalahSayap(k), induk: INDUK[k] || null
         };
       })
     };
@@ -552,6 +630,18 @@
       }).map(function (c) { return c.jawatan; }),
       peristiwa: []
     };
+    ringkasan.usulDibawa = null;                                              // v6.1: satu usul sayap dibawa ke mesyuarat utama
+    if (adalahSayap(peringkat)) {
+      var calon = m.agenda.filter(function (a) { return a.jenis === 'usul' && a.keputusan && a.keputusan.lulus && a.nilai > 0; });
+      calon.sort(function (a, b) {
+        var pa = a.pilihan && a.pilihan.peranan === 'pembawa' ? 1 : 0, pb = b.pilihan && b.pilihan.peranan === 'pembawa' ? 1 : 0;
+        return pb - pa || b.keputusan.sokongan - a.keputusan.sokongan;
+      });
+      if (calon.length) {
+        var c = calon[0];
+        ringkasan.usulDibawa = { kod: c.kod, tajuk: c.tajuk, penerangan: c.penerangan, populariti: c.populariti, nilai: c.nilai, sayap: sayapPemain(p), ke: PERINGKAT[INDUK[peringkat]].nama };
+      }
+    }
     var apUsul = 0;
     usulList.forEach(function (a) { if (a.pilihan) { apUsul += CONFIG.KOS_AP[a.pilihan.peranan] || 0; } });
     ringkasan.perubahan = {
@@ -573,7 +663,8 @@
 
     var peristiwa = [];
     pemilihan.forEach(function (x) { if (x.ok) { x.peristiwa.forEach(function (e) { peristiwa.push(e); }); } });
-    var mesej = PERINGKAT[peringkat].nama + ' ditutup. ' + ringkasan.lulus + ' usul lulus, ' + ringkasan.ditolak + ' ditolak.';
+    var mesej = PERINGKAT[peringkat].nama + ' ditutup. ' + ringkasan.lulus + ' usul lulus, ' + ringkasan.ditolak + ' ditolak.' +
+      (adalahSayap(peringkat) ? (ringkasan.usulDibawa ? ' Usul dibawa ke ' + ringkasan.usulDibawa.ke + ': ' + ringkasan.usulDibawa.tajuk + '.' : ' Tiada usul dibawa ke mesyuarat utama.') : '');
     pemilihan.forEach(function (x) { if (x.ok) { mesej += ' ' + x.mesej; } else { mesej += ' ' + x.ralat; } });
     var penuh = getRingkasan(peringkat, r.profil);
     return { ok: true, mesej: mesej, ringkasan: penuh || ringkasan, pemilihan: pemilihan, peristiwa: peristiwa, profil: r.profil };

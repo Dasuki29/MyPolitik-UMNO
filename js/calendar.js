@@ -73,9 +73,11 @@
 
     /* Tetingkap setiap mesyuarat / pengundian. 'pusat' dalam election.js dipetakan kepada 'pau'. */
     TETINGKAP: {
+      sayap_cawangan: { mula: 4, tamat: 6, nama: 'Mesyuarat Sayap Cawangan' },     // v6.1: laluan sayap sahaja; mesti selesai sebelum mesyuarat utama
       cawangan: { mula: 4, tamat: 6, nama: 'Mesyuarat Cawangan' },
-      sayap:    { mula: 5, tamat: 6, nama: 'Mesyuarat Sayap' },            // v6.0: sebelum Mesyuarat Bahagian (laluan sayap sahaja)
+      sayap_bahagian: { mula: 7, tamat: 7, nama: 'Mesyuarat Sayap Bahagian' },
       bahagian: { mula: 7, tamat: 7, nama: 'Mesyuarat Bahagian' },
+      sayap_pau: { mula: 8, tamat: 8, nama: 'Perhimpunan Sayap (Pra-PAU)' },
       pau:      { mula: 8, tamat: 8, nama: 'Perhimpunan Agung UMNO (PAU)' }
     }
   };
@@ -187,7 +189,7 @@
       fasa: fasa, bonusAkarUmbi: fasa.kod === 'akar_umbi' ? CONFIG.BONUS_AKAR_UMBI : 0,
       bulanSeterusnya: tahunBaharu ? 1 : bulan + 1, tahunSeterusnya: tahunBaharu ? p.tahun + 1 : p.tahun,
       tahunBaharuSeterusnya: tahunBaharu,
-      tetingkap: { cawangan: getTetingkap('cawangan', bulan), sayap: getTetingkap('sayap', bulan), bahagian: getTetingkap('bahagian', bulan), pau: getTetingkap('pau', bulan) },
+      tetingkap: { cawangan: getTetingkap('cawangan', bulan), sayap_cawangan: getTetingkap('sayap_cawangan', bulan), bahagian: getTetingkap('bahagian', bulan), sayap_bahagian: getTetingkap('sayap_bahagian', bulan), pau: getTetingkap('pau', bulan), sayap_pau: getTetingkap('sayap_pau', bulan) },
       jadual: jadual
     };
   }
@@ -226,9 +228,9 @@
       if (lv.status === 'sedang') {
         var r = M.tutupMesyuarat(k);
         if (r.ok) { out.push({ jenis: 'mesyuarat_ditutup_auto', mesej: t.nama + ' ditutup secara automatik kerana musim tamat. ' + r.mesej }); (r.peristiwa || []).forEach(function (e) { out.push(e); }); }
-      } else if (lv.status === 'boleh_mula') {
+      } else if (lv.status === 'boleh_mula' || lv.status === 'terkunci') {     // terkunci = mesyuarat sayap tidak diselesaikan (v6.1): terlepas juga
         out.push({ jenis: 'mesyuarat_terlepas', mesej: t.nama + ' tahun ' + p.tahun + ' terlepas kerana tidak dihadiri.' });
-        if (E && k !== 'sayap') {
+        if (E && k.indexOf('sayap_') !== 0) {
           (E.jalankanPemilihanPeringkat(k === 'pau' ? 'pusat' : k) || []).forEach(function (x) {
             if (x.ok) { out.push({ jenis: 'pemilihan_auto', mesej: 'Pengundian dijalankan oleh urus setia. ' + x.mesej }); (x.peristiwa || []).forEach(function (e) { out.push(e); }); }
           });
@@ -253,7 +255,7 @@
         if (tk.bulan !== t.tamat) { return; }
         var lv = ms.peringkat.filter(function (x) { return x.kod === k; })[0];
         if (lv && lv.status === 'sedang') { amaran.push(t.nama + ' sedang berjalan dan akan ditutup secara automatik.'); }
-        else if (lv && lv.status === 'boleh_mula') { amaran.push(t.nama + ' belum dimulakan dan akan terlepas.'); }
+        else if (lv && (lv.status === 'boleh_mula' || lv.status === 'terkunci')) { amaran.push(t.nama + ' belum dimulakan dan akan terlepas.'); }
       });
     }
     var fasaBaharu = getFasa(tk.bulanSeterusnya);
