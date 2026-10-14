@@ -398,7 +398,8 @@
    * Setiap cawangan (Lokaliti): { id, kod, nama, bahagianId, bahagianNama, dunId, dunNama, negeri,
    *                               jumlahAhli, lelaki, perempuan, bawah40, atas40, lokaliti:[] }
    */
-  function rowsToHierarchy(rows) {
+  function rowsToHierarchy(rows, hopts) {
+    hopts = hopts || {};
     if (!rows || !rows.length) { throw new Error('CSV kosong'); }
     var peta = petakanLajur(rows), idx = peta.idx;
     var parlimenMap = {}, senarai = [], dilihat = {}, bilCawangan = 0, jumlahAhli = 0;
@@ -455,14 +456,16 @@
     senarai.sort(function (a, b) { return a.kod < b.kod ? -1 : 1; });
     senarai.forEach(function (p) {
       p.nama = p.nama || ('Parlimen ' + p.kod);
-      p.negeri = p._negeriSheet || negeriDariKod(p.kod);
+      p.negeri = hopts.negeriNama || p._negeriSheet || negeriDariKod(p.kod);     // v7.14: nama tab = nama negeri (lajur Negeri boleh kosong)
       delete p._negeriSheet; delete p._d;
       p.dun.sort(function (a, b) { return a.kod < b.kod ? -1 : 1; });
+      // v7.14: Wilayah Persekutuan (KL, Putrajaya, Labuan) hanya ada Parlimen: semua lajur DUN kosong
+      p.tiadaDUN = p.dun.length > 0 && p.dun.every(function (d) { return !d.nama; });
       p.dun.forEach(function (d) {
-        d.nama = d.nama || ('DUN ' + d.kod);
+        d.tiada = p.tiadaDUN; d.nama = p.tiadaDUN ? '' : (d.nama || ('DUN ' + d.kod));
         d.cawangan.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
         d.cawangan.forEach(function (c) {
-          c.bahagianNama = p.nama; c.dunNama = d.nama; c.negeri = p.negeri;
+          c.bahagianNama = p.nama; c.dunNama = d.nama; c.negeri = p.negeri; c.tiadaDUN = !!p.tiadaDUN;
         });
         bilDun++;
       });
@@ -537,17 +540,19 @@
     return parseCSV(t);
   }
 
-  function cacheWrite(url, csv) {
+  function kunciCache(tab) { return tab ? CONFIG.CACHE_KEY + ':' + String(tab).toLowerCase() : CONFIG.CACHE_KEY; }
+
+  function cacheWrite(url, csv, tab) {
     try {
       if (typeof localStorage === 'undefined') { return; }
-      localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({ url: url, simpanPada: Date.now(), csv: csv }));
+      localStorage.setItem(kunciCache(tab), JSON.stringify({ url: url, simpanPada: Date.now(), csv: csv }));
     } catch (e) { /* storan penuh atau disekat: abaikan */ }
   }
 
-  function cacheRead(url) {
+  function cacheRead(url, tab) {
     try {
       if (typeof localStorage === 'undefined') { return null; }
-      var raw = localStorage.getItem(CONFIG.CACHE_KEY);
+      var raw = localStorage.getItem(kunciCache(tab));
       if (!raw) { return null; }
       var o = JSON.parse(raw);
       return (o && o.url === url && typeof o.csv === 'string') ? o : null;
@@ -567,9 +572,9 @@
   async function loadPartyData(opts) {
     opts = opts || {};
     var urls = [];
-    var as = opts.appsScriptUrl || CONFIG.APPS_SCRIPT_URL, csvUrl = opts.url || CONFIG.SHEET_CSV_URL;
-    if (as) { urls.push({ jenis: 'apps-script', url: as }); }
-    if (csvUrl) { urls.push({ jenis: 'csv', url: csvUrl }); }
+    var as = opts.appsScriptUrl || CONFIG.APPS_SCRIPT_URL, csvUrl = opts.url || CONFIG.SHEET_CSV_URL, tab = opts.tab || null;
+    if (as) { urls.push({ jenis: 'apps-script', url: tab ? as + (as.indexOf('?') >= 0 ? '&' : '?') + 'sheet=' + encodeURIComponent(tab) : as }); }
+    if (csvUrl && !tab) { urls.push({ jenis: 'csv', url: csvUrl }); }       // CSV Published hanya satu tab; tab negeri perlukan Apps Script
     var hasil = { source: 'fallback', sumber: 'contoh', amaran: [], dimuatPada: Date.now() }, h = null;
 
     if (!opts.paksaFallback) {
@@ -582,9 +587,9 @@
           for (var cuba = 0; cuba < 2 && !h; cuba++) {
             try {
               var teks = await fetchSheetCSV(urls[i].url, opts.timeoutMs);
-              h = rowsToHierarchy(teksKeBaris(teks));
+              h = rowsToHierarchy(teksKeBaris(teks), { negeriNama: tab });
               hasil.source = 'sheet'; hasil.sumber = urls[i].jenis; hasil.urlDigunakan = urls[i].url;
-              cacheWrite(urls[i].url, teks);
+              cacheWrite(urls[i].url, teks, tab);
             } catch (e) {
               var msg = (urls[i].jenis === 'apps-script' ? 'Apps Script' : 'CSV') + ': ' + (e && e.message ? e.message : e);
               if (cuba === 1) { hasil.amaran.push('Gagal mengambil Google Sheets (' + msg + ')'); }
@@ -595,10 +600,10 @@
       }
       if (!h) {
         for (var k = 0; k < urls.length && !h; k++) {
-          var c = cacheRead(urls[k].url);
+          var c = cacheRead(urls[k].url, tab);
           if (!c) { continue; }
           try {
-            h = rowsToHierarchy(teksKeBaris(c.csv));
+            h = rowsToHierarchy(teksKeBaris(c.csv), { negeriNama: tab });
             hasil.source = 'cache'; hasil.sumber = 'cache';
             hasil.amaran.push('Menggunakan salinan tersimpan pada ' + new Date(c.simpanPada).toLocaleString('ms-MY') + '.');
           } catch (e) { h = null; }
@@ -606,9 +611,40 @@
       }
     }
 
+    if (!h && tab) { throw new Error('Data negeri ' + tab + ' tidak dapat dimuatkan. ' + (hasil.amaran.join(' ') || '')); }
     if (!h) { h = rowsToHierarchy(fallbackRows()); hasil.source = 'fallback'; hasil.sumber = 'contoh'; }
     hasil.negeri = h.negeri; hasil.bahagian = h.bahagian; hasil.jumlah = h.jumlah;
     return hasil;
+  }
+
+  /**
+   * v7.14: senarai tab negeri daripada Apps Script (?senarai=1). Pulang { tab:[nama...], sumber:'apps-script'|'cache' }
+   * atau null jika Apps Script lama (tiada sokongan senarai) / tidak tersedia. Tab bermula dengan '_' diabaikan oleh Apps Script.
+   */
+  async function loadSenaraiTab(opts) {
+    opts = opts || {};
+    var as = opts.appsScriptUrl || CONFIG.APPS_SCRIPT_URL;
+    if (!as) { return null; }
+    var kunci = CONFIG.CACHE_KEY + ':senarai';
+    function sahTab(j) { return j && j.ok !== false && Array.isArray(j.tab) && j.tab.length ? j.tab.map(String) : null; }
+    try {
+      var teks = await fetchSheetCSV(as + (as.indexOf('?') >= 0 ? '&' : '?') + 'senarai=1', opts.timeoutMs);
+      var tab = sahTab(JSON.parse(teks));
+      if (!tab) { return null; }
+      try { localStorage.setItem(kunci, JSON.stringify(tab)); } catch (e) { /* abaikan */ }
+      return { tab: tab, sumber: 'apps-script' };
+    } catch (e) {
+      try { var c = JSON.parse(localStorage.getItem(kunci) || 'null'); if (Array.isArray(c) && c.length) { return { tab: c, sumber: 'cache' }; } } catch (x) { /* abaikan */ }
+      return null;
+    }
+  }
+
+  /** Muat data negeri pemain: guna tab bernama negeri jika Sheet berbilang tab; jika tidak, data lama satu Sheet. */
+  async function loadUntukNegeri(negeri, opts) {
+    opts = opts || {};
+    var sen = null; try { sen = await loadSenaraiTab(opts); } catch (e) { sen = null; }
+    var tab = sen && negeri ? sen.tab.filter(function (t) { return t.toLowerCase() === String(negeri).toLowerCase(); })[0] : null;
+    return loadPartyData(tab ? Object.assign({}, opts, { tab: tab }) : opts);
   }
 
   function getFallbackData() { return rowsToHierarchy(fallbackRows()); }
@@ -929,6 +965,8 @@
 
     // data sumber
     loadPartyData: loadPartyData,
+    loadSenaraiTab: loadSenaraiTab,
+    loadUntukNegeri: loadUntukNegeri,
     fetchSheetCSV: fetchSheetCSV,
     parseCSV: parseCSV,
     teksKeBaris: teksKeBaris,

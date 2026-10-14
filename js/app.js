@@ -72,7 +72,7 @@
   function sembunyiInfo() { el.info.hidden = true; }
 
   function tunjukInfo(c) {
-    $('i-nama').textContent = c.nama + ', ' + c.dunNama;
+    $('i-nama').textContent = c.nama + (c.dunNama ? ', ' + c.dunNama : '');
     $('i-jumlah').textContent = fmt(c.jumlahAhli);
     $('i-lelaki').textContent = fmtN(c.lelaki);
     $('i-perempuan').textContent = fmtN(c.perempuan);
@@ -97,7 +97,33 @@
     isi(el.negeri, 'Pilih negeri', state.data.negeri, function (n) { return n.nama; });
   }
 
+  /* v7.14: Sheet berbilang tab. Setiap tab = satu negeri, dimuat apabila dipilih. */
+  state.tab = null; state.cacheTab = {};
+  async function pilihNegeriTab() {
+    var nama = el.negeri.value;
+    state.negeri = null; state.bahagian = state.dun = state.cawangan = null;
+    setError('negeri'); sembunyiInfo();
+    reset(el.dun, 'Pilih bahagian dahulu'); reset(el.cawangan, 'Pilih DUN dahulu');
+    if (!nama) { reset(el.bahagian, 'Pilih negeri dahulu'); return; }
+    reset(el.bahagian, 'Memuatkan data ' + nama + '...');
+    el.submit.disabled = true; setStatus('loading', 'Memuatkan data ' + nama + '...');
+    var h = state.cacheTab[nama];
+    if (!h) {
+      try { h = await D.loadPartyData({ appsScriptUrl: CFG.appsScriptUrl, tab: nama }); state.cacheTab[nama] = h; }
+      catch (e) {
+        if (el.negeri.value !== nama) { return; }
+        reset(el.bahagian, 'Data gagal dimuatkan'); setStatus('fallback', (e && e.message ? e.message : e) + ' Tekan Cuba Semula.'); el.retry.hidden = false; return;
+      }
+    }
+    if (el.negeri.value !== nama) { return; }                    // pemain sudah menukar negeri semasa memuat
+    state.data = h; state.negeri = { id: nama, nama: nama, bahagian: h.bahagian };
+    setStatus(h.source === 'cache' ? 'cache' : 'sheet', (h.source === 'cache' ? 'Salinan tersimpan: ' : 'Data langsung: ') + nama + ' (' + ringkasan(h) + ').');
+    el.submit.disabled = false;
+    isi(el.bahagian, 'Pilih bahagian (parlimen)', state.negeri.bahagian, function (p) { return p.nama + ' (P.' + p.kod + ')'; });
+  }
+
   el.negeri.addEventListener('change', function () {
+    if (state.tab) { pilihNegeriTab(); return; }
     state.negeri = cari(state.data.negeri, el.negeri.value);
     state.bahagian = state.dun = state.cawangan = null;
     setError('negeri'); sembunyiInfo();
@@ -114,7 +140,11 @@
     state.dun = state.cawangan = null;
     setError('bahagian'); sembunyiInfo();
     reset(el.cawangan, 'Pilih DUN dahulu');
-    if (state.bahagian) {
+    if (state.bahagian && state.bahagian.tiadaDUN) {            // v7.14: Wilayah Persekutuan: tiada DUN, terus pilih cawangan
+      state.dun = state.bahagian.dun[0];
+      reset(el.dun, 'Tiada DUN (Wilayah Persekutuan)');
+      isi(el.cawangan, 'Pilih cawangan (lokaliti)', state.dun.cawangan, function (c) { return c.nama + ' (' + c.kod + ')'; });
+    } else if (state.bahagian) {
       isi(el.dun, 'Pilih DUN', state.bahagian.dun, function (d) { return d.nama + ' (N.' + d.kod + ')'; });
     } else { reset(el.dun, 'Pilih bahagian dahulu'); }
   });
@@ -246,7 +276,17 @@
     el.submit.disabled = true;
     setStatus('loading', 'Memuatkan data daripada Google Sheets...');
     var url = CFG.sheetCsvUrl || D.CONFIG.SHEET_CSV_URL;
-    var h;
+    var h, sen = null;
+    try { sen = D.loadSenaraiTab ? await D.loadSenaraiTab({ appsScriptUrl: CFG.appsScriptUrl }) : null; } catch (e) { sen = null; }
+    if (sen && sen.tab.length) {                                  // v7.14: Sheet berbilang tab (satu tab = satu negeri)
+      state.tab = sen.tab; state.cacheTab = {}; state.data = { negeri: [], bahagian: [] };
+      kosongkanSemua();
+      isi(el.negeri, 'Pilih negeri', sen.tab.map(function (n) { return { id: n, nama: n }; }), function (n) { return n.nama; });
+      setStatus(sen.sumber === 'cache' ? 'cache' : 'sheet', (sen.sumber === 'cache' ? 'Senarai negeri daripada salinan tersimpan' : 'Data langsung daripada Google Sheets') + ' (' + sen.tab.length + ' negeri). Data negeri dimuat apabila dipilih.');
+      el.submit.disabled = false;
+      return;
+    }
+    state.tab = null;
     try {
       h = await D.loadPartyData({ url: url, appsScriptUrl: CFG.appsScriptUrl });
     } catch (e) {
@@ -266,7 +306,7 @@
     el.submit.disabled = false;
   }
 
-  el.retry.addEventListener('click', muatData);
+  el.retry.addEventListener('click', function () { if (state.tab && el.negeri.value) { pilihNegeriTab(); } else { muatData(); } });
 
   /* ---------- Padam ralat sebaik pengguna membetulkan medan ---------- */
   el.nama.addEventListener('input', function () { if (el.nama.value.trim().length >= 3) { setError('nama'); } });
@@ -528,7 +568,7 @@
       um.parentNode.classList.toggle('is-risiko', !!(hr && hr.label === 'Tinggi'));
     }
     $('p-negeri').textContent = p.negeri || '–'; $('p-bahagian').textContent = p.bahagian || '–';
-    $('p-dun').textContent = p.dun || '–'; $('p-cawangan').textContent = p.cawangan || '–';
+    $('p-dun').textContent = p.dun || '–'; if ($('p-dun-li')) { $('p-dun-li').hidden = !p.dun; } $('p-cawangan').textContent = p.cawangan || '–';
     var pem = adalahTahunPemilihan(p.tahun);
     var tk = K ? K.getTakwim(p) : null;
     var tp = $('p-tahun'); tp.textContent = labelTahun(p.tahun) + (tk ? ' · BULAN ' + tk.bulan : ''); tp.setAttribute('data-fasa', pem ? 'pemilihan' : 'pentadbiran');
@@ -981,7 +1021,7 @@
     pt.status = 'memuat';
     host.innerHTML = '<div class="loading" role="status">Memuatkan data peta...</div>';
     try {
-      if (!pt.data) { pt.data = await D.loadPartyData({ url: CFG.sheetCsvUrl, appsScriptUrl: CFG.appsScriptUrl }); }
+      if (!pt.data) { var pp = S && S.loadPlayer(); pt.data = await D.loadUntukNegeri(pp && pp.negeri, { url: CFG.sheetCsvUrl, appsScriptUrl: CFG.appsScriptUrl }); }
       host.innerHTML = '';
       if (pt.instance) { pt.instance.destroy(); }
       pt.instance = await MAP.mount(host, { data: pt.data, mode: 'negeri' });
