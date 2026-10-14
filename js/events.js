@@ -56,6 +56,9 @@
                  jumlah peluang = 1. Kos asas dikira dahulu daripada `kesan`.
      Teks boleh guna {cawangan} / {bahagian} / {dun}.
      ------------------------------------------------------------------------ */
+  /* v6.4: peristiwa khas sayap. 'sayapIni' = laluan sayap pemain; 'ketuaSayap' = memegang jawatan Ketua sayap di mana-mana peringkat. */
+  function sayapIni(p, k) { return p.sayap === k; }
+  function ketuaSayap(p, k) { return p.sayap === k && Array.isArray(p.jawatanList) && p.jawatanList.some(function (j) { return j.kumpulan === 'sayap' && j.sayap === k; }); }
   function bilJ(p) { return Array.isArray(p.jawatanList) ? p.jawatanList.length : (p.jawatan && p.jawatan !== 'Ahli Biasa' ? 1 : 0); }
 
   var ACARA = [
@@ -403,7 +406,146 @@
             { peluang: 0.6, kesan: { ip: -12, reputasi: -4, kesetiaan: { akarUmbi: -10 } }, mesej: 'Bukti baharu muncul dan anda dituduh bersubahat. Sokongan akar umbi jatuh.' } ] },
         { id: 'c', label: 'Serahkan kepada Jawatankuasa Disiplin (AP)', huraian: 'Ikut saluran rasmi. Stress +2.', kesan: { ap: -1, ip: -2, reputasi: 2, kesetiaan: { ajk: 2 } }, etika: { modal: 2 }, stres: { stress: 2 }, mesej: 'Anda menyerahkan perkara itu kepada parti. Prosesnya lambat tetapi anda dilihat adil.' }
       ]
+    },
+    /* --- v6.4: Peristiwa khas sayap (hanya untuk laluan sayap berkenaan) --- */
+    {
+      id: 'sayap_pemuda_siswazah', kategori: 'sayap', ikon: '🎓', tajuk: 'Siswazah Belia Menganggur Mengadu',
+      syarat: function (p) { return sayapIni(p, 'pemuda'); }, berat: 1.5,
+      huraian: 'Sekumpulan siswazah belia di {cawangan} sudah berbulan menganggur dan mengadu gaji permulaan yang ditawarkan terlalu rendah. Mereka bertanya apa yang Pemuda boleh buat untuk mereka.',
+      pilihan: [
+        { id: 'a', label: 'Anjur bengkel kerjaya dan temu duga (Dana + AP)', huraian: 'Kos sederhana, kesan jelas. Stress +1.', kesan: { myr: -500, ap: -1, ip: 8, kesetiaan: { akarUmbi: 5 } }, stres: { stress: 1 }, mesej: 'Bengkel itu dipenuhi belia. Beberapa orang mendapat temu duga dan nama Pemuda disebut baik.' },
+        { id: 'b', label: 'Hubungi rakan korporat mencari jawatan kosong (AP)', huraian: 'Bergantung pada hubungan anda.', kesan: { ap: -2 }, hasil: [
+            { peluang: 0.5, kesan: { ip: 10, reputasi: 2, kesetiaan: { akarUmbi: 5 } }, mesej: 'Dua syarikat menawarkan jawatan kosong. Belia pulang dengan harapan.' },
+            { peluang: 0.5, kesan: { ip: -3 }, mesej: 'Tiada syarikat menjawab. Belia kecewa dengan hasilnya.' } ] },
+        { id: 'c', label: 'Nasihatkan mereka bersabar', huraian: 'Tiada kos, tetapi mereka kecewa.', kesan: { ip: -6, kesetiaan: { akarUmbi: -6 } }, mesej: 'Belia merasakan Pemuda tidak peduli dan sebahagian mula menjauhkan diri.' }
+      ]
+    },
+    {
+      id: 'sayap_pemuda_tular', kategori: 'sayap', ikon: '📱', tajuk: 'Pengkritik Belia Tular di Media Sosial',
+      syarat: function (p) { return sayapIni(p, 'pemuda'); }, berat: 1.5,
+      huraian: 'Seorang penjana kandungan belia menyiarkan video yang mengkritik parti dan menuduh Pemuda hanya pandai berpidato. Video itu sudah ditonton ratusan ribu kali.',
+      pilihan: [
+        { id: 'a', label: 'Balas dengan video kreatif (AP)', huraian: 'Berisiko, tetapi boleh meletup.', kesan: { ap: -1 }, hasil: [
+            { peluang: 0.55, kesan: { ip: 9, reputasi: 2, kesetiaan: { akarUmbi: 4 } }, mesej: 'Balasan anda disambut ramai dan ramai belia mula melihat Pemuda dengan pandangan baharu.' },
+            { peluang: 0.45, kesan: { ip: -5, reputasi: -1 }, mesej: 'Balasan anda dianggap defensif dan menjadi bahan sindiran.' } ] },
+        { id: 'b', label: 'Jemput pengkritik berdialog di Balai (AP)', huraian: 'Matang tetapi memenatkan. Stress +2.', kesan: { ap: -2, ip: 5, reputasi: 2, kesetiaan: { akarUmbi: 3 } }, stres: { stress: 2 }, mesej: 'Dialog berlangsung terbuka. Pengkritik itu mengakui ada isu yang wajar diperbaiki.' },
+        { id: 'c', label: 'Buat laporan dan minta video diturunkan', huraian: 'Nampak lemah. Stress +2.', kesan: { ip: -7, reputasi: -2 }, stres: { stress: 2 }, mesej: 'Tindakan itu dianggap menyekat suara belia. Kemarahan bertambah.' }
+      ]
+    },
+    {
+      id: 'sayap_pemuda_gig', kategori: 'sayap', ikon: '🛵', tajuk: 'Rider dan Pekerja Gig Minta Perlindungan',
+      syarat: function (p) { return sayapIni(p, 'pemuda'); }, berat: 1.5,
+      huraian: 'Sekumpulan rider penghantaran dan pekerja gig belia di {dun} mahu Pemuda memperjuangkan caruman dan perlindungan kemalangan. Mereka menunggu jawapan anda.',
+      pilihan: [
+        { id: 'a', label: 'Tajai kursus kemahiran digital penuh (Dana)', huraian: 'Pelaburan untuk masa depan mereka.', kesan: { myr: -800, ip: 10, kesetiaan: { akarUmbi: 6 } }, mesej: 'Kursus penuh dengan peserta. Belia melihat Pemuda benar-benar membantu.' },
+        { id: 'b', label: 'Rundingkan skim dengan platform gig (AP)', huraian: 'Bergantung pada kesediaan platform. Stress +2.', kesan: { ap: -2 }, stres: { stress: 2 }, hasil: [
+            { peluang: 0.6, kesan: { ip: 12, reputasi: 3, kesetiaan: { akarUmbi: 5 } }, mesej: 'Platform bersetuju melancarkan skim perlindungan percubaan. Nama anda dipuji.' },
+            { peluang: 0.4, kesan: { ip: -2 }, mesej: 'Rundingan buntu, tetapi anda dilihat mencuba.' } ] },
+        { id: 'c', label: 'Katakan itu urusan kerajaan', huraian: 'Tiada kos.', kesan: { ip: -5, kesetiaan: { akarUmbi: -5 } }, mesej: 'Rider berasa Pemuda lepas tangan. Sokongan di kalangan mereka turun.' }
+      ]
+    },
+    {
+      id: 'sayap_puteri_gangguan', kategori: 'sayap', ikon: '🛡️', tajuk: 'Aduan Gangguan dalam Kalangan Ahli',
+      syarat: function (p) { return sayapIni(p, 'puteri'); }, berat: 1.5,
+      huraian: 'Seorang ahli Puteri di {cawangan} mengadu dia diganggu oleh seorang pemimpin muda. Dia takut membuat laporan rasmi, kerana pemimpin itu rapat dengan ramai AJK.',
+      pilihan: [
+        { id: 'a', label: 'Bela mangsa dan lapor kepada Bahagian (AP)', huraian: 'Tegas dan bersih. Stress +4.', kesan: { ap: -2, ip: -2, reputasi: 4, kesetiaan: { akarUmbi: 6, ajk: -4 } }, etika: { modal: 3 }, stres: { stress: 4 }, mesej: 'Anda berpihak kepada mangsa. Sebahagian AJK tidak senang, tetapi ahli Puteri semakin yakin kepada anda.' },
+        { id: 'b', label: 'Selesaikan secara dalaman (AP)', huraian: 'Cepat, tetapi berisiko bocor. Stress +3.', kesan: { ap: -1 }, stres: { stress: 3 }, hasil: [
+            { peluang: 0.5, kesan: { ip: 3, kesetiaan: { ajk: 3 } }, mesej: 'Isu diselesaikan secara senyap dan pemimpin itu dipindahkan.' },
+            { peluang: 0.5, kesan: { ip: -10, reputasi: -4, kesetiaan: { akarUmbi: -8 } }, mesej: 'Isu bocor. Anda dituduh melindungi pemimpin berkenaan.' } ] },
+        { id: 'c', label: 'Abaikan, takut menimbulkan masalah', huraian: 'Tiada kos, tetapi sangat memudaratkan. Stress +3.', kesan: { ip: -8, reputasi: -3, kesetiaan: { akarUmbi: -10 } }, etika: { modal: -2 }, stres: { stress: 3 }, mesej: 'Mangsa berasa ditinggalkan. Ahli Puteri mula meragui kepimpinan anda.' }
+      ]
+    },
+    {
+      id: 'sayap_puteri_geran', kategori: 'sayap', ikon: '💼', tajuk: 'Peluang Geran Usahawan Muda',
+      syarat: function (p) { return sayapIni(p, 'puteri'); }, berat: 1.5,
+      huraian: 'Sebuah agensi membuka geran kecil untuk usahawan perempuan muda, tetapi permohonannya rumit. Ramai ahli Puteri di {dun} berminat tetapi tidak tahu bermula dari mana.',
+      pilihan: [
+        { id: 'a', label: 'Tulis cadangan geran bagi sayap (AP)', huraian: 'Boleh menambah Dana sayap. Stress +2.', kesan: { ap: -2 }, stres: { stress: 2 }, hasil: [
+            { peluang: 0.55, kesan: { myr: 1200, ip: 8, reputasi: 2, kesetiaan: { akarUmbi: 4 } }, mesej: 'Cadangan anda berjaya dan geran masuk. Program usahawan Puteri dapat dimulakan.' },
+            { peluang: 0.45, kesan: { ip: 1 }, mesej: 'Permohonan ditolak, tetapi anda belajar banyak untuk percubaan seterusnya.' } ] },
+        { id: 'b', label: 'Bantu tiga usahawan mengisi permohonan (AP)', huraian: 'Kecil tetapi bermakna.', kesan: { ap: -1, ip: 6, kesetiaan: { akarUmbi: 5 } }, mesej: 'Tiga usahawan muda mendapat bantuan permulaan. Mereka menjadi penyokong setia anda.' },
+        { id: 'c', label: 'Biarkan mereka cuba sendiri', huraian: 'Tiada kos.', kesan: { ip: -3, kesetiaan: { akarUmbi: -3 } }, mesej: 'Hanya segelintir yang berjaya memohon. Peluang itu terlepas begitu sahaja.' }
+      ]
+    },
+    {
+      id: 'sayap_puteri_mental', kategori: 'sayap', ikon: '💬', tajuk: 'Ahli Muda Tertekan dan Dibuli Siber',
+      syarat: function (p) { return sayapIni(p, 'puteri'); }, berat: 1.5,
+      huraian: 'Beberapa ahli Puteri muda di {cawangan} dilaporkan tertekan akibat buli siber dan tekanan kerja. Seorang daripadanya berhenti hadir semua aktiviti.',
+      pilihan: [
+        { id: 'a', label: 'Anjur sesi sokongan rakan sebaya (Dana + AP)', huraian: 'Selamat dan mesra. Stress -2.', kesan: { myr: -300, ap: -1, ip: 7, kesetiaan: { akarUmbi: 6 } }, stres: { stress: -2 }, mesej: 'Sesi itu menjadi ruang selamat. Ahli yang menyepi mula kembali hadir.' },
+        { id: 'b', label: 'Rujuk kepada kaunselor profesional (Dana)', huraian: 'Lebih berkesan, tetapi mahal.', kesan: { myr: -700, ip: 9, reputasi: 2, kesetiaan: { akarUmbi: 4 } }, etika: { modal: 2 }, mesej: 'Kaunselor memberi bantuan kepada beberapa ahli. Program itu dipuji dan dicontohi cawangan lain.' },
+        { id: 'c', label: 'Anggap itu masalah peribadi', huraian: 'Tiada kos.', kesan: { ip: -5, kesetiaan: { akarUmbi: -6 } }, mesej: 'Ahli muda berasa tidak difahami. Sebahagiannya berhenti menyertai Puteri.' }
+      ]
+    },
+    {
+      id: 'sayap_wanita_penjaga', kategori: 'sayap', ikon: '🧓', tajuk: 'Penjaga Warga Emas Meminta Bantuan',
+      syarat: function (p) { return sayapIni(p, 'wanita'); }, berat: 1.5,
+      huraian: 'Ramai ahli Wanita di {cawangan} menjaga ibu bapa yang uzur dan tidak mampu bekerja. Mereka meluahkan keletihan dan bertanya adakah parti boleh membantu.',
+      pilihan: [
+        { id: 'a', label: 'Wujudkan pusat jagaan harian sukarela (Dana + AP)', huraian: 'Beban berat tetapi bermakna. Stress +2.', kesan: { myr: -500, ap: -1, ip: 8, kesetiaan: { akarUmbi: 7 } }, stres: { stress: 2 }, mesej: 'Pusat jagaan itu menjadi sandaran keluarga. Ahli Wanita menghargai usaha anda.' },
+        { id: 'b', label: 'Rujuk Jabatan Kebajikan dan uruskan permohonan (AP)', huraian: 'Perlukan kesabaran.', kesan: { ap: -2, ip: 5, reputasi: 2, kesetiaan: { akarUmbi: 4 } }, mesej: 'Beberapa keluarga mendapat bantuan bulanan. Anda dikenali sebagai pemimpin yang prihatin.' },
+        { id: 'c', label: 'Nasihatkan mereka bersabar', huraian: 'Tiada kos.', kesan: { ip: -5, kesetiaan: { akarUmbi: -6 } }, mesej: 'Ahli merasakan keluh-kesah mereka tidak didengari.' }
+      ]
+    },
+    {
+      id: 'sayap_wanita_dapur', kategori: 'sayap', ikon: '🛒', tajuk: 'Harga Barang Dapur Naik Mendadak',
+      syarat: function (p) { return sayapIni(p, 'wanita'); }, berat: 1.5,
+      huraian: 'Harga ayam, telur dan minyak masak melonjak. Ibu rumah di {dun} menyerbu pejabat Wanita bertanya apa yang parti boleh lakukan.',
+      pilihan: [
+        { id: 'a', label: 'Anjur jualan murah bersama peniaga (Dana)', huraian: 'Bantuan segera yang dilihat jelas.', kesan: { myr: -900, ip: 10, reputasi: 1, kesetiaan: { akarUmbi: 8 } }, mesej: 'Jualan murah sesak dengan pembeli. Wanita dipuji kerana turun padang.' },
+        { id: 'b', label: 'Bawa isu ini kepada ADUN dan pegawai harga (AP)', huraian: 'Bergantung pada tindak balas mereka. Stress +2.', kesan: { ap: -2 }, stres: { stress: 2 }, hasil: [
+            { peluang: 0.55, kesan: { ip: 9, reputasi: 2, kesetiaan: { akarUmbi: 4 } }, mesej: 'Pemantauan harga diperketatkan dan peniaga nakal ditegur.' },
+            { peluang: 0.45, kesan: { ip: -1 }, mesej: 'Aduan itu hanya dicatat tanpa tindakan.' } ] },
+        { id: 'c', label: 'Katakan harga di luar kawalan parti', huraian: 'Tiada kos.', kesan: { ip: -6, kesetiaan: { akarUmbi: -7 } }, mesej: 'Ibu rumah merasakan Wanita tidak berguna ketika mereka paling memerlukan.' }
+      ]
+    },
+    {
+      id: 'sayap_wanita_saringan', kategori: 'sayap', ikon: '🩺', tajuk: 'Kempen Saringan Kesihatan Wanita',
+      syarat: function (p) { return sayapIni(p, 'wanita'); }, berat: 1.5,
+      huraian: 'Seorang ahli Wanita di {cawangan} disahkan menghidap kanser peringkat awal selepas saringan yang lewat. Ahli lain mula meminta kempen saringan dianjurkan.',
+      pilihan: [
+        { id: 'a', label: 'Anjur kempen saringan percuma (Dana + AP)', huraian: 'Kos tinggi, nama baik tinggi. Stress +2.', kesan: { myr: -600, ap: -2, ip: 10, reputasi: 3, kesetiaan: { akarUmbi: 6 } }, stres: { stress: 2 }, mesej: 'Ratusan wanita hadir untuk saringan. Beberapa kes awal dikesan dan anda menerima ucapan terima kasih.' },
+        { id: 'b', label: 'Sertai kempen yang dianjurkan klinik (AP)', huraian: 'Murah dan mudah.', kesan: { ap: -1, ip: 6, kesetiaan: { akarUmbi: 3 } }, mesej: 'Wanita menjadi rakan program klinik. Kehadiran memuaskan.' },
+        { id: 'c', label: 'Tangguh ke tahun depan', huraian: 'Tiada kos.', kesan: { ip: -3, kesetiaan: { akarUmbi: -3 } }, mesej: 'Ahli kecewa kerana kempen ditangguhkan.' }
+      ]
+    },
+    /* --- v6.4: Krisis khas Ketua sayap (pemegang jawatan Ketua sayap sahaja) --- */
+    {
+      id: 'krisis_sayap_pemuda_himpunan', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '🔥', tajuk: 'Himpunan Belia Hampir Tidak Terkawal',
+      syarat: function (p) { return ketuaSayap(p, 'pemuda'); }, berat: 4,
+      huraian: 'Himpunan belia anjuran Pemuda di {dun} menjadi tegang apabila sekumpulan belia mula memprovokasi pihak lawan. Polis memerhati dan kamera media sudah menyala.',
+      pilihan: [
+        { id: 'a', label: 'Henti program dan minta polis kawal (AP)', huraian: 'Selamat tetapi mengecewakan. Stress +4.', kesan: { ap: -2, ip: -3, reputasi: 1, kesetiaan: { akarUmbi: -2 } }, stres: { stress: 4 }, mesej: 'Himpunan dibubarkan tanpa kecederaan. Sebahagian belia kecewa tetapi imej Pemuda terpelihara.' },
+        { id: 'b', label: 'Turun sendiri menenangkan belia (AP)', huraian: 'Berisiko, tetapi menunjukkan kepimpinan. Stress +5.', kesan: { ap: -2 }, stres: { stress: 5 }, hasil: [
+            { peluang: 0.6, kesan: { ip: 10, reputasi: 2, kesetiaan: { akarUmbi: 5, perwakilan: 3 } }, mesej: 'Belia mendengar kata-kata anda dan keadaan reda. Kepimpinan anda dipuji.' },
+            { peluang: 0.4, kesan: { ip: -10, reputasi: -3, kesetiaan: { akarUmbi: -6 } }, mesej: 'Belia tidak mendengar kata anda. Insiden itu tular dan anda dipersalahkan.' } ] },
+        { id: 'c', label: 'Biarkan, mereka hanya bersemangat', huraian: 'Tiada kos, tetapi sangat berisiko. Stress +3.', kesan: { ip: -12, reputasi: -3, kesetiaan: { akarUmbi: -8, perwakilan: -4 } }, stres: { stress: 3 }, mesej: 'Keadaan menjadi kecoh dan Pemuda dipersalahkan oleh Bahagian dan media.' }
+      ]
+    },
+    {
+      id: 'krisis_sayap_puteri_kuota', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '📣', tajuk: 'Puteri Tuntut Kuota Calon, Ancam Boikot',
+      syarat: function (p) { return ketuaSayap(p, 'puteri'); }, berat: 4,
+      huraian: 'Ahli Puteri menuduh Bahagian mengabaikan kuota calon perempuan muda. Sebahagian mengancam memboikot jentera pilihan raya jika tuntutan itu tidak dipenuhi.',
+      pilihan: [
+        { id: 'a', label: 'Bawa tuntutan ke mesyuarat Bahagian (AP)', huraian: 'Bergantung pada sambutan Bahagian. Stress +3.', kesan: { ap: -2 }, stres: { stress: 3 }, hasil: [
+            { peluang: 0.55, kesan: { ip: 10, reputasi: 3, kesetiaan: { akarUmbi: 4, perwakilan: 3 } }, mesej: 'Bahagian bersetuju mengkaji kuota. Puteri melihat anda sebagai pejuang mereka.' },
+            { peluang: 0.45, kesan: { ip: -4, kesetiaan: { ajk: -3 } }, mesej: 'Tuntutan itu ditolak buat sementara. Suasana tegang di Bahagian.' } ] },
+        { id: 'b', label: 'Pujuk ahli supaya bersabar', huraian: 'Tiada kos. Stress +2.', kesan: { ip: -3, kesetiaan: { akarUmbi: -5 } }, stres: { stress: 2 }, mesej: 'Sebahagian ahli menerima, tetapi ramai merasakan suara mereka diperkecilkan.' },
+        { id: 'c', label: 'Sokong boikot secara terbuka', huraian: 'Garang, dan tegang dengan Bahagian. Stress +4.', kesan: { ip: -12, reputasi: -3, kesetiaan: { ajk: -8, perwakilan: -4 } }, stres: { stress: 4 }, mesej: 'Hubungan anda dengan Bahagian memburuk. Sebahagian ahli menyokong, tetapi ramai menganggap anda melampaui batas.' }
+      ]
+    },
+    {
+      id: 'krisis_sayap_wanita_senior', kategori: 'krisis', krisis: true, hanyaKrisis: true, ikon: '👵', tajuk: 'Ahli Senior Wanita Kecewa, Ugut Keluar',
+      syarat: function (p) { return ketuaSayap(p, 'wanita'); }, berat: 4,
+      huraian: 'Sekumpulan ahli Wanita warga emas kecewa kerana program sayap kini lebih menumpukan anak muda. Mereka mengugut untuk meninggalkan parti dan membawa pengikut bersama.',
+      pilihan: [
+        { id: 'a', label: 'Jumpa dan dengar luahan mereka (AP)', huraian: 'Perlukan kesabaran. Stress +3.', kesan: { ap: -2, ip: 4, kesetiaan: { akarUmbi: 6 } }, stres: { stress: 3 }, mesej: 'Mereka berasa dihargai dan bersetuju memberi anda peluang.' },
+        { id: 'b', label: 'Anjur program khas untuk ahli senior (Dana)', huraian: 'Tunjukkan sikap prihatin.', kesan: { myr: -700, ip: 6, reputasi: 1, kesetiaan: { akarUmbi: 8 } }, mesej: 'Program itu meriah. Ahli senior kembali menyokong dan ramai membawa rakan baharu.' },
+        { id: 'c', label: 'Biarkan, parti perlukan darah muda', huraian: 'Tiada kos. Stress +2.', kesan: { ip: -10, kesetiaan: { akarUmbi: -12, perwakilan: -3 } }, stres: { stress: 2 }, mesej: 'Sebahagian ahli senior keluar dan membawa pengikut mereka bersama.' }
+      ]
     }
+
   ];
 
   /* ------------------------------------------------------------------------
