@@ -193,6 +193,7 @@
     function semak(jenis) {
       var c = CONFIG[jenis], sebab = [];
       if (ip < c.ipMin) { sebab.push('Perlu IP ' + c.ipMin + ' (anda ' + ip + ')'); }
+      if (jenis === 'DUN' && !p.dun) { sebab.push('Wilayah Persekutuan tiada DUN'); }
       if (jenis === 'DUN' && !ada) { sebab.push('Perlu pegang jawatan Cawangan atau lebih'); }
       if (jenis === 'PARLIMEN' && !ketuaBahagianKeAtas(p)) { sebab.push('Perlu Ketua Bahagian atau lebih'); }
       var ratio = ip / c.ipMin;
@@ -286,6 +287,7 @@
   function runding(opsi, o) {
     var p = S().loadPlayer(), pru = getPRU(p), a = pru.aktif, k = KOS_RUNDING[opsi];
     if (!a || a.fasa !== 'runding' || !k) { return { ok: false, ralat: 'Rundingan tidak tersedia.' }; }
+    if (opsi === 'ganti' && !p.dun) { return { ok: false, ralat: 'Wilayah Persekutuan tiada kerusi DUN.' }; }
     if (opsi === 'ganti' && a.candidateType !== 'PARLIMEN') { return { ok: false, ralat: 'Tawaran ganti hanya bagi kerusi Parlimen.' }; }
     if ((Number(p.ip) || 0) < k.ip) { return { ok: false, ralat: 'IP tidak mencukupi (perlu ' + k.ip + ').' }; }
     var r = rng(o), hub = pru.hubunganGabungan, bonus = (hub - 50) * 0.004, kes = { ip: -k.ip }, mesej = '';

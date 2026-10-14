@@ -87,6 +87,7 @@
   /** Jenis kerusi yang boleh kosong: bukan kerusi yang sedang anda pegang. */
   function jenisBoleh(p) {
     var st = PRU().getPRU(p).status, senarai = ['DUN', 'PARLIMEN'];
+    if (!p.dun) { senarai = ['PARLIMEN']; }                                  // v7.14: Wilayah Persekutuan tiada DUN
     if (st && st.jenis === 'ADUN') { senarai = senarai.filter(function (x) { return x !== 'DUN'; }); }
     if (st && st.jenis === 'MP') { senarai = senarai.filter(function (x) { return x !== 'PARLIMEN'; }); }
     return senarai;
