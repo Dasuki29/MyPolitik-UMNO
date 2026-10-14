@@ -36,12 +36,11 @@
   function tetapkan(v) { mod = sah(v); simpan(mod); terap(); kemaskini(); return mod; }
 
   function kemaskini() {
-    var b = doc.getElementById('btn-tema');
-    if (b) {
-      var t = cari(mod);
-      b.innerHTML = t.ikon + '<span class="tema-teks"> ' + t.nama + '</span>';
-      b.setAttribute('title', 'Paparan: ' + t.nama);
-      b.setAttribute('aria-label', 'Tetapan paparan. Sekarang: ' + t.nama);
+    var t = cari(mod), bs = butang();
+    for (var j = 0; j < bs.length; j++) {
+      bs[j].innerHTML = t.ikon + '<span class="tema-teks"> ' + t.nama + '</span>';
+      bs[j].setAttribute('title', 'Paparan: ' + t.nama);
+      bs[j].setAttribute('aria-label', 'Tetapan paparan. Sekarang: ' + t.nama);
     }
     var p = doc.getElementById('paparan-pop');
     if (p) {
@@ -50,9 +49,11 @@
     }
   }
 
+  function butang() { return doc.querySelectorAll('#btn-tema, [data-tema-btn]'); }
+
   function bina() {
-    var b = doc.getElementById('btn-tema');
-    if (!b || doc.getElementById('paparan-pop')) { return; }
+    var bs = butang();
+    if (!bs.length || doc.getElementById('paparan-pop')) { return; }
     var p = doc.createElement('div');
     p.id = 'paparan-pop'; p.className = 'card paparan-pop'; p.hidden = true;
     p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'Tetapan paparan');
@@ -64,22 +65,29 @@
     p.innerHTML = h + '</div>';
     doc.body.appendChild(p);
     p.addEventListener('change', function (e) { if (e.target && e.target.name === 'mod-paparan') { tetapkan(e.target.value); } });
-    b.setAttribute('aria-haspopup', 'dialog');
-    b.addEventListener('click', function (e) { e.stopPropagation(); p.hidden = !p.hidden; });
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].setAttribute('aria-haspopup', 'dialog');
+      bs[k].addEventListener('click', function (e) { e.stopPropagation(); p.hidden = !p.hidden; });
+    }
     doc.addEventListener('click', function (e) { if (!p.hidden && !p.contains(e.target)) { p.hidden = true; } });
     doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') { p.hidden = true; } });
     kemaskini();
   }
 
   terap();
+  var mq = null;                                   // dirujuk pada API supaya tidak dikutip sampah (pendengar akan berhenti)
   try {
-    var mq = root.matchMedia('(prefers-color-scheme: dark)');
+    mq = root.matchMedia('(prefers-color-scheme: dark)');
     var ubah = function () { if (mod === 'auto') { terap(); } };
     if (mq.addEventListener) { mq.addEventListener('change', ubah); } else if (mq.addListener) { mq.addListener(ubah); }
   } catch (e) { /* abaikan */ }
 
-  root.MyPolitikTema = { MOD: MOD, tetapkan: tetapkan, semasa: function () { return mod; },
+  root.MyPolitikTema = { _mq: mq, MOD: MOD, tetapkan: tetapkan, semasa: function () { return mod; },
     skema: function () { return doc.documentElement.getAttribute('data-skema'); } };
+
+  /* Lapisan keselamatan: sesetengah pelayar tidak menghantar acara 'change' dengan konsisten. */
+  root.setInterval(function () { if (mod === 'auto' && doc.documentElement.getAttribute('data-skema') !== (gelapPeranti() ? 'gelap' : 'cerah')) { terap(); } }, 1000);
+  doc.addEventListener('visibilitychange', function () { if (mod === 'auto') { terap(); } });
 
   if (doc.readyState === 'loading') { doc.addEventListener('DOMContentLoaded', bina); } else { bina(); }
 })(typeof window !== 'undefined' ? window : this);
