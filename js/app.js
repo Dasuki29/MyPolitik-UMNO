@@ -365,7 +365,7 @@
   if (!document.getElementById('btn-tahun')) { return; }
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
-      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, ST = W.MyPolitikStres, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
+      I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, ST = W.MyPolitikStres, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial, LAT = W.MyPolitikLatihan;
   var SYP = W.MyPolitikSayap, BLK = W.MyPolitikBlok, MIS = W.MyPolitikMisi;
   function PUIh(p, jenis) { var u = W.NusaPRU_UI; return u && u.kad ? u.kad(p, jenis) : ''; }
   function musimPR(p) { var u = W.NusaPRU_UI; return !!(u && u.musim && u.musim(p)); }                    // v7.10: tab khas Pilihan Raya                      // v7.3: kad PRU/PRN & Kabinet (js/pru-ui.js)                          // v6.5/v6.6 (Dashboard)
@@ -1043,6 +1043,13 @@
       ['Sokongan akar umbi (akhir)', (t.kesetiaanAkarUmbi === undefined ? '\u2013' : t.kesetiaanAkarUmbi + '%')],
       ['Status disiplin', (DISIPLIN[t.statusDisiplin] || 'Baik') + (t.hukumanDisiplin ? ' \u00B7 ' + t.hukumanDisiplin + ' hukuman' : '')],
       ['Gaya kepimpinan', t.gaya || '\u2013'], ['Pengaruh (IP)', fmt(t.ip)], ['Reputasi Parti', t.reputasi + '%']];
+    var pr = t.pilihanRaya;                                                   // v7.11: rekod pilihan raya & jawatan kerajaan
+    if (pr) {
+      baris.push(['Rekod pilihan raya', pr.bertanding ? pr.bertanding + ' kali bertanding \u00B7 ' + pr.menang + ' menang \u00B7 ' + pr.kalah + ' kalah' + (pr.prkBertanding ? ' (termasuk ' + pr.prkBertanding + ' PRK)' : '') : 'Tidak pernah bertanding']);
+      if (pr.kerusi.length) { baris.push(['Kerusi dimenangi', pr.kerusi.join('; ')]); }
+      if (pr.statusSemasa) { baris.push(['Kerusi semasa', pr.statusSemasa]); }
+      if (pr.jawatanKerajaan.length || pr.kabinetSemasa) { baris.push(['Jawatan kerajaan', (pr.jawatanKerajaan.length ? pr.jawatanKerajaan : [pr.kabinetSemasa]).join('; ')]); }
+    }
     l.setAttribute('role', 'dialog'); l.setAttribute('aria-modal', 'true'); l.setAttribute('aria-label', 'Rumusan Kerjaya');
     l.innerHTML = '<div class="legasi__kepala"><p class="legasi__kecil">Rumusan Kerjaya \u00B7 ' + esc(t.tajuk) + '</p><h1>' + esc(p.nama) + '</h1><p class="legasi__gelaran">' + esc(gel[0].nama) + '</p></div>' +
       '<p class="legasi__mesej">' + esc(t.mesej) + '</p>' +
@@ -1052,6 +1059,7 @@
       '<div class="legasi__butang"><button type="button" class="btn btn--gold" data-act="legasi-baharu">Main Semula (mula umur 18)</button> <a class="btn btn--ghost" href="' + INDEX_URL + '">Menu Utama</a></div>' +
       '<p class="legasi__nota">Simulasi permainan. Umur dan risiko kesihatan ialah angka permainan, bukan ramalan sebenar.</p>';
     l.hidden = false;
+    if (LAT && LAT.aktif()) { var mb = l.querySelector('[data-act="legasi-baharu"]'); if (mb) { mb.hidden = true; } LAT.pasangLegasi(l); }   // v7.13
     var h = l.querySelector('h1'); if (h) { h.setAttribute('tabindex', '-1'); }
   }
   function jadualRender() {
@@ -1358,7 +1366,11 @@
     render();
     if (state.tab === 'peta') { muatPeta(); }
     S.subscribe(jadualRender);
-    if (TUT) { TUT.init({ profil: p }); }                           // butang (?) + tutorial kali pertama
+    if (LAT && LAT.aktif()) { LAT.init(); }                          // v7.13: mod Latihan Amir (simpanan berasingan)
+    else if (TUT) {                                                  // butang (?) + tutorial kali pertama
+      var mulaTut = function () { TUT.init({ profil: p }); };
+      if (!(LAT && !TUT.sudahSelesai(p) && LAT.tawar({ profil: p, lepas: mulaTut }))) { mulaTut(); }
+    }
     if (EV && EV.getTertunggak()) { tunjukAcara(EV.getTertunggak()); }          // acara yang belum dijawab sebelum muat semula                                      // kemas kini masa nyata (juga antara tab pelayar)
   }
   W.NusaUI = { modal: modal, toast: toast, render: render, esc: esc, fmt: fmt, lapor: urusPeristiwa };   // v7.3: dikongsi dengan js/pru-ui.js

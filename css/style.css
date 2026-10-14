@@ -906,6 +906,7 @@ option { background: var(--bg-elev-2); color: var(--text); }
 /* ---- Stepper borang ---- */
 .stepper { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--space-5); padding: 0; list-style: none; }
 .stepper li { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; font: 600 .74rem var(--font-body); color: var(--text-dim); }
+.stepper li:first-child { flex: none; }
 .stepper li + li::before { content: ""; flex: 1; height: 2px; min-width: 10px; background: var(--border); border-radius: 2px; }
 .stepper__n { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%;
   border: 2px solid var(--border); background: var(--bg-elev-2); color: var(--text-muted); transition: all var(--transition); }
