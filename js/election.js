@@ -378,6 +378,7 @@
     var v = Math.min(100, 100 * p.ip / skala) * b.ip + k.akarUmbi * b.akarUmbi + k.ketuaCawangan * b.ketuaCawangan +
             k.ajk * b.ajk + k.perwakilan * b.perwakilan + st.kempen.mata * b.kempen;
     if (d && d.sayap && J.sayapPemain(p) === d.sayap) { v += CONFIG.BONUS_SAYAP; }
+    var sm = syMod(); if (sm && sm.bonusWarisan) { v += sm.bonusWarisan(p, d); }              // v6.5: Legacy Loyalty (pertandingan Induk sahaja)
     var Et = etika();
     if (Et) { v += Et.bonusUndi(p); }                                // Modal Sosial (kempen bersih)
     return clamp(v, 0, 100);
@@ -392,7 +393,9 @@
     if (p && p.bahagianInfo && p.bahagianInfo.jumlahAhli) { return p.bahagianInfo.jumlahAhli; }
     return ahliCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
   }
-  function kuotaCawangan(p) { return kuota(ahliCawangan(p), CONFIG.KUOTA_CAWANGAN); }              // wakil Cawangan ke Bahagian
+  function syMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikSayap) { return g.MyPolitikSayap; } try { return typeof require === 'function' ? require('./sayap.js') : null; } catch (x) { return null; } }
+  function bonusKuota(p) { var m = syMod(); return m && m.bonusKuota ? m.bonusKuota(p) : 0; }              // v6.5: Kempen Outreach Belia
+  function kuotaCawangan(p) { return kuota(ahliCawangan(p), CONFIG.KUOTA_CAWANGAN) + bonusKuota(p); }              // wakil Cawangan ke Bahagian
   /** v6.3: bilangan ahli sayap dalam Cawangan pemain (Pemuda, Puteri atau Wanita); data silang jantina x umur atau anggaran. */
   function ahliSayap(p, sayap) {
     var sy = sayap || J.sayapPemain(p), info = p && p.cawanganInfo ? p.cawanganInfo : null;
@@ -405,7 +408,7 @@
     }
     return kg && kg[sy] !== undefined ? kg[sy] : Math.round(ahliCawangan(p) * 0.2);
   }
-  function kuotaSayapCawangan(p) { return kuota(ahliSayap(p), CONFIG.KUOTA_SAYAP_CAWANGAN); }   // v6.3: 1 wakil / 10 ahli sayap, maks 3
+  function kuotaSayapCawangan(p) { return kuota(ahliSayap(p), CONFIG.KUOTA_SAYAP_CAWANGAN) + bonusKuota(p); }   // v6.3: 1 wakil / 10 ahli sayap, maks 3
   function kuotaBahagian(p, opts) { return kuota(ahliBahagian(p, opts), CONFIG.KUOTA_BAHAGIAN); }   // wakil Bahagian ke PAU
 
   function bilPemilih(p, peringkat, opts) {

@@ -601,12 +601,40 @@
   /* ---------- Panel: Tindakan Pemain ---------- */
   function fx(t) { return t ? '<span class="badge badge--gold">' + esc(t) + '</span>' : ''; }
 
+  /* ---------- v6.5: Tindakan khas sayap, notis transisi dan Legacy Loyalty ---------- */
+  function bannerTransisi(p) {
+    var n = SYP && SYP.notisTransisi ? SYP.notisTransisi(p) : null;
+    return n ? '<div class="banner banner--warn" role="alert"><strong>' + esc(n.tajuk) + ' (umur ' + n.umur + '/' + n.had + ')</strong>' + esc(n.mesej) + '</div>' : '';
+  }
+  function kadSayap(p) {
+    var h = bannerTransisi(p), lw = SYP && SYP.ringkasWarisan ? SYP.ringkasWarisan(p) : null;
+    if (lw) {
+      h += '<div class="banner banner--gold"><strong>Legacy Loyalty aktif: +' + lw.bonus + ' kekuatan undi</strong>Dibawa dari sayap ' + esc(SYP.INFO[lw.dari].nama) + ' (asal +' + lw.awal + ', susut beransur sehingga tahun ' + lw.tamatTahun + '). Dikira dalam pertandingan Induk: jawatan utama dan perwakilan.</div>';
+    }
+    var ts = SYP && SYP.senaraiTindakanSayap ? SYP.senaraiTindakanSayap(p) : [];
+    if (!ts.length) { return h; }
+    h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">Tindakan Khas Sayap ' + esc(SYP.INFO[SYP.kod(p)].nama) + '</h2>' +
+      '<p class="note">Kebolehan istimewa sayap anda. Boleh digunakan <b>sekali sebulan</b>.</p><div class="choice-list">';
+    ts.forEach(function (t) {
+      h += '<button type="button" class="choice" data-act="tindakan-sayap" data-id="' + esc(t.id) + '" data-fk="ts:' + esc(t.id) + '"' + (t.boleh ? '' : ' disabled') + '>' +
+        '<span class="choice__title">' + esc(t.ikon) + ' ' + esc(t.nama) + '</span><span class="choice__desc">' + esc(t.penerangan) + '</span>' +
+        '<span class="choice__fx">' + fx(t.ringkas) + '</span>' + (t.boleh ? '' : '<span class="choice__desc" style="color:var(--danger)">' + esc(t.sebab) + '</span>') + '</button>';
+    });
+    return h + '</div>' + (state.mesej.sayap ? '<p class="result" style="margin-top:12px">' + esc(state.mesej.sayap) + '</p>' : '') + '</section>';
+  }
+  async function tindakanSayap(id) {
+    var r = SYP.jalankanTindakanSayap(id);
+    state.mesej.sayap = r.ok ? r.mesej : '';
+    render(); await lapor(r);
+    if (r.ok && EV) { await tunjukAcara(EV.selepasAktiviti()); }
+  }
+
   function panelTindakan(p) {
     var peg = pemegang(p), mod = peg ? I : O;
     if (!mod) { return '<div class="card"><p class="empty">Modul tindakan tidak dimuatkan.</p></div>'; }
     var senarai = mod.senaraiTindakan(p), h = '';
     var tkb = K ? K.getTakwim(p) : null;
-    h += bannerDisiplin(p);
+    h += bannerDisiplin(p) + kadSayap(p);
     if (tkb && tkb.bonusAkarUmbi) {
       h += '<div class="banner banner--gold"><strong>Musim Akar Umbi (bulan 1-3)</strong>Setiap tindakan memberi bonus +' + Math.round(tkb.bonusAkarUmbi * 100) + '% IP dan kesetiaan. Manfaatkan sebelum musim mesyuarat bermula pada bulan 4.</div>';
     }
@@ -764,7 +792,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += bannerDisiplin(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
+    h += bannerDisiplin(p) + bannerTransisi(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
@@ -1177,7 +1205,8 @@
     if (act === 'ringkasan') { tunjukRingkasan(M.getRingkasan(lvl)); return; }
     if (act === 'bulan') { lanjutBulan(); return; }
     if (act === 'acara-buka') { bukaAcaraTertunggak(); return; }
-    if (act === 'tindakan') { tindakan(t.getAttribute('data-id')); }
+    if (act === 'tindakan-sayap') { tindakanSayap(t.getAttribute('data-id')); }
+    else if (act === 'tindakan') { tindakan(t.getAttribute('data-id')); }
     else if (act === 'ke-tab') { setTab(t.getAttribute('data-v')); }
     else if (act === 'ulang-peta') { muatPeta(true); }
     else if (act === 'daftar') { operasiPemilihan(function () { return E.daftarBertanding(kod); }); }

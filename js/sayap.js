@@ -104,8 +104,171 @@
   /** Pengurangan susutan akar umbi bulanan bagi pemegang jawatan. */
   function kurangSusutAkarUmbi(p) { return (CONFIG[kod(p)] || {}).susutAkarUmbiKurang || 0; }
 
+
+  /* ========================================================================
+     v6.5  TINDAKAN KHAS SAYAP dan FASA TRANSISI KE DEWAN INDUK
+     ======================================================================== */
+  function modul(nama, fail) {
+    var g = typeof globalThis !== 'undefined' ? globalThis : null;
+    if (g && g[nama]) { return g[nama]; }
+    try { return typeof require === 'function' ? require('./' + fail) : null; } catch (e) { return null; }
+  }
+  function bulatan(n) { return Math.round(n); }
+  function indeksBulan(p) { return (parseInt(p.tahun, 10) || 0) * 12 + (parseInt(p.bulan, 10) || 1); }
+
+  /**
+   * Tindakan khas setiap sayap (satu kali sebulan setiap pemain). Nilai ialah andaian permainan.
+   *   kesan  : dihantar ke Save.applyEffects (kena buff sayap dan bonus bulan 1-3 akar umbi)
+   *   stres  : laras Stress / Kesihatan
+   *   khas   : kesan tambahan ('ahli_kuota' = tambah ahli Cawangan dan kuota perwakilan; 'perisai' = hentikan susutan sokongan)
+   */
+  var TINDAKAN_SAYAP = {
+    pemuda: {
+      id: 'kempen_saraf_digital', nama: 'Kempen Saraf Digital', ikon: '📲',
+      penerangan: 'Kempen media sosial besar-besaran: video pendek, siaran langsung dan cabaran tular. IP naik tinggi, tetapi memenatkan.',
+      kesan: { ap: -2, myr: -300, ip: 24, reputasi: 1, kesetiaan: { akarUmbi: 3 } }, stres: { stress: 9 }
+    },
+    wanita: {
+      id: 'skuad_sayang', nama: 'Skuad Sayang / Ziarah Kasih', ikon: '🤝',
+      penerangan: 'Skuad Wanita menziarahi ahli dan keluarga yang memerlukan. Sokongan Cawangan dikekalkan dua bulan (tiada susutan akar umbi dan AJK) dan Stress berkurang.',
+      kesan: { ap: -2, ip: 6, kesetiaan: { akarUmbi: 10, ajk: 4 } }, stres: { stress: -10, kesihatan: 2 }, khas: 'perisai'
+    },
+    puteri: {
+      id: 'kempen_outreach_belia', nama: 'Kempen Outreach Belia', ikon: '🌸',
+      penerangan: 'Turun ke kampus dan kolej komuniti untuk mendaftar ahli baharu. Menambah ahli Cawangan dan +1 kerusi perwakilan tahun ini (maksimum +2 setahun).',
+      kesan: { ap: -2, myr: -400, ip: 8, kesetiaan: { perwakilan: 8, akarUmbi: 4 } }, khas: 'ahli_kuota'
+    }
+  };
+  var TS_CONFIG = {
+    AHLI_BARU: { puteri: 5, pemuda: 3 },     // ahli Cawangan yang direkrut setiap Kempen Outreach Belia
+    MAKS_AHLI_CAWANGAN: 500,
+    MAKS_BONUS_KUOTA: 2,                      // maksimum tambahan kerusi perwakilan setahun
+    PERISAI_BULAN: 2                          // bilangan pertukaran bulan sokongan dilindungi
+  };
+
+  function tindakanUntuk(p) { var k = kod(p); return TINDAKAN_SAYAP[k] || null; }
+
+  /** Tindakan khas bagi sayap pemain, dengan keadaan butang. Pulang [] untuk laluan Utama. */
+  function senaraiTindakanSayap(profil) {
+    var S = modul('MyPolitikSave', 'save.js'), p = profil || (S && S.loadPlayer());
+    var d = p ? tindakanUntuk(p) : null;
+    if (!d) { return []; }
+    var st = semakTindakanSayap(d, p);
+    return [{
+      id: d.id, nama: d.nama, ikon: d.ikon, penerangan: d.penerangan,
+      kos: { ap: Math.abs(Math.min(0, d.kesan.ap || 0)), myr: Math.abs(Math.min(0, d.kesan.myr || 0)) },
+      ringkas: (S ? S.ringkasPerubahan({ ip: d.kesan.ip || 0, myr: d.kesan.myr || 0, ap: d.kesan.ap || 0, reputasi: d.kesan.reputasi || 0, kesetiaan: d.kesan.kesetiaan || {} }) : '') +
+        (d.stres ? ', Stress ' + (d.stres.stress > 0 ? '+' : '') + d.stres.stress : '') + (d.khas === 'ahli_kuota' ? ', ahli baharu dan +1 kerusi perwakilan' : d.khas === 'perisai' ? ', sokongan dilindungi 2 bulan' : ''),
+      boleh: st.boleh, sebab: st.sebab
+    }];
+  }
+
+  function semakTindakanSayap(d, p) {
+    var Et = modul('MyPolitikEtika', 'etika.js');
+    if (Et) { var hak = Et.semakHak(p, 'tindakan'); if (!hak.boleh) { return { boleh: false, sebab: hak.sebab }; } }
+    var u = p.tindakanSayap;
+    if (u && u.tahun === p.tahun && u.bulan === p.bulan) { return { boleh: false, sebab: 'Sudah digunakan bulan ini. Cuba lagi bulan depan.' }; }
+    if (p.ap + (d.kesan.ap || 0) < 0) { return { boleh: false, sebab: 'AP tidak mencukupi (perlu ' + Math.abs(d.kesan.ap) + ').' }; }
+    if (p.myr + (d.kesan.myr || 0) < 0) { return { boleh: false, sebab: 'Wang tidak mencukupi (perlu ' + Math.abs(d.kesan.myr) + ').' }; }
+    return { boleh: true, sebab: '' };
+  }
+
+  /** Jalankan tindakan khas sayap. Pulang { ok, mesej, perubahan, profil } atau { ok:false, kod, ralat }. */
+  function jalankanTindakanSayap(id) {
+    var S = modul('MyPolitikSave', 'save.js'), p = S && S.loadPlayer();
+    if (!p) { return { ok: false, kod: 'tiada_profil', ralat: 'Tiada profil pemain.' }; }
+    var d = tindakanUntuk(p);
+    if (!d || d.id !== id) { return { ok: false, kod: 'bukan_sayap_anda', ralat: 'Tindakan ini bukan untuk laluan sayap anda.' }; }
+    var st = semakTindakanSayap(d, p);
+    if (!st.boleh) { return { ok: false, kod: 'tidak_boleh', ralat: st.sebab }; }
+
+    var K = modul('MyPolitikCalendar', 'calendar.js'), kesan = JSON.parse(JSON.stringify(d.kesan));
+    if (K && K.skalaKesan) { kesan = K.skalaKesan(p, kesan); }                  // bonus musim akar umbi (bulan 1-3)
+    var patch = { tindakanSayap: { tahun: p.tahun, bulan: p.bulan, id: d.id } }, nota = '';
+    if (d.khas === 'perisai') { patch.perisaiSokongan = indeksBulan(p) + TS_CONFIG.PERISAI_BULAN - 1; }
+    if (d.khas === 'ahli_kuota') {
+      var info = JSON.parse(JSON.stringify(p.cawanganInfo || {})), tambah = TS_CONFIG.AHLI_BARU.puteri + TS_CONFIG.AHLI_BARU.pemuda;
+      var jumlah = Math.min(TS_CONFIG.MAKS_AHLI_CAWANGAN, (Number(info.jumlahAhli) || 0) + tambah), sebenar = jumlah - (Number(info.jumlahAhli) || 0);
+      if (sebenar > 0) {
+        info.jumlahAhli = jumlah;
+        if (info.kumpulan) { info.kumpulan.puteri = (info.kumpulan.puteri || 0) + Math.min(sebenar, TS_CONFIG.AHLI_BARU.puteri); info.kumpulan.pemuda = (info.kumpulan.pemuda || 0) + Math.max(0, sebenar - TS_CONFIG.AHLI_BARU.puteri); }
+        patch.cawanganInfo = info; nota += ' ' + sebenar + ' ahli baharu direkrut.';
+      }
+      var bk = p.bonusKuota && p.bonusKuota.tahun === p.tahun ? p.bonusKuota.kerusi : 0;
+      if (bk < TS_CONFIG.MAKS_BONUS_KUOTA) { patch.bonusKuota = { tahun: p.tahun, kerusi: bk + 1 }; nota += ' +1 kerusi perwakilan tahun ' + p.tahun + '.'; }
+      else { nota += ' Bonus kerusi perwakilan tahun ini sudah mencapai had (+' + TS_CONFIG.MAKS_BONUS_KUOTA + ').'; }
+    }
+    var r = S.applyEffects(kesan, { patch: patch, log: { tindakan: d.id, nama: d.nama, peringkat: 'sayap' } });
+    if (!r.ok) { return r; }
+    if (d.stres) { var STr = modul('MyPolitikStres', 'stress.js'); if (STr && STr.laras) { STr.laras(d.stres); r.perubahan.stres = d.stres; } }
+    if (d.khas === 'perisai') { nota += ' Susutan sokongan Cawangan dihentikan untuk ' + TS_CONFIG.PERISAI_BULAN + ' bulan.'; }
+    var mesej = d.nama + ': ' + S.ringkasPerubahan(r.perubahan) + '.' + (d.stres ? ' Stress ' + (d.stres.stress > 0 ? '+' : '') + d.stres.stress + '.' : '') + nota;
+    return { ok: true, mesej: mesej, perubahan: r.perubahan, profil: r.profil };
+  }
+
+  /** Tambahan kerusi perwakilan tahun ini daripada Kempen Outreach Belia (dipakai election.js). */
+  function bonusKuota(p) { return p && p.bonusKuota && p.bonusKuota.tahun === p.tahun ? Math.min(TS_CONFIG.MAKS_BONUS_KUOTA, p.bonusKuota.kerusi || 0) : 0; }
+  /** Adakah sokongan Cawangan masih dilindungi Skuad Sayang untuk pertukaran bulan semasa? (dipakai calendar.js) */
+  function sokonganDilindungi(p) { return !!(p && Number(p.perisaiSokongan) >= indeksBulan(p)); }
+
+  /* ---------- Fasa Transisi ke Dewan Induk ---------- */
+  var TRANSISI = {
+    pemuda: { had: 40, amaran: 38 },          // lelaki: sayap Pemuda sehingga 40 tahun
+    puteri: { had: 35, amaran: 33 }           // andaian: had Puteri ialah 35 tahun dalam permainan; 'amaran' 2 tahun lebih awal
+  };
+  var WARISAN = { IP_SKALA: 250, BERAT_IP: 7, BERAT_AKAR: 7, MAKS: 14, TAHUN: 6 };
+
+  function umurPemain(p) {
+    var H = modul('MyPolitikHayat', 'hayat.js');
+    if (H && H.umurSemasa) { return H.umurSemasa(p); }
+    if (!p || !p.demografik) { return null; }
+    return (parseInt(p.demografik.umur, 10) || 0) + Math.max(0, (parseInt(p.tahun, 10) || 2026) - 2026);
+  }
+
+  /** Bonus kekuatan (0 hingga MAKS) jika pemain bertransisi dengan IP dan kesetiaan akar umbi ini. */
+  function kiraBonusWarisan(ip, akarUmbi) {
+    var v = Math.min(1, (Number(ip) || 0) / WARISAN.IP_SKALA) * WARISAN.BERAT_IP + Math.min(1, (Number(akarUmbi) || 0) / 100) * WARISAN.BERAT_AKAR;
+    return Math.max(0, Math.min(WARISAN.MAKS, bulatan(v)));
+  }
+
+  /** Notis amaran transisi, atau null. Pulang { sayap, umur, had, baki, tajuk, mesej, anggaran } bagi pemain Pemuda/Puteri berumur 'amaran' hingga 'had'. */
+  function notisTransisi(profil) {
+    var S = modul('MyPolitikSave', 'save.js'), p = profil || (S && S.loadPlayer());
+    if (!p || p.tamat) { return null; }
+    var k = kod(p), t = TRANSISI[k], umur = umurPemain(p);
+    if (!t || umur === null || umur < t.amaran || umur > t.had) { return null; }
+    var baki = t.had - umur, anggaran = kiraBonusWarisan(p.ip, p.kesetiaan ? p.kesetiaan.akarUmbi : 0);
+    return {
+      sayap: k, umur: umur, had: t.had, baki: baki, tajuk: 'Fasa Transisi Ke Dewan Induk', anggaran: anggaran,
+      mesej: 'Anda berumur ' + umur + ' tahun. Had umur sayap ' + INFO[k].nama + ' ialah ' + t.had + ' tahun, ' + (baki > 0 ? 'jadi anda akan bertransisi dalam ' + baki + ' tahun.' : 'jadi anda akan bertransisi pada tahun depan.') +
+        ' IP dan kesetiaan akar umbi yang anda pupuk sekarang dibawa ke Dewan Induk sebagai Legacy Loyalty (anggaran semasa: +' + anggaran + ' kekuatan undi dalam pertandingan Induk).'
+    };
+  }
+
+  /** Warisan yang akan disimpan apabila pemain bertukar laluan keluar daripada sayap (dipanggil hayat.js). */
+  function bentukWarisan(p, daripada) {
+    var ip = Number(p.ip) || 0, au = p.kesetiaan ? Number(p.kesetiaan.akarUmbi) || 0 : 0;
+    return { dari: daripada, tahun: p.tahun, tamatTahun: p.tahun + WARISAN.TAHUN, ip: ip, akarUmbi: au, bonus: kiraBonusWarisan(ip, au) };
+  }
+
+  /** Bonus Legacy Loyalty semasa (susut mendatar sehingga sifar dalam WARISAN.TAHUN tahun). */
+  function bonusWarisan(p, pertandingan) {
+    var w = p && p.warisan;
+    if (!w || !w.bonus) { return 0; }
+    if (pertandingan && (pertandingan.kumpulan === 'sayap' || pertandingan.sayap)) { return 0; }     // hanya pertandingan Induk (jawatan utama dan perwakilan)
+    var umurW = (parseInt(p.tahun, 10) || 0) - (parseInt(w.tahun, 10) || 0);
+    if (umurW < 0 || umurW >= WARISAN.TAHUN) { return 0; }
+    return bulatan(w.bonus * (1 - umurW / WARISAN.TAHUN));
+  }
+  function ringkasWarisan(p) {
+    var w = p && p.warisan, b = w ? bonusWarisan(p, null) : 0;
+    return w && b > 0 ? { dari: w.dari, tahun: w.tahun, bonus: b, awal: w.bonus, tamatTahun: w.tamatTahun } : null;
+  }
+
   return {
     SENARAI: SENARAI, SAYAP: SAYAP, CONFIG: CONFIG, INFO: INFO, ISU: ISU, sah: sah, kategori: kategori, cadangan: cadangan, kelayakan: kelayakan,
-    kod: kod, sayapJawatan: sayapJawatan, info: info, sesuaikan: sesuaikan, bebanStres: bebanStres, pemulihanStres: pemulihanStres, kurangSusutAkarUmbi: kurangSusutAkarUmbi
+    kod: kod, sayapJawatan: sayapJawatan, info: info, sesuaikan: sesuaikan, bebanStres: bebanStres, pemulihanStres: pemulihanStres, kurangSusutAkarUmbi: kurangSusutAkarUmbi,
+    TINDAKAN_SAYAP: TINDAKAN_SAYAP, TRANSISI: TRANSISI, WARISAN: WARISAN, senaraiTindakanSayap: senaraiTindakanSayap, jalankanTindakanSayap: jalankanTindakanSayap,
+    bonusKuota: bonusKuota, sokonganDilindungi: sokonganDilindungi, notisTransisi: notisTransisi, bentukWarisan: bentukWarisan, bonusWarisan: bonusWarisan, ringkasWarisan: ringkasWarisan, kiraBonusWarisan: kiraBonusWarisan
   };
 });

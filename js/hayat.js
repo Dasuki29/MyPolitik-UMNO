@@ -234,6 +234,10 @@
       extra = sayapLama === 'utama' ? ' Laluan Utama / Induk anda tidak berubah.' : ' Laluan sayap pilihan anda dikekalkan.';
     }
     if (!ikutAvatar) { extra += ' Avatar pilihan anda dikekalkan.'; }
+    if (ikutSayap && SYm && SYm.bentukWarisan && (sayapLama === 'pemuda' || sayapLama === 'puteri') && patch.sayap !== sayapLama) {     // v6.5: Legacy Loyalty dibawa ke Dewan Induk
+      patch.warisan = SYm.bentukWarisan(p, sayapLama);
+      if (patch.warisan.bonus > 0) { extra += ' Transisi ke Dewan Induk: Legacy Loyalty +' + patch.warisan.bonus + ' kekuatan undi dalam pertandingan Induk (susut beransur selama ' + SYm.WARISAN.TAHUN + ' tahun), hasil IP dan kesetiaan akar umbi yang anda pupuk di ' + NAMA_KATEGORI[sayapLama] + '.'; }
+    }
     var r = s.applyEffects({}, { kiraTindakan: false, patch: patch, log: { tindakan: 'kategori', nama: 'Kategori ' + NAMA_KATEGORI[lama] + ' → ' + NAMA_KATEGORI[baru], peringkat: 'hayat' } });
     if (!r || !r.ok) { return kosong; }
     return { berubah: true, daripada: lama, kepada: baru, peristiwa: [{ jenis: 'kategori_bertukar', mesej: mesej + extra }] };
