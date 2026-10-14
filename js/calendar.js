@@ -305,6 +305,9 @@
       if (!ht.tamat && HY.prosesPeralihanKategori) { peristiwa = peristiwa.concat(HY.prosesPeralihanKategori().peristiwa || []); }   // v5.1: kategori bertukar mengikut umur pada tahun baharu
     }
 
+    var BLK = tahunBaharu ? muat('MyPolitikBlok', 'blok.js') : null;                        // v6.6: Penetapan Calon, janji kuota sayap
+    if (BLK && BLK.prosesTahunBaharu) { peristiwa = peristiwa.concat(BLK.prosesTahunBaharu().peristiwa || []); }
+
     peristiwa = peristiwa.concat(mesejMasuk(bulan, tahun, tahunBaharu));
     var akhir = S.loadPlayer();
     return {

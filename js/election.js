@@ -394,6 +394,7 @@
     return ahliCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
   }
   function syMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikSayap) { return g.MyPolitikSayap; } try { return typeof require === 'function' ? require('./sayap.js') : null; } catch (x) { return null; } }
+  function blokMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikBlok) { return g.MyPolitikBlok; } try { return typeof require === 'function' ? require('./blok.js') : null; } catch (x) { return null; } }
   function bonusKuota(p) { var m = syMod(); return m && m.bonusKuota ? m.bonusKuota(p) : 0; }              // v6.5: Kempen Outreach Belia
   function kuotaCawangan(p) { return kuota(ahliCawangan(p), CONFIG.KUOTA_CAWANGAN) + bonusKuota(p); }              // wakil Cawangan ke Bahagian
   /** v6.3: bilangan ahli sayap dalam Cawangan pemain (Pemuda, Puteri atau Wanita); data silang jantina x umur atau anggaran. */
@@ -690,6 +691,9 @@
     var p = S.loadPlayer();
     if (!p) { return []; }
     if (peringkat === 'pau') { peringkat = 'pusat'; }
+    if (peringkat === 'bahagian' && adalahTahunPemilihan(p.tahun)) {          // v6.6: blok sayap mengalih undi dalam pemilihan Ketua Bahagian (NPC)
+      var bm = blokMod(); if (bm && bm.selesaikanPerlumbaan) { bm.selesaikanPerlumbaan(opts); p = S.loadPlayer(); }
+    }
     var st = getKeadaanPemilihan(p);
     var kod = Object.keys(st.daftar).filter(function (k) { return !st.keputusan[k] && st.daftar[k].peringkat === peringkat; });
     kod.sort(function (a, b) { return (st.daftar[a].jenis === 'perwakilan' ? 0 : 1) - (st.daftar[b].jenis === 'perwakilan' ? 0 : 1); });   // perwakilan dahulu

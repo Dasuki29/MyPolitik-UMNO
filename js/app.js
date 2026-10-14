@@ -366,6 +366,7 @@
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
       I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, ST = W.MyPolitikStres, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
+  var SYP = W.MyPolitikSayap, BLK = W.MyPolitikBlok;                          // v6.5/v6.6 (Dashboard)
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -440,7 +441,7 @@
     var penting = { disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
-                    kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan' };
+                    kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', blok_janji_mungkir: 'Janji Kuota Dimungkiri' };
     for (var i = 0; i < (senarai || []).length; i++) {
       var e = senarai[i];
       if (!e || !e.mesej) { continue; }
@@ -629,6 +630,58 @@
     if (r.ok && EV) { await tunjukAcara(EV.selepasAktiviti()); }
   }
 
+  /* ---------- v6.6: Pengaruh Blok Sayap & tawar-menawar Ketua Bahagian ---------- */
+  function kadBlok(p) {
+    var r = BLK && BLK.ringkasan ? BLK.ringkasan(p) : null;
+    if (!r) { return ''; }
+    var m = r.meter;
+    var h = '<section class="card blok"><h2 class="card__title" style="margin:0 0 4px">Blok Undi Sayap ' + esc(m.nama) + ' Bahagian</h2>' +
+      '<p class="note">Sebagai Ketua Sayap Bahagian, anda mengawal satu blok undi dalam pemilihan Ketua Bahagian. Calon merisik sokongan anda dan boleh dirunding: sokongan ditukar dengan janji kuota tempat bertanding untuk ahli sayap pada pilihan raya akan datang.</p>' +
+      '<div class="kv"><span>Meter Pengaruh Blok</span><b>' + m.nilai + '/100 · ' + esc(m.label) + '</b></div>' +
+      '<div class="meter__track" role="progressbar" aria-valuenow="' + m.nilai + '" aria-valuemin="0" aria-valuemax="100"><i class="' + (m.nilai >= 55 ? '' : m.nilai >= 35 ? 'is-sederhana' : 'is-kritikal') + '" style="width:' + m.nilai + '%"></i></div>' +
+      '<div class="kv"><span>Saiz blok (anggaran)</span><b>' + fmt(m.blokUndi) + ' undi · ' + m.peratusPemilih + '% pemilih Bahagian</b></div>' +
+      '<details class="note" style="margin-top:6px"><summary>Apa yang membina blok?</summary><ul style="margin:6px 0 0;padding-left:18px">' +
+      '<li>IP: ' + m.komponen.ip + ' · Kesetiaan: ' + m.komponen.kesetiaan + ' · Reputasi: ' + m.komponen.reputasi + ' · Ahli sayap: ' + m.komponen.ahli + '</li>' +
+      '<li>Wakil G10: +' + m.komponen.g10 + ' · Rekod janji: ' + (m.komponen.laras >= 0 ? '+' : '') + m.komponen.laras + '</li></ul></details>';
+    if (r.keputusan) {
+      h += '<div class="banner ' + (r.keputusan.disokongMenang ? 'banner--gold' : '') + '" style="margin-top:10px"><strong>Keputusan Ketua Bahagian ' + r.keputusan.tahun + '</strong>' + esc(r.keputusan.mesej || '') + '</div>';
+    } else if (r.tutup) {
+      h += '<p class="note" style="margin-top:10px">' + esc(r.tutup) + '</p>';
+    } else {
+      if (r.sokongan) {
+        var sk = r.sokongan;
+        h += '<div class="banner banner--gold" style="margin-top:10px"><strong>Sokongan diikat: ' + esc(sk.nama) + '</strong>' +
+          (sk.mata ? 'Janji kuota ' + (sk.parlimen ? sk.parlimen + ' Parlimen' : '') + (sk.parlimen && sk.dun ? ' + ' : '') + (sk.dun ? sk.dun + ' DUN' : '') + ' (kemungkinan ditunaikan ' + sk.kemungkinan + '%). ' : 'Tanpa syarat. ') +
+          'Undi dikira apabila Mesyuarat Bahagian ditutup.</div>';
+      } else {
+        h += '<p class="note" style="margin-top:10px">Calon datang merisik anda. Setiap pusingan rundingan memakan ' + r.apKos + ' AP. Tuntutan terlalu tinggi akan ditolak. Jika anda tidak berikat dengan sesiapa, blok undi mengikut kehendak sendiri.</p>';
+      }
+      r.calon.forEach(function (c) {
+        h += '<div class="item" style="margin-top:8px"><div class="item__head"><strong>' + esc(c.nama) + '</strong><span class="status-chip' + (c.disokong ? ' is-done' : '') + '">' +
+          (c.disokong ? 'Disokong' : c.ditolak ? 'Menolak' : 'Merisik') + '</span></div>' +
+          '<p class="item__desc">' + esc(c.gaya) + ' · kekuatan ' + c.kekuatan + '. ' + (c.maksMata >= 4 ? 'Terdesak, sanggup menjanjikan banyak kuota.' : c.maksMata === 3 ? 'Sederhana, boleh berunding.' : 'Yakin dengan sokongan sendiri, kuota dihadkan.') + '</p>';
+        if (!r.sokongan && !c.ditolak) {
+          h += '<div class="choice-list" style="margin-top:6px">';
+          r.menu.forEach(function (t) {
+            h += '<button type="button" class="btn btn--sm' + (t.mata ? '' : ' btn--primary') + '" data-act="blok-runding" data-calon="' + esc(c.id) + '" data-tuntut="' + esc(t.id) + '" data-fk="b:' + esc(c.id) + t.id + '">' + esc(t.label) + '</button> ';
+          });
+          h += '</div>';
+        }
+        h += '</div>';
+      });
+    }
+    if (r.janji.length) {
+      h += '<details class="note" style="margin-top:10px" open><summary>Janji kuota (' + r.kerusiDiperoleh + ' mata diperoleh setakat ini)</summary><ul style="margin:6px 0 0;padding-left:18px">' +
+        r.janji.map(function (j) { return '<li>' + esc(j.tahun + ': ' + j.nama + ', ' + (j.parlimen ? j.parlimen + ' Parlimen' : '') + (j.parlimen && j.dun ? ' + ' : '') + (j.dun ? j.dun + ' DUN' : '') + ' — ' + (j.status === 'menunggu' ? 'menunggu Penetapan Calon' : j.status === 'ditepati' ? 'ditunaikan' : 'dimungkiri')); }).join('</li>') + '</li></ul></details>';
+    }
+    return h + (state.mesej.blok ? '<p class="result" style="margin-top:12px">' + esc(state.mesej.blok) + '</p>' : '') + '</section>';
+  }
+  async function rundingBlok(calon, tuntut) {
+    var r = BLK.runding(calon, tuntut);
+    state.mesej.blok = r.ok ? r.mesej : '';
+    render(); await lapor(r);
+  }
+
   function panelTindakan(p) {
     var peg = pemegang(p), mod = peg ? I : O;
     if (!mod) { return '<div class="card"><p class="empty">Modul tindakan tidak dimuatkan.</p></div>'; }
@@ -792,7 +845,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += bannerDisiplin(p) + bannerTransisi(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
+    h += bannerDisiplin(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
@@ -1205,7 +1258,8 @@
     if (act === 'ringkasan') { tunjukRingkasan(M.getRingkasan(lvl)); return; }
     if (act === 'bulan') { lanjutBulan(); return; }
     if (act === 'acara-buka') { bukaAcaraTertunggak(); return; }
-    if (act === 'tindakan-sayap') { tindakanSayap(t.getAttribute('data-id')); }
+    if (act === 'blok-runding') { rundingBlok(t.getAttribute('data-calon'), t.getAttribute('data-tuntut')); }
+    else if (act === 'tindakan-sayap') { tindakanSayap(t.getAttribute('data-id')); }
     else if (act === 'tindakan') { tindakan(t.getAttribute('data-id')); }
     else if (act === 'ke-tab') { setTab(t.getAttribute('data-v')); }
     else if (act === 'ulang-peta') { muatPeta(true); }
