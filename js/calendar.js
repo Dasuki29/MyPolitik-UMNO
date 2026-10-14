@@ -62,7 +62,7 @@
       { kod: 'akar_umbi', mula: 1, tamat: 3, tajuk: 'Awal Tahun', ringkas: 'Khidmat Akar Umbi & Pendaftaran Ahli',
         fokus: ['Ziarah dan gotong-royong', 'Bina pengaruh dan kesetiaan akar umbi', 'Kumpul isu tempatan'] },
       { kod: 'cawangan', mula: 4, tamat: 6, tajuk: 'Musim Cawangan', ringkas: 'Musim Mesyuarat & Pemilihan Cawangan (Cawangan & Sayap)',
-        fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Pemilihan jawatan Cawangan dan Sayap Cawangan', 'Pemilihan Perwakilan ke Bahagian'] },
+        fokus: ['Mesyuarat Cawangan dan usul lokaliti', 'Mesyuarat Sayap (bulan 5-6) sebelum Bahagian', 'Pemilihan jawatan Cawangan dan Sayap Cawangan', 'Pemilihan Perwakilan ke Bahagian'] },
       { kod: 'bahagian', mula: 7, tamat: 7, tajuk: 'Musim Bahagian', ringkas: 'Musim Mesyuarat & Pemilihan Bahagian (Bahagian & Sayap)',
         fokus: ['Mesyuarat Bahagian', 'Pemilihan jawatan Bahagian dan Sayap Bahagian', 'Pemilihan Perwakilan ke PAU'] },
       { kod: 'pau', mula: 8, tamat: 8, tajuk: 'Perhimpunan Agung', ringkas: 'Perhimpunan Agung UMNO (PAU) & Pemilihan Pusat',
@@ -73,8 +73,11 @@
 
     /* Tetingkap setiap mesyuarat / pengundian. 'pusat' dalam election.js dipetakan kepada 'pau'. */
     TETINGKAP: {
+      sayap_cawangan: { mula: 4, tamat: 6, nama: 'Mesyuarat Sayap Cawangan' },     // v6.1: laluan sayap sahaja; mesti selesai sebelum mesyuarat utama
       cawangan: { mula: 4, tamat: 6, nama: 'Mesyuarat Cawangan' },
+      sayap_bahagian: { mula: 7, tamat: 7, nama: 'Mesyuarat Sayap Bahagian' },
       bahagian: { mula: 7, tamat: 7, nama: 'Mesyuarat Bahagian' },
+      sayap_pau: { mula: 8, tamat: 8, nama: 'Perhimpunan Sayap (Pra-PAU)' },
       pau:      { mula: 8, tamat: 8, nama: 'Perhimpunan Agung UMNO (PAU)' }
     }
   };
@@ -147,7 +150,11 @@
     var p = profil || S.loadPlayer(), d = pendapatanBulanan(p);
     var susut = {};                                                    // v3.8: susutan kesetiaan bulanan
     Object.keys(CONFIG.SUSUT_BULANAN).forEach(function (k) { susut[k] = -CONFIG.SUSUT_BULANAN[k]; });
-    if (peringkatDipegang(p).length) { susut.akarUmbi -= CONFIG.SUSUT_PEMEGANG_JAWATAN; }
+    if (peringkatDipegang(p).length) {
+      var syKurang = (root.MyPolitikSayap && root.MyPolitikSayap.kurangSusutAkarUmbi) ? root.MyPolitikSayap.kurangSusutAkarUmbi(p) : 0;   // v5.9: Wanita
+      susut.akarUmbi -= Math.max(0, CONFIG.SUSUT_PEMEGANG_JAWATAN - syKurang);
+    }
+    if (root.MyPolitikSayap && root.MyPolitikSayap.sokonganDilindungi && root.MyPolitikSayap.sokonganDilindungi(p)) { susut.akarUmbi = 0; susut.ajk = 0; }   // v6.5: Skuad Sayang melindungi sokongan Cawangan
     return { ap: CONFIG.AP_BULANAN - p.ap, apBaharu: CONFIG.AP_BULANAN, myr: d.jumlah, butiran: d.butiran, kesetiaan: susut };
   }
 
@@ -183,7 +190,7 @@
       fasa: fasa, bonusAkarUmbi: fasa.kod === 'akar_umbi' ? CONFIG.BONUS_AKAR_UMBI : 0,
       bulanSeterusnya: tahunBaharu ? 1 : bulan + 1, tahunSeterusnya: tahunBaharu ? p.tahun + 1 : p.tahun,
       tahunBaharuSeterusnya: tahunBaharu,
-      tetingkap: { cawangan: getTetingkap('cawangan', bulan), bahagian: getTetingkap('bahagian', bulan), pau: getTetingkap('pau', bulan) },
+      tetingkap: { cawangan: getTetingkap('cawangan', bulan), sayap_cawangan: getTetingkap('sayap_cawangan', bulan), bahagian: getTetingkap('bahagian', bulan), sayap_bahagian: getTetingkap('sayap_bahagian', bulan), pau: getTetingkap('pau', bulan), sayap_pau: getTetingkap('sayap_pau', bulan) },
       jadual: jadual
     };
   }
@@ -222,7 +229,7 @@
       if (lv.status === 'sedang') {
         var r = M.tutupMesyuarat(k);
         if (r.ok) { out.push({ jenis: 'mesyuarat_ditutup_auto', mesej: t.nama + ' ditutup secara automatik kerana musim tamat. ' + r.mesej }); (r.peristiwa || []).forEach(function (e) { out.push(e); }); }
-      } else if (lv.status === 'boleh_mula') {
+      } else if (lv.status === 'boleh_mula' || lv.status === 'terkunci') {     // terkunci = mesyuarat sayap tidak diselesaikan (v6.1): terlepas juga
         out.push({ jenis: 'mesyuarat_terlepas', mesej: t.nama + ' tahun ' + p.tahun + ' terlepas kerana tidak dihadiri.' });
         if (E) {
           (E.jalankanPemilihanPeringkat(k === 'pau' ? 'pusat' : k) || []).forEach(function (x) {
@@ -249,7 +256,7 @@
         if (tk.bulan !== t.tamat) { return; }
         var lv = ms.peringkat.filter(function (x) { return x.kod === k; })[0];
         if (lv && lv.status === 'sedang') { amaran.push(t.nama + ' sedang berjalan dan akan ditutup secara automatik.'); }
-        else if (lv && lv.status === 'boleh_mula') { amaran.push(t.nama + ' belum dimulakan dan akan terlepas.'); }
+        else if (lv && (lv.status === 'boleh_mula' || lv.status === 'terkunci')) { amaran.push(t.nama + ' belum dimulakan dan akan terlepas.'); }
       });
     }
     var fasaBaharu = getFasa(tk.bulanSeterusnya);
@@ -291,12 +298,20 @@
     var STR = muat('MyPolitikStres', 'stress.js');                                              // v5.6: stress dan kesihatan bulanan
     if (STR) { peristiwa = peristiwa.concat(STR.prosesBulan().peristiwa || []); }
 
+    var MIS = muat('MyPolitikMisi', 'misi.js');                                                 // v6.7: Undi Tidak Percaya sayap
+    if (MIS && MIS.prosesBulan) { peristiwa = peristiwa.concat(MIS.prosesBulan().peristiwa || []); }
+
     var HY = tahunBaharu ? muat('MyPolitikHayat', 'hayat.js') : null;                       // v5.0: umur +1 dan semakan kesihatan
     if (HY) {
       var ht = HY.prosesTahunBaharu();
       peristiwa = peristiwa.concat(ht.peristiwa || []);
       if (!ht.tamat && HY.prosesPeralihanKategori) { peristiwa = peristiwa.concat(HY.prosesPeralihanKategori().peristiwa || []); }   // v5.1: kategori bertukar mengikut umur pada tahun baharu
     }
+
+    var MIS2 = tahunBaharu ? muat('MyPolitikMisi', 'misi.js') : null;                        // v6.7: notis rasmi transisi umur
+    if (MIS2 && MIS2.prosesTahunBaharu) { peristiwa = peristiwa.concat(MIS2.prosesTahunBaharu().peristiwa || []); }
+    var BLK = tahunBaharu ? muat('MyPolitikBlok', 'blok.js') : null;                        // v6.6: Penetapan Calon, janji kuota sayap
+    if (BLK && BLK.prosesTahunBaharu) { peristiwa = peristiwa.concat(BLK.prosesTahunBaharu().peristiwa || []); }
 
     peristiwa = peristiwa.concat(mesejMasuk(bulan, tahun, tahunBaharu));
     var akhir = S.loadPlayer();

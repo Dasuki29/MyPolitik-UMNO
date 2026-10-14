@@ -60,6 +60,9 @@
     KITARAN_TAHUN: 3,
     // v3.7: kuota perwakilan mengikut Perlembagaan
     KUOTA_CAWANGAN: { ahliPerWakil: 50, maks: 5, min: 1 },    // Fasal 14.4.4: 1 wakil / 50 ahli, maks 5 seorang Cawangan
+    KUOTA_SAYAP_CAWANGAN: { ahliPerWakil: 10, maks: 3, min: 1 },    // v6.3: 1 wakil setiap 10 ahli sayap, maksimum 3 (wakil sayap Cawangan ke Mesyuarat Sayap Bahagian)
+    SAYAP_G10: 10,                                                  // v6.2: 10 wakil sayap Bahagian ke Mesyuarat Bahagian (G10)
+    SAYAP_G2: 2,                                                    // v6.2: 2 wakil sayap Bahagian ke Perhimpunan Sayap Pusat (G2)
     KUOTA_BAHAGIAN: { ahliPerWakil: 500, maks: 7, min: 1 },   // Fasal 8.4.3: 1 wakil / 500 ahli, maks 7 seorang Bahagian
     ANGGARAN_CAWANGAN_PER_BAHAGIAN: 25,  // anggaran bilangan Cawangan dalam satu Bahagian (jika tiada data sebenar)
     PEMILIH_PUSAT: 1500,                 // pengundi simulasi peringkat pusat
@@ -151,7 +154,7 @@
       kempen: { mata: 0, aktiviti: {} },
       daftar: {},                                // kod -> pendaftaran
       keputusan: {},                             // kod -> keputusan pengundian
-      perwakilan: { cawangan: false, bahagian: false }      // dikira semula daripada profil.perwakilan (setahun)
+      perwakilan: { cawangan: false, bahagian: false, sayapCawangan: false, g10: false, g2: false }      // dikira semula daripada profil.perwakilan (setahun)
     };
   }
 
@@ -170,7 +173,8 @@
         if (/^perwakilan_/.test(k) && st[f][k].tahun !== p.tahun) { delete st[f][k]; }
       });
     });
-    st.perwakilan = { cawangan: J.perwakilanSah(p, 'cawangan').sah, bahagian: J.perwakilanSah(p, 'bahagian').sah };
+    var pwS = p.perwakilan || {};
+    st.perwakilan = { cawangan: J.perwakilanSah(p, 'cawangan').sah, bahagian: J.perwakilanSah(p, 'bahagian').sah, sayapCawangan: pwS.sayapCawangan === p.tahun, g10: pwS.g10 === p.tahun, g2: pwS.g2 === p.tahun };
     return st;
   }
 
@@ -230,6 +234,7 @@
     }
 
     // 1. Perwakilan tahunan
+    var g10Sah = !!p.perwakilan && p.perwakilan.g10 === p.tahun;                      // v6.2: wakil G10 hadir Mesyuarat Bahagian
     var pc = J.perwakilanSah(p, 'cawangan'), exBhg = J.exOfficio(p, 'bahagian'), exPau = J.exOfficio(p, 'pau');
     tambah({
       kod: 'perwakilan_cawangan', jenis: 'perwakilan', jawatan: 'Perwakilan Cawangan ke Bahagian', peringkat: 'cawangan', kumpulan: 'perwakilan', sayap: null,
@@ -240,10 +245,36 @@
     tambah({
       kod: 'perwakilan_bahagian', jenis: 'perwakilan', jawatan: 'Perwakilan Bahagian ke PAU', peringkat: 'bahagian', kumpulan: 'perwakilan', sayap: null,
       kerusi: kuotaBahagian(p), kesukaran: 0,
-      terbuka: !exPau.sah && pc.layak,
+      terbuka: !exPau.sah && (pc.layak || g10Sah),
       sebab: exPau.sah ? 'Anda hadir PAU secara automatik sebagai ' + exPau.sumber + '.'
-                       : (pc.layak ? '' : 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu' + (pc.luput ? ' (mandat tahun lepas sudah luput).' : '.'))
+                       : (pc.layak || g10Sah ? '' : 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu' + (pc.luput ? ' (mandat tahun lepas sudah luput).' : '.'))
     });
+
+    // 1b. v6.2: wakil sayap (laluan Pemuda / Puteri / Wanita sahaja)
+    var sy = J.sayapPemain(p);
+    if (sy) {
+      var NS = J.NAMA_SAYAP[sy], pw2 = p.perwakilan || {}, swSah = pw2.sayapCawangan === p.tahun, ketuaSy = J.pegang(p, 'sayap_cawangan_' + sy);   // Ketua sayap Cawangan hadir automatik
+      tambah({
+        kod: 'perwakilan_sayap_cawangan', jenis: 'perwakilan', jawatan: 'Wakil ' + NS + ' Cawangan ke Mesyuarat ' + NS + ' Bahagian', peringkat: 'sayap_cawangan', kumpulan: 'perwakilan', sayap: sy,
+        kerusi: kuotaSayapCawangan(p), kesukaran: 0,
+        terbuka: !exBhg.sah && !ketuaSy,
+        sebab: ketuaSy ? 'Anda hadir Mesyuarat ' + NS + ' Bahagian secara automatik sebagai Ketua ' + NS + ' Cawangan.' : (exBhg.sah ? 'Anda hadir Mesyuarat ' + NS + ' Bahagian secara automatik sebagai ' + exBhg.sumber + '.' : '')
+      });
+      var ketuaSyB = J.pegang(p, 'sayap_bahagian_' + sy);                       // Ketua sayap Bahagian hadir Perhimpunan Sayap Pusat automatik
+      var layakB = swSah || exBhg.sah || ketuaSy;
+      tambah({
+        kod: 'perwakilan_sayap_g10', jenis: 'perwakilan', jawatan: 'G10 ' + NS + ': 10 wakil ke Mesyuarat Bahagian', peringkat: 'sayap_bahagian', kumpulan: 'perwakilan', sayap: sy,
+        kerusi: CONFIG.SAYAP_G10, kesukaran: 0,
+        terbuka: layakB && !exBhg.sah,
+        sebab: exBhg.sah ? 'Anda hadir Mesyuarat Bahagian secara automatik sebagai ' + exBhg.sumber + '.' : (layakB ? '' : 'Menjadi wakil ' + NS + ' Cawangan tahun ' + p.tahun + ' dahulu.')
+      });
+      tambah({
+        kod: 'perwakilan_sayap_g2', jenis: 'perwakilan', jawatan: 'G2 ' + NS + ': 2 wakil ke Perhimpunan ' + NS + ' Pusat', peringkat: 'sayap_bahagian', kumpulan: 'perwakilan', sayap: sy,
+        kerusi: CONFIG.SAYAP_G2, kesukaran: 0,
+        terbuka: layakB && !exPau.sah && !ketuaSyB,
+        sebab: ketuaSyB ? 'Anda hadir Perhimpunan ' + NS + ' Pusat secara automatik sebagai Ketua ' + NS + ' Bahagian.' : exPau.sah ? 'Anda hadir Perhimpunan ' + NS + ' Pusat secara automatik sebagai ' + exPau.sumber + '.' : (layakB ? '' : 'Menjadi wakil ' + NS + ' Cawangan tahun ' + p.tahun + ' dahulu.')
+      });
+    }
 
     // 2. Jawatan (tahun pemilihan)
     if (buka) {
@@ -341,11 +372,13 @@
 
   /** Kekuatan pemain (0 hingga 100) mengikut peringkat pengundi. */
   function kekuatanPemain(p, st, peringkat, d) {
-    var b = CONFIG.BERAT[peringkat === 'cawangan' ? 'cawangan' : 'bahagian'], k = p.kesetiaan;
-    var skala = CONFIG.IP_SKALA[peringkat] || CONFIG.IP_SKALA.bahagian;
+    var pr = String(peringkat).replace(/^sayap_/, '');                          // v6.2: peringkat sayap ikut skala peringkat induknya
+    var b = CONFIG.BERAT[pr === 'cawangan' ? 'cawangan' : 'bahagian'], k = p.kesetiaan;
+    var skala = CONFIG.IP_SKALA[pr] || CONFIG.IP_SKALA.bahagian;
     var v = Math.min(100, 100 * p.ip / skala) * b.ip + k.akarUmbi * b.akarUmbi + k.ketuaCawangan * b.ketuaCawangan +
             k.ajk * b.ajk + k.perwakilan * b.perwakilan + st.kempen.mata * b.kempen;
     if (d && d.sayap && J.sayapPemain(p) === d.sayap) { v += CONFIG.BONUS_SAYAP; }
+    var sm = syMod(); if (sm && sm.bonusWarisan) { v += sm.bonusWarisan(p, d); }              // v6.5: Legacy Loyalty (pertandingan Induk sahaja)
     var Et = etika();
     if (Et) { v += Et.bonusUndi(p); }                                // Modal Sosial (kempen bersih)
     return clamp(v, 0, 100);
@@ -360,10 +393,28 @@
     if (p && p.bahagianInfo && p.bahagianInfo.jumlahAhli) { return p.bahagianInfo.jumlahAhli; }
     return ahliCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN);
   }
-  function kuotaCawangan(p) { return kuota(ahliCawangan(p), CONFIG.KUOTA_CAWANGAN); }              // wakil Cawangan ke Bahagian
+  function syMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikSayap) { return g.MyPolitikSayap; } try { return typeof require === 'function' ? require('./sayap.js') : null; } catch (x) { return null; } }
+  function blokMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikBlok) { return g.MyPolitikBlok; } try { return typeof require === 'function' ? require('./blok.js') : null; } catch (x) { return null; } }
+  function bonusKuota(p) { var m = syMod(); return m && m.bonusKuota ? m.bonusKuota(p) : 0; }              // v6.5: Kempen Outreach Belia
+  function kuotaCawangan(p) { return kuota(ahliCawangan(p), CONFIG.KUOTA_CAWANGAN) + bonusKuota(p); }              // wakil Cawangan ke Bahagian
+  /** v6.3: bilangan ahli sayap dalam Cawangan pemain (Pemuda, Puteri atau Wanita); data silang jantina x umur atau anggaran. */
+  function ahliSayap(p, sayap) {
+    var sy = sayap || J.sayapPemain(p), info = p && p.cawanganInfo ? p.cawanganInfo : null;
+    if (!sy) { return 0; }
+    var kg = info && info.kumpulan;
+    if (!kg) {
+      var g = typeof globalThis !== 'undefined' ? globalThis : null, Dm = g && g.MyPolitikData ? g.MyPolitikData : null;
+      if (!Dm) { try { Dm = typeof require === 'function' ? require('./data.js') : null; } catch (x) { Dm = null; } }
+      kg = Dm && info ? Dm.pecahanKumpulan(info) : null;
+    }
+    return kg && kg[sy] !== undefined ? kg[sy] : Math.round(ahliCawangan(p) * 0.2);
+  }
+  function kuotaSayapCawangan(p) { return kuota(ahliSayap(p), CONFIG.KUOTA_SAYAP_CAWANGAN) + bonusKuota(p); }   // v6.3: 1 wakil / 10 ahli sayap, maks 3
   function kuotaBahagian(p, opts) { return kuota(ahliBahagian(p, opts), CONFIG.KUOTA_BAHAGIAN); }   // wakil Bahagian ke PAU
 
   function bilPemilih(p, peringkat, opts) {
+    if (peringkat === 'sayap_cawangan') { return Math.max(10, ahliSayap(p)); }      // v6.2: pengundi mesyuarat sayap
+    if (peringkat === 'sayap_bahagian') { return kuotaSayapCawangan(p) * ((opts && opts.bilCawangan) || CONFIG.ANGGARAN_CAWANGAN_PER_BAHAGIAN); }
     if (peringkat === 'cawangan') {
       var jumlah = p.cawanganInfo && p.cawanganInfo.jumlahAhli ? p.cawanganInfo.jumlahAhli : 60;
       return Math.max(50, jumlah);
@@ -410,7 +461,7 @@
   function bina(p, st, d, opts) {
     var peringkat = d.peringkat, kerusi = d.kerusi || 1;
     var bil = Math.max(4, kerusi + CONFIG.PESAING_TAMBAHAN);
-    var aras = (CONFIG.ARAS_PESAING[peringkat] || 0) + (d.kesukaran || 0) * CONFIG.GANDA_KESUKARAN;
+    var aras = (CONFIG.ARAS_PESAING[String(peringkat).replace(/^sayap_/, '')] || 0) + (d.kesukaran || 0) * CONFIG.GANDA_KESUKARAN;
     var calon = janaPesaing(p, d.kod, bil - 1, aras);
     calon.push({ nama: p.nama, pemain: true, kekuatan: kekuatanPemain(p, st, peringkat, d) });
     return { calon: calon, kerusi: kerusi, pemilih: bilPemilih(p, peringkat, opts) };
@@ -577,6 +628,8 @@
    * opts: { rng, bilCawangan }
    * Pulangan: { ok, mesej, keputusan, perubahan, peristiwa:[], profil }
    */
+  var KUNCI_PERWAKILAN = { perwakilan_cawangan: 'cawangan', perwakilan_bahagian: 'bahagian', perwakilan_sayap_cawangan: 'sayapCawangan', perwakilan_sayap_g10: 'g10', perwakilan_sayap_g2: 'g2' };
+
   function jalankanPemilihan(kod, opts) {
     opts = opts || {};
     var p = S.loadPlayer();
@@ -606,7 +659,7 @@
 
     var patch = { pemilihan: st }, peristiwa = [];
     if (jenis === 'perwakilan') {
-      var aras = kod === 'perwakilan_cawangan' ? 'cawangan' : 'bahagian', pw = salin(p.perwakilan || { cawangan: 0, bahagian: 0 });
+      var aras = KUNCI_PERWAKILAN[kod] || 'bahagian', pw = salin(p.perwakilan || { cawangan: 0, bahagian: 0 });
       pw[aras] = menang ? p.tahun : 0;
       patch.perwakilan = pw;
       if (menang) { peristiwa.push({ jenis: 'perwakilan_terpilih', mesej: 'Anda terpilih sebagai ' + d.jawatan + '. Mandat sah untuk tahun ' + p.tahun + ' sahaja.' }); }
@@ -638,6 +691,9 @@
     var p = S.loadPlayer();
     if (!p) { return []; }
     if (peringkat === 'pau') { peringkat = 'pusat'; }
+    if (peringkat === 'bahagian' && adalahTahunPemilihan(p.tahun)) {          // v6.6: blok sayap mengalih undi dalam pemilihan Ketua Bahagian (NPC)
+      var bm = blokMod(); if (bm && bm.selesaikanPerlumbaan) { bm.selesaikanPerlumbaan(opts); p = S.loadPlayer(); }
+    }
     var st = getKeadaanPemilihan(p);
     var kod = Object.keys(st.daftar).filter(function (k) { return !st.keputusan[k] && st.daftar[k].peringkat === peringkat; });
     kod.sort(function (a, b) { return (st.daftar[a].jenis === 'perwakilan' ? 0 : 1) - (st.daftar[b].jenis === 'perwakilan' ? 0 : 1); });   // perwakilan dahulu
@@ -692,7 +748,7 @@
     getKeadaanPemilihan: getKeadaanPemilihan,
     getStatusModul: getStatusModul,
     senaraiPertandingan: senaraiPertandingan,
-    kuotaCawangan: kuotaCawangan, kuotaBahagian: kuotaBahagian,
+    kuotaCawangan: kuotaCawangan, kuotaBahagian: kuotaBahagian, kuotaSayapCawangan: kuotaSayapCawangan, ahliSayap: ahliSayap,
     daftarBertanding: daftarBertanding,
     tarikBalik: tarikBalik,
     senaraiKempen: senaraiKempen,

@@ -66,6 +66,11 @@
   /** Jumlah beban Stress sebulan daripada SEMUA jawatan yang dipegang. */
   function bebanJawatan(p) { return pecahanBeban(p).reduce(function (m, x) { return m + x.beban; }, 0); }
 
+  function SY() { return root.MyPolitikSayap || (typeof require === 'function' ? tryReq('./sayap.js') : null); }
+  /** v5.9: beban bulanan selepas kelebihan sayap (Pemuda +10%, Wanita -20%). */
+  function bebanEfektif(p) { var b = bebanJawatan(p), y = SY(); return y ? y.bebanStres(p, b) : b; }
+  function pemulihanEfektif(p) { var y = SY(); return CONFIG.PEMULIHAN + (y ? y.pemulihanStres(p) : 0); }
+
   function umur(p) { var h = H(); return h && h.umurSemasa ? h.umurSemasa(p) : null; }
 
   /** Perubahan Kesihatan sebulan bagi Stress dan umur tertentu. */
@@ -82,10 +87,10 @@
 
   /** Ringkasan untuk UI. */
   function ringkasan(p) {
-    var n = nilai(p), beban = bebanJawatan(p), u = umur(p);
+    var n = nilai(p), beban = bebanEfektif(p), u = umur(p), pulih = pemulihanEfektif(p);
     return {
       stress: n.stress, kesihatan: n.kesihatan, labelStress: labelStress(n.stress), labelKesihatan: labelKesihatan(n.kesihatan),
-      bilJawatan: senaraiJawatan(p).length, pecahan: pecahanBeban(p), beban: beban, bersih: beban - CONFIG.PEMULIHAN, kadarKesihatan: kadarKesihatan(n.stress, u), risikoTambahan: risikoTambahan(p)
+      bilJawatan: senaraiJawatan(p).length, pecahan: pecahanBeban(p), beban: beban, pulih: pulih, bersih: beban - pulih, kadarKesihatan: kadarKesihatan(n.stress, u), risikoTambahan: risikoTambahan(p)
     };
   }
 
@@ -148,7 +153,7 @@
   function prosesBulan() {
     var s = S(), p = s && s.loadPlayer(), ev = [];
     if (!p || p.tamat) { return { peristiwa: ev, tamat: (p && p.tamat) || null }; }
-    var n = nilai(p), beban = bebanJawatan(p), baruS = clamp(n.stress + beban - CONFIG.PEMULIHAN, 0, 100);
+    var n = nilai(p), beban = bebanEfektif(p), baruS = clamp(n.stress + beban - pemulihanEfektif(p), 0, 100);
     var dK = kadarKesihatan(baruS, umur(p)), baruK = clamp(n.kesihatan + dK, 0, 100);
     s.applyEffects({}, { kiraTindakan: false, patch: { stress: baruS, kesihatan: baruK } });
 
@@ -165,7 +170,7 @@
   }
 
   return {
-    CONFIG: CONFIG, ringkasan: ringkasan, bebanJawatan: bebanJawatan, kadarKesihatan: kadarKesihatan, risikoTambahan: risikoTambahan,
+    CONFIG: CONFIG, ringkasan: ringkasan, bebanJawatan: bebanJawatan, bebanEfektif: bebanEfektif, kadarKesihatan: kadarKesihatan, risikoTambahan: risikoTambahan,
     labelStress: labelStress, labelKesihatan: labelKesihatan, laras: laras, lepasJawatan: lepasJawatan, lucutJawatan: lucutJawatan, pecahanBeban: pecahanBeban, bebanSatu: bebanSatu, prosesBulan: prosesBulan
   };
 });

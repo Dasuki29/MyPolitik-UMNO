@@ -294,6 +294,11 @@
     perempuan: ['perempuan'],
     bawah40:   ['bawah40', 'dibawah40', 'kurang40'],
     atas40:    ['atas40', 'diatas40'],
+    // v6.3: pecahan silang jantina x umur (pilihan). Jika tiada dalam Sheet, dianggar daripada empat lajur di atas.
+    lelakiBawah40:    ['lelakibawah40', 'lelakidibawah40', 'pemuda'],
+    perempuanBawah40: ['perempuanbawah40', 'perempuandibawah40', 'puteri'],
+    lelakiAtas40:     ['lelakiatas40', 'lelakidiatas40', 'induk'],
+    perempuanAtas40:  ['perempuanatas40', 'perempuandiatas40', 'wanita'],
     negeri:    ['namanegeri', 'negeri'],
     lelakiPct:    ['lelakipercentage', 'lelakiperatus'],
     perempuanPct: ['perempuanpercentage', 'perempuanperatus'],
@@ -302,6 +307,7 @@
   };
   // Hanya dipakai jika baris tajuk tiada (format lama 3 bahagian: A, B, C, D, E, G, I, K, M).
   var LAJUR_LALAI = { id: 0, parlimen: 1, dun: 2, lokaliti: 3, jumlah: 4, lelaki: 6, perempuan: 8, bawah40: 10, atas40: 12,
+    lelakiBawah40: -1, perempuanBawah40: -1, lelakiAtas40: -1, perempuanAtas40: -1,
     negeri: -1, lelakiPct: -1, perempuanPct: -1, bawah40Pct: -1, atas40Pct: -1 };
   var REGEX_ID4 = /^(\d{1,3})\s*\/\s*(\d{1,3})\s*\/\s*(\d{1,3})\s*\/\s*(\d{1,3})$/;
   var REGEX_ID3 = /^(\d{1,3})\s*\/\s*(\d{1,3})\s*\/\s*(\d{1,3})$/;
@@ -338,6 +344,31 @@
     if (a !== null && b === null && jumlah > 0) { b = Math.max(0, jumlah - a); }
     else if (b !== null && a === null && jumlah > 0) { a = Math.max(0, jumlah - b); }
     return [a, b];
+  }
+  /**
+   * v6.3: pecahan ahli ikut kumpulan, silang jantina x umur 40:
+   *   Pemuda = lelaki bawah 40, Puteri = perempuan bawah 40, Wanita = perempuan atas 40, Induk = lelaki atas 40.
+   * Jika Sheet ada keempat-empat lajur silang (lelakiBawah40 dsb.) angka itu dipakai (langsung = true).
+   * Jika tidak, dianggar daripada jumlah lelaki/perempuan dan bawah/atas 40 dengan andaian kedua-dua paksi tidak bersandar
+   * (kaedah baki terbesar supaya jumlah kekal sama dengan jumlah ahli). Anggaran: langsung = false.
+   */
+  function pecahanKumpulan(c) {
+    c = c || {};
+    var lb = c.lelakiBawah40, pb = c.perempuanBawah40, la = c.lelakiAtas40, pa = c.perempuanAtas40;
+    function ok(x) { return x !== null && x !== undefined && isFinite(x); }
+    if (ok(lb) && ok(pb) && ok(la) && ok(pa)) {
+      return { pemuda: lb, puteri: pb, wanita: pa, induk: la, jumlah: lb + pb + la + pa, langsung: true };
+    }
+    var jumlah = Math.max(0, Math.round(c.jumlahAhli || 0));
+    var jk = (c.lelaki || 0) + (c.perempuan || 0), um = (c.bawah40 || 0) + (c.atas40 || 0);
+    var pL = jk > 0 ? c.lelaki / jk : 0.60, pU = um > 0 ? c.bawah40 / um : 0.40;
+    var asal = [['pemuda', pL * pU], ['puteri', (1 - pL) * pU], ['wanita', (1 - pL) * (1 - pU)], ['induk', pL * (1 - pU)]];
+    var out = { pemuda: 0, puteri: 0, wanita: 0, induk: 0 }, guna = 0, baki = [];
+    asal.forEach(function (x) { var v = jumlah * x[1], f = Math.floor(v); out[x[0]] = f; guna += f; baki.push([x[0], v - f]); });
+    baki.sort(function (a, b) { return b[1] - a[1]; });
+    for (var i = 0; guna < jumlah; i++, guna++) { out[baki[i % baki.length][0]]++; }
+    out.jumlah = jumlah; out.langsung = false;
+    return out;
   }
   function teks(row, i) { return i >= 0 && row[i] !== undefined && row[i] !== null ? String(row[i]).trim() : ''; }
 
@@ -402,14 +433,17 @@
       var lk = nomborAtauNull(row[idx.lelaki]), pr = nomborAtauNull(row[idx.perempuan]);
       var b40 = nomborAtauNull(row[idx.bawah40]), a40 = nomborAtauNull(row[idx.atas40]);
       var jumlah = nomborAtauNull(row[idx.jumlah]) || ((lk || 0) + (pr || 0)) || ((b40 || 0) + (a40 || 0));
+      var xLB = nomborAtauNull(row[idx.lelakiBawah40]), xPB = nomborAtauNull(row[idx.perempuanBawah40]), xLA = nomborAtauNull(row[idx.lelakiAtas40]), xPA = nomborAtauNull(row[idx.perempuanAtas40]);
       var jk = lengkapkanPasangan(jumlah, lk, pr, peratus(row[idx.lelakiPct]), peratus(row[idx.perempuanPct]));
       var um = lengkapkanPasangan(jumlah, b40, a40, peratus(row[idx.bawah40Pct]), peratus(row[idx.atas40Pct]));
       var c = {
         id: id, idSheet: idSheet, kodNegeri: kodN, kod: kodL, nama: teks(row, idx.lokaliti) || ('Lokaliti ' + kodL),
         bahagianId: kodP, dunId: d.id,
         jumlahAhli: jumlah, lelaki: jk[0], perempuan: jk[1], bawah40: um[0], atas40: um[1],
+        lelakiBawah40: xLB, perempuanBawah40: xPB, lelakiAtas40: xLA, perempuanAtas40: xPA,
         lokaliti: []
       };
+      c.kumpulan = pecahanKumpulan(c);
       d.cawangan.push(c);
       p.cawangan.push(c);
       bilCawangan++; jumlahAhli += jumlah;
@@ -609,6 +643,11 @@
    berumur 60 tahun ke atas (Veteran, kedua-dua jantina). Pulang null jika data tiada.
    */
   function bobotDemografi(c) {
+    var kg = c.kumpulan;                                       // v6.3: data silang langsung dalam Sheet (jika ada)
+    if (kg && kg.langsung && kg.jumlah > 0) {
+      var V0 = 0.25, atasW = kg.wanita + kg.induk;
+      return { pemuda: kg.pemuda / kg.jumlah, puteri: kg.puteri / kg.jumlah, wanita: kg.wanita * (1 - V0) / kg.jumlah, biasa: kg.induk * (1 - V0) / kg.jumlah, veteran: atasW * V0 / kg.jumlah };
+    }
     var jk = (c.lelaki || 0) + (c.perempuan || 0), um = (c.bawah40 || 0) + (c.atas40 || 0);
     if (jk <= 0 && um <= 0) { return null; }                 // tiada maklumat: guna agihan lalai
     // Paksi yang tiada data guna nisbah lalai DEMOGRAFI (lelaki 0.60, bawah 40 tahun 0.40).
@@ -895,10 +934,12 @@
     teksKeBaris: teksKeBaris,
     rowsToHierarchy: rowsToHierarchy,
     getFallbackData: getFallbackData,
+    pecahanKumpulan: pecahanKumpulan,
     findCawangan: findCawangan,
 
     // penjana
     createRng: createRng,
+    janaNama: janaNama,
     createGameSeed: createGameSeed,
     generateAhliCawangan: generateAhliCawangan,
 
