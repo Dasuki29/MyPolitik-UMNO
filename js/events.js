@@ -76,7 +76,7 @@
       id: 'isu_keahlian', kategori: 'cawangan', ikon: '📋', tajuk: 'Isu Keahlian Tertunggak',
       huraian: 'Puluhan ahli di Cawangan {cawangan} didapati belum menjelaskan yuran dan terancam hilang kelayakan mengundi.',
       pilihan: [
-        { id: 'a', label: 'Bayarkan yuran mereka', huraian: 'Kos tinggi, tetapi kesetiaan dijamin.', kesan: { myr: -500, ip: 8, kesetiaan: { akarUmbi: 8, ajk: 3 } }, mesej: 'Keahlian dipulihkan. Mereka berjanji menyokong anda.' },
+        { id: 'a', label: 'Bayarkan yuran mereka', huraian: 'Kos tinggi, tetapi sokongan dijamin.', kesan: { myr: -500, ip: 8, kesetiaan: { akarUmbi: 8, ajk: 3 } }, mesej: 'Keahlian dipulihkan. Mereka berjanji menyokong anda.' },
         { id: 'b', label: 'Jalankan operasi ziarah', huraian: 'Pujuk satu demi satu.', kesan: { ap: -2, ip: 10, kesetiaan: { akarUmbi: 4 } }, mesej: 'Sebahagian besar ahli menjelaskan sendiri selepas dipujuk.' },
         { id: 'c', label: 'Biarkan', huraian: 'Tiada kos.', kesan: { kesetiaan: { akarUmbi: -6 }, ip: -4 }, mesej: 'Ramai ahli gugur kelayakan. Ada yang menyalahkan anda.' }
       ]

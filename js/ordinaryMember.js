@@ -4,8 +4,8 @@
 
    1. Tindakan Akar Umbi
         Ziarah Kasih          +10 IP, -1 AP
-        Hadir Gotong-Royong   +15 Kesetiaan Ketua Cawangan, -1 AP
-        Sembang Warung        isu tempatan + 5 Kesetiaan Akar Umbi, -1 AP
+        Hadir Gotong-Royong   +15 Sokongan Ketua Cawangan, -1 AP
+        Sembang Warung        isu tempatan + 5 Sokongan Akar Umbi, -1 AP
         Kerja Sampingan       +MYR 500, -2 AP
    2. Kelayakan Bertanding
         Bahagian dan Pusat sentiasa terkunci.

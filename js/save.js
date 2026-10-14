@@ -24,7 +24,7 @@
   var MAKS_LOG = 50;
   var MAKS_ISU = 12;
 
-  // Kesetiaan dalam peratus (0 hingga 100).
+  // Sokongan dalam peratus (0 hingga 100).
   var KESETIAAN_LALAI = Object.freeze({
     ketuaCawangan: 50,
     ajk: 50,
@@ -38,7 +38,7 @@
     ajk: 'AJK',
     akarUmbi: 'Akar Umbi',
     perwakilan: 'Perwakilan PAU',
-    penentang: 'Penentang/Atas Pagar'
+    penentang: 'Atas Pagar'
   });
 
   // Nilai permulaan setiap pemain baharu.
@@ -228,7 +228,7 @@
    * Laluan tunggal untuk mengubah sumber pemain.
    * kesan: { ip, myr, ap, kesetiaan:{ketuaCawangan, ajk, akarUmbi, perwakilan, penentang}, isu:{...} }
    *        nilai ialah perubahan (boleh negatif). AP dan MYR tidak boleh jatuh bawah 0
-   *        (tindakan ditolak). IP tidak jatuh bawah 0. Kesetiaan dihadkan 0 hingga 100.
+   *        (tindakan ditolak). IP tidak jatuh bawah 0. Sokongan dihadkan 0 hingga 100.
    * opts:  { log:{ tindakan, nama, ... }, patch:{ medan profil untuk digabung }, kiraTindakan:false }
    * Pulangan: { ok, perubahan:{ip,myr,ap,kesetiaan}, sebelum, profil } atau { ok:false, kod, ralat }
    * Perubahan yang dipulangkan ialah nilai sebenar selepas had dikenakan.
@@ -246,7 +246,7 @@
     var kes = kesan.kesetiaan || {};
     for (var k in kes) {
       if (!Object.prototype.hasOwnProperty.call(KESETIAAN_LALAI, k)) {
-        return { ok: false, kod: 'kesetiaan', ralat: 'Jenis kesetiaan tidak sah: ' + k };
+        return { ok: false, kod: 'kesetiaan', ralat: 'Jenis sokongan tidak sah: ' + k };
       }
     }
 
@@ -283,7 +283,7 @@
     return { ok: true, perubahan: perubahan, sebelum: sebelum, profil: p };
   }
 
-  /** Format ringkas: "+10 IP, -1 AP, +15 Kesetiaan Ketua Cawangan". */
+  /** Format ringkas: "+10 IP, -1 AP, +15 Sokongan Ketua Cawangan". */
   function ringkasPerubahan(perubahan) {
     var bahagian = [];
     function tanda(n) { return (n > 0 ? '+' : '-') + Math.abs(n).toLocaleString('ms-MY'); }
@@ -292,7 +292,7 @@
     if (perubahan.ap) { bahagian.push(tanda(perubahan.ap) + ' AP'); }
     if (perubahan.reputasi) { bahagian.push(tanda(perubahan.reputasi) + ' Reputasi Parti'); }
     Object.keys(perubahan.kesetiaan || {}).forEach(function (k) {
-      bahagian.push(tanda(perubahan.kesetiaan[k]) + ' Kesetiaan ' + KESETIAAN_LABEL[k]);
+      bahagian.push(tanda(perubahan.kesetiaan[k]) + ' Sokongan ' + KESETIAAN_LABEL[k]);
     });
     return bahagian.join(', ');
   }

@@ -10,8 +10,8 @@
    Kelebihan (angka ialah andaian permainan; laras dalam CONFIG):
      Utama  : +10% pada setiap kemasukan Dana (elaun dan sumbangan).
      Pemuda : +20% kenaikan IP (selepas redaman IP tinggi), tetapi beban Stress bulanan +10%.
-     Puteri : +25% kenaikan Kesetiaan AJK dan Perwakilan, dan +25% kenaikan Reputasi Parti.
-     Wanita : kerugian Kesetiaan Akar Umbi -30%, susutan akar umbi bulanan pemegang jawatan -1,
+     Puteri : +25% kenaikan Sokongan AJK dan Perwakilan, dan +25% kenaikan Reputasi Parti.
+     Wanita : kerugian Sokongan Akar Umbi -30%, susutan akar umbi bulanan pemegang jawatan -1,
               beban Stress bulanan -20% dan pemulihan Stress +1 sebulan.
    Modul ini tiada kebergantungan; save.js, stress.js dan calendar.js memanggilnya.
    ========================================================================== */
@@ -36,7 +36,7 @@
   var INFO = {
     utama:  { kod: 'utama',  nama: 'Utama / Induk', ikon: '🏛️', ringkas: 'Laluan jawatan utama parti', kelebihan: ['+10% Dana masuk'], syarat: 'Terbuka kepada semua.' },
     pemuda: { kod: 'pemuda', nama: 'Pemuda',        ikon: '⚡', ringkas: 'Laju naik, tetapi lebih penat', kelebihan: ['+20% kenaikan IP', 'Beban Stress +10%'], syarat: 'Lelaki berumur 18 hingga 40 tahun.' },
-    puteri: { kod: 'puteri', nama: 'Puteri',        ikon: '🌸', ringkas: 'Rangkaian dan nama baik', kelebihan: ['+25% kesetiaan AJK dan Perwakilan', '+25% Reputasi Parti'], syarat: 'Perempuan berumur 18 hingga 35 tahun.' },
+    puteri: { kod: 'puteri', nama: 'Puteri',        ikon: '🌸', ringkas: 'Rangkaian dan nama baik', kelebihan: ['+25% sokongan AJK dan Perwakilan', '+25% Reputasi Parti'], syarat: 'Perempuan berumur 18 hingga 35 tahun.' },
     wanita: { kod: 'wanita', nama: 'Wanita',        ikon: '🛡️', ringkas: 'Stabil dan tenang', kelebihan: ['Kerugian akar umbi -30%', 'Susutan akar umbi pemegang jawatan -1', 'Beban Stress -20%, pulih +1'], syarat: 'Perempuan berumur 36 hingga 59 tahun.' }
   };
 
@@ -225,7 +225,7 @@
     return (parseInt(p.demografik.umur, 10) || 0) + Math.max(0, (parseInt(p.tahun, 10) || 2026) - 2026);
   }
 
-  /** Bonus kekuatan (0 hingga MAKS) jika pemain bertransisi dengan IP dan kesetiaan akar umbi ini. */
+  /** Bonus kekuatan (0 hingga MAKS) jika pemain bertransisi dengan IP dan sokongan akar umbi ini. */
   function kiraBonusWarisan(ip, akarUmbi) {
     var v = Math.min(1, (Number(ip) || 0) / WARISAN.IP_SKALA) * WARISAN.BERAT_IP + Math.min(1, (Number(akarUmbi) || 0) / 100) * WARISAN.BERAT_AKAR;
     return Math.max(0, Math.min(WARISAN.MAKS, bulatan(v)));
@@ -241,7 +241,7 @@
     return {
       sayap: k, umur: umur, had: t.had, baki: baki, tajuk: 'Fasa Transisi Ke Dewan Induk', anggaran: anggaran,
       mesej: 'Anda berumur ' + umur + ' tahun. Had umur sayap ' + INFO[k].nama + ' ialah ' + t.had + ' tahun, ' + (baki > 0 ? 'jadi anda akan bertransisi dalam ' + baki + ' tahun.' : 'jadi anda akan bertransisi pada tahun depan.') +
-        ' IP dan kesetiaan akar umbi yang anda pupuk sekarang dibawa ke Dewan Induk sebagai Legacy Loyalty (anggaran semasa: +' + anggaran + ' kekuatan undi dalam pertandingan Induk).'
+        ' IP dan sokongan akar umbi yang anda pupuk sekarang dibawa ke Dewan Induk sebagai Legacy Loyalty (anggaran semasa: +' + anggaran + ' kekuatan undi dalam pertandingan Induk).'
     };
   }
 

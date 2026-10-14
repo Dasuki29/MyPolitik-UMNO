@@ -161,6 +161,10 @@
     if (sama && (sama.pangkat || 0) >= d.pangkat) {
       return { terbuka: false, sebab: 'Konflik peringkat: anda sudah memegang ' + sama.jawatan + ' di peringkat ' + LABEL_PERINGKAT[d.peringkat] + '. Hanya satu jawatan bagi setiap peringkat (boleh bertanding jawatan lebih tinggi di peringkat ini, atau jawatan di peringkat lain).' };
     }
+    var sudahTahunIni = getJawatan(p).filter(function (j) { return j.kod !== d.kod && j.kod !== 'lama' && j.peringkat === d.peringkat && j.kumpulan === d.kumpulan && Number(j.tahun) === Number(p.tahun); })[0];
+    if (sudahTahunIni) {                                         // v6.8: satu jawatan setiap peringkat (kumpulan sama) dalam satu pemilihan; tiada rantaian MKT -> Timbalan -> Presiden
+      return { terbuka: false, sebab: 'Anda sudah memenangi ' + sudahTahunIni.jawatan + ' pada pemilihan ' + p.tahun + '. Hanya satu jawatan bagi setiap peringkat dalam satu pemilihan; jawatan lebih tinggi dibuka pada pemilihan seterusnya.' };
+    }
     if (Et && d.keahlian) {                                    // Fasal 15.5: ahli sekurang-kurangnya 3 tahun
       var kh = Et.semakKeahlian(p, d.keahlian, d.fasal);
       if (!kh.sah) { return { terbuka: false, sebab: kh.sebab, tunggu: kh.baki }; }
@@ -196,6 +200,44 @@
     var r = null;
     getJawatan(p).forEach(function (j) { if (j.kod !== d.kod && j.peringkat === d.peringkat && (!r || (j.pangkat || 0) > (r.pangkat || 0))) { r = j; } });
     return r;
+  }
+
+  function pemilihanMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikElection) { return g.MyPolitikElection; } try { return typeof require === 'function' ? require('./election.js') : null; } catch (e) { return null; } }
+
+  /**
+   * v6.8: Penggal tamat. Jawatan dipilih pada tahun pemilihan Y sah sehingga akhir tahun pemilihan seterusnya.
+   * Jika tidak dipertahankan (tiada kemenangan baharu), jawatan luput. Jawatan sayap yang tidak sepadan
+   * dengan laluan sayap semasa juga dibuang. Pulang { dibuang:[{jawatan,sebab}], patch } atau null.
+   */
+  function semakPenggalTamat(p) {
+    if (!p || p.tamat) { return null; }
+    var E = pemilihanMod(), senarai = getJawatan(p), tahun = Number(p.tahun) || 0;
+    if (!E || !senarai.length || !Array.isArray(p.jawatanList) || !p.jawatanList.length) { return null; }
+    var lepas = E.tahunPemilihanLepas ? E.tahunPemilihanLepas(tahun) : null, sy = sayapPemain(p), dibuang = [];
+    senarai.forEach(function (j) {
+      if (j.kod === 'lama') { return; }
+      if (j.kumpulan === 'sayap' && j.sayap && j.sayap !== sy) { dibuang.push({ j: j, sebab: 'tidak lagi layak dalam sayap ' + NAMA_SAYAP[j.sayap] }); return; }
+      if (lepas && lepas !== tahun && Number(j.tahun) && Number(j.tahun) < lepas) { dibuang.push({ j: j, sebab: 'penggal tamat pada pemilihan ' + lepas + ' dan tidak dipertahankan' }); }
+    });
+    if (!dibuang.length) { return null; }
+    var baki = senarai.filter(function (j) { return !dibuang.some(function (x) { return x.j === j; }); }), tangga = Number(p.pangkatUtamaLalu) || 0;
+    dibuang.forEach(function (x) { if (x.j.kumpulan === 'utama') { tangga = Math.max(tangga, x.j.pangkat || 0); } });
+    baki.sort(function (a, b) { return (b.pangkat || 0) - (a.pangkat || 0); });
+    var patch = { jawatanList: baki, jawatan: baki.length ? baki[0].jawatan : BIASA, pangkatUtamaLalu: tangga };
+    if (!baki.length) { patch.cabaran = null; patch.amaranAktif = false; }
+    return { dibuang: dibuang.map(function (x) { return { kod: x.j.kod, jawatan: x.j.jawatan, sebab: x.sebab }; }), patch: patch };
+  }
+
+  /** Laksanakan semakan penggal tamat pada profil semasa. Pulang { peristiwa: [] }. */
+  function kemaskiniPenggal() {
+    var p = S.loadPlayer(), out = { peristiwa: [] }, r = semakPenggalTamat(p);
+    if (!r) { return out; }
+    var nama = r.dibuang.map(function (x) { return x.jawatan; }).join(', ');
+    var ap = S.applyEffects({}, { kiraTindakan: false, patch: r.patch, log: { tindakan: 'penggal_tamat', nama: 'Jawatan luput: ' + nama, peringkat: 'ahli' } });
+    if (ap && ap.ok) {
+      out.peristiwa.push({ jenis: 'penggal_tamat', mesej: 'Jawatan luput: ' + r.dibuang.map(function (x) { return x.jawatan + ' (' + x.sebab + ')'; }).join('; ') + '. Bertanding semula pada pemilihan untuk mendapatkannya kembali.' });
+    }
+    return out;
   }
 
   /** Pulang { jawatanList, jawatan, ... } untuk dipatch ke profil selepas menang/kalah satu jawatan. */
@@ -259,6 +301,6 @@
     cariDef: cariDef, selaraskan: selaraskan, getJawatan: getJawatan, pegang: pegang, pegangPeringkat: pegangPeringkat, bilJawatan: bilJawatan,
     pangkatTertinggi: pangkatTertinggi, jawatanTertinggi: jawatanTertinggi, peringkatTertinggi: peringkatTertinggi,
     sayapPemain: sayapPemain, exOfficio: exOfficio, perwakilanSah: perwakilanSah,
-    jawatanSamaPeringkat: jawatanSamaPeringkat, katalogUntuk: katalogUntuk, semakKelayakan: semakKelayakan, terapkan: terapkan, ringkas: ringkas
+    jawatanSamaPeringkat: jawatanSamaPeringkat, katalogUntuk: katalogUntuk, semakKelayakan: semakKelayakan, terapkan: terapkan, semakPenggalTamat: semakPenggalTamat, kemaskiniPenggal: kemaskiniPenggal, ringkas: ringkas
   };
 });

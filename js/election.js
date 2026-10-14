@@ -648,6 +648,11 @@
     var rng = opts.rng || Math.random, b = bina(p, st, d, opts), h = undi(b.calon, b.kerusi, b.pemilih, rng);
     var sendiri = h.jadual.filter(function (j) { return j.pemain; })[0], menang = sendiri.menang;
     var jenis = d.jenis === 'perwakilan' ? 'perwakilan' : 'jawatan';
+    var kumpulanKod = function (k) { var df = J.cariDef(k); return df ? df.kumpulan || 'utama' : 'utama'; };
+    if (jenis === 'jawatan') {                                                  // v6.8: satu jawatan setiap peringkat dalam satu pemilihan
+      var sudahMenang = Object.keys(st.keputusan).filter(function (k) { return k !== kod && st.daftar[k] && st.daftar[k].jenis !== 'perwakilan' && st.daftar[k].peringkat === d.peringkat && kumpulanKod(k) === kumpulanKod(kod) && st.keputusan[k] && st.keputusan[k].menang; })[0];
+      if (sudahMenang) { return gagal('satu_setahun', 'Anda sudah memenangi ' + st.daftar[sudahMenang].jawatan + ' pada peringkat ' + d.peringkat + ' tahun ini. Hanya satu jawatan bagi setiap peringkat dalam satu pemilihan.'); }
+    }
     if (jenis === 'jawatan' && !adalahTahunPemilihan(p.tahun)) { return gagal('tutup', 'Pemilihan jawatan hanya berlaku pada tahun pemilihan. ' + tutupTahun(p)); }
 
     var keputusan = {
@@ -696,7 +701,8 @@
     }
     var st = getKeadaanPemilihan(p);
     var kod = Object.keys(st.daftar).filter(function (k) { return !st.keputusan[k] && st.daftar[k].peringkat === peringkat; });
-    kod.sort(function (a, b) { return (st.daftar[a].jenis === 'perwakilan' ? 0 : 1) - (st.daftar[b].jenis === 'perwakilan' ? 0 : 1); });   // perwakilan dahulu
+    var pg = function (k) { var df = J.cariDef(k); return df ? df.pangkat || 0 : 0; };
+    kod.sort(function (a, b) { var ja = st.daftar[a].jenis === 'perwakilan' ? 0 : 1, jb = st.daftar[b].jenis === 'perwakilan' ? 0 : 1; var ga = (J.cariDef(a) || {}).kumpulan === 'sayap' ? 1 : 0, gb = (J.cariDef(b) || {}).kumpulan === 'sayap' ? 1 : 0; return ja - jb || ga - gb || pg(b) - pg(a); });   // perwakilan dahulu, jawatan utama sebelum sayap, kemudian pangkat tertinggi dahulu (v6.8)
     return kod.map(function (k) { return jalankanPemilihan(k, opts); });
   }
 

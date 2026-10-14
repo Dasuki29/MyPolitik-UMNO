@@ -10,7 +10,7 @@
        Rentetan 3 bulan berturut-turut memberi bonus, kemudian ditetapkan semula. Bulan terlepas
        hanya memutuskan rentetan (tiada denda).
      - Undi Tidak Percaya terpakai kepada pemegang mana-mana jawatan sayap. "Sokongan sayap"
-       ialah Kesetiaan Akar Umbi (diwakili oleh data permainan sedia ada).
+       ialah Sokongan Akar Umbi (diwakili oleh data permainan sedia ada).
    ========================================================================== */
 (function (root, factory) {
   'use strict';
@@ -60,10 +60,10 @@
     ],
     wanita: [
       { id: 'ziarah_kasih_wanita', nama: 'Ziarah Kasih', ikon: '🤝',
-        penerangan: 'Ziarah keluarga warga emas dan ibu tunggal di Cawangan. Menguatkan kesetiaan dan menenangkan fikiran.',
+        penerangan: 'Ziarah keluarga warga emas dan ibu tunggal di Cawangan. Menguatkan sokongan dan menenangkan fikiran.',
         kesan: { ap: -3, myr: -350, ip: 8, kesetiaan: { akarUmbi: 14, ajk: 4 } }, stres: { stress: -12, kesihatan: 2 } },
       { id: 'bakul_makanan', nama: 'Agihan Bakul Makanan', ikon: '🧺',
-        penerangan: 'Agihkan bakul makanan kepada keluarga B40 bersama AJK Wanita. Kesetiaan akar umbi dan perwakilan naik.',
+        penerangan: 'Agihkan bakul makanan kepada keluarga B40 bersama AJK Wanita. Sokongan akar umbi dan perwakilan naik.',
         kesan: { ap: -3, myr: -450, ip: 6, kesetiaan: { akarUmbi: 12, perwakilan: 4 } }, stres: { stress: -8 } }
     ],
     puteri: [

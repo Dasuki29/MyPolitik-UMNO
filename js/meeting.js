@@ -13,7 +13,7 @@
      Pembawa Usul   membawa usul (kos 2 AP). Kredit penuh dan risiko terbesar.
      Pembahas       berbahas menyokong atau membantah (kos 1 AP).
      Mengundi       mengundi sokong, bantah atau berkecuali (percuma).
-   Peranan, pendirian, pengaruh (IP) dan kesetiaan menentukan sama ada usul lulus
+   Peranan, pendirian, pengaruh (IP) dan sokongan menentukan sama ada usul lulus
    serta perubahan IP dan Reputasi Parti pemain.
 
    Hanya perwakilan yang dipilih (atau pemegang jawatan yang berkaitan) menghadiri

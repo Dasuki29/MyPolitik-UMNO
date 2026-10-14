@@ -441,7 +441,7 @@
     var penting = { disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
-                    kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', transisi_rasmi: 'Upacara Graduasi Sayap', transisi_amaran: 'Notis Rasmi Transisi', undi_tp_amaran: 'Amaran Undi Tidak Percaya', undi_tp_kalah: 'Kalah Undi Tidak Percaya', undi_tp_menang: 'Selamat Undi Tidak Percaya', blok_janji_mungkir: 'Janji Kuota Dimungkiri' };
+                    kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', transisi_rasmi: 'Upacara Graduasi Sayap', transisi_amaran: 'Notis Rasmi Transisi', undi_tp_amaran: 'Amaran Undi Tidak Percaya', undi_tp_kalah: 'Kalah Undi Tidak Percaya', undi_tp_menang: 'Selamat Undi Tidak Percaya', blok_janji_mungkir: 'Janji Kuota Dimungkiri', penggal_tamat: 'Penggal Jawatan Tamat' };
     for (var i = 0; i < (senarai || []).length; i++) {
       var e = senarai[i];
       if (!e || !e.mesej) { continue; }
@@ -562,7 +562,7 @@
         ' title="' + esc(j.nama + (j.acara.length ? ': ' + j.acara.join(', ') : '')) + '"><b>' + j.bulan + '</b>' + esc(j.pendek) + '</li>';
     }).join('');
     $('t-info').textContent = 'Setiap bulan baharu: AP ditetapkan semula kepada ' + K.CONFIG.AP_BULANAN + ' dan elaun bulanan ditambah ke dana.' +
-      (tk.bonusAkarUmbi ? ' Bonus +' + Math.round(tk.bonusAkarUmbi * 100) + '% IP dan kesetiaan bagi tindakan sehingga bulan 3.' : '');
+      (tk.bonusAkarUmbi ? ' Bonus +' + Math.round(tk.bonusAkarUmbi * 100) + '% IP dan sokongan bagi tindakan sehingga bulan 3.' : '');
     btn.disabled = false;
     btn.innerHTML = tk.tahunBaharuSeterusnya
       ? 'Teruskan ke Bulan 1, ' + tk.tahunSeterusnya + ' &rarr;'
@@ -580,7 +580,7 @@
     var h = '';
     Object.keys(S.KESETIAAN_LABEL).forEach(function (k) {
       var v = p.kesetiaan[k];
-      h += bar('Kesetiaan ' + S.KESETIAAN_LABEL[k], v, k === 'akarUmbi' && v < 40);
+      h += bar('Sokongan ' + S.KESETIAAN_LABEL[k], v, k === 'akarUmbi' && v < 40);
     });
     h += bar('Reputasi Parti', p.reputasi, false);
     $('s-kesetiaan').innerHTML = h;
@@ -664,7 +664,7 @@
       '<div class="meter__track" role="progressbar" aria-valuenow="' + m.nilai + '" aria-valuemin="0" aria-valuemax="100"><i class="' + (m.nilai >= 55 ? '' : m.nilai >= 35 ? 'is-sederhana' : 'is-kritikal') + '" style="width:' + m.nilai + '%"></i></div>' +
       '<div class="kv"><span>Saiz blok (anggaran)</span><b>' + fmt(m.blokUndi) + ' undi · ' + m.peratusPemilih + '% pemilih Bahagian</b></div>' +
       '<details class="note" style="margin-top:6px"><summary>Apa yang membina blok?</summary><ul style="margin:6px 0 0;padding-left:18px">' +
-      '<li>IP: ' + m.komponen.ip + ' · Kesetiaan: ' + m.komponen.kesetiaan + ' · Reputasi: ' + m.komponen.reputasi + ' · Ahli sayap: ' + m.komponen.ahli + '</li>' +
+      '<li>IP: ' + m.komponen.ip + ' · Sokongan: ' + m.komponen.kesetiaan + ' · Reputasi: ' + m.komponen.reputasi + ' · Ahli sayap: ' + m.komponen.ahli + '</li>' +
       '<li>Wakil G10: +' + m.komponen.g10 + ' · Rekod janji: ' + (m.komponen.laras >= 0 ? '+' : '') + m.komponen.laras + '</li></ul></details>';
     if (r.keputusan) {
       h += '<div class="banner ' + (r.keputusan.disokongMenang ? 'banner--gold' : '') + '" style="margin-top:10px"><strong>Keputusan Ketua Bahagian ' + r.keputusan.tahun + '</strong>' + esc(r.keputusan.mesej || '') + '</div>';
@@ -719,9 +719,9 @@
       var c = I.getCabaranAktif();
       if (c) {
         h += '<div class="banner banner--warn" role="alert"><strong>Jawatan anda dicabar</strong>' + esc((c.penentang && c.penentang.nama ? c.penentang.nama + ': ' : '') + (c.mesej || 'Seorang penentang mencabar jawatan anda.')) +
-          ' Pulihkan Kesetiaan Akar Umbi sebelum pemilihan berikutnya.</div>';
+          ' Pulihkan Sokongan Akar Umbi sebelum pemilihan berikutnya.</div>';
       } else if (p.kesetiaan.akarUmbi < 40) {
-        h += '<div class="banner banner--warn" role="alert"><strong>Amaran kesetiaan</strong>Kesetiaan Akar Umbi tinggal ' + p.kesetiaan.akarUmbi + '%. Di bawah 40%, penentang boleh mencabar jawatan anda.</div>';
+        h += '<div class="banner banner--warn" role="alert"><strong>Amaran kesetiaan</strong>Sokongan Akar Umbi tinggal ' + p.kesetiaan.akarUmbi + '%. Di bawah 40%, penentang boleh mencabar jawatan anda.</div>';
       }
     }
 
@@ -778,7 +778,7 @@
   function kadEtika(p) {
     if (!ET) { return ''; }
     var r = ET.ringkasan(p), cfg = ET.CONFIG;
-    function bar(nilai, kelas, label) { return '<div class="kv"><span>' + label + '</span><b>' + nilai + '%</b></div><div class="meter meter--' + kelas + '" role="progressbar" aria-valuenow="' + nilai + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + nilai + '%"></i></div>'; }
+    function bar(nilai, kelas, label) { return '<div class="kv"><span>' + label + '</span><b>' + nilai + '%</b></div><div class="meter__track" role="progressbar" aria-valuenow="' + nilai + '" aria-valuemin="0" aria-valuemax="100"><i class="' + (kelas === 'bahaya' ? 'is-kritikal' : kelas === 'amaran' ? 'is-sederhana' : '') + '" style="width:' + nilai + '%"></i></div>'; }
     var h = '<section class="card etika"><h2 class="card__title" style="margin:0 0 4px">Tataetika &amp; Tempoh Keahlian</h2>';
     h += '<p class="note">Kempen bersih membina <b>Modal Sosial</b> (kekuatan undi +' + r.bonusUndi + ') dan menurunkan risiko dilapor. Politik wang, fitnah dan ugutan melanggar Tataetika Ahli UMNO dan boleh dihukum Lembaga Disiplin (Fasal 20.10): amaran, gantung, dilarang bertanding atau dipecat.</p>';
     h += bar(r.modal, 'baik', 'Modal Sosial') + bar(r.risiko, r.risiko >= 45 ? 'bahaya' : r.risiko >= 20 ? 'amaran' : 'baik', 'Risiko Disiplin (' + r.labelRisiko + ')');
@@ -1192,7 +1192,7 @@
     toast(r.mesej, 'ok');
     if (ET) { var dis = ET.prosesBulan(); r.peristiwa = (r.peristiwa || []).concat(dis.peristiwa || []); if (dis.berubah) { render(); } }
     var pBaru = S.loadPlayer();
-    if (I && pemegang(pBaru)) {                                    // semakan kesetiaan bulanan
+    if (I && pemegang(pBaru)) {                                    // semakan sokongan bulanan
       var a = I.semakAmaranKesetiaan();
       if (a && a.amaran && a.cabaranBaru) { r.peristiwa = (r.peristiwa || []).concat([{ jenis: 'cabaran_jawatan', mesej: a.cabaranBaru.mesej }]); }
       else if (a && a.amaran) { toast(a.mesej, 'ralat'); }
