@@ -225,7 +225,7 @@
   function pemilihanAktif(p) { return !!(E && E.adalahTahunPemilihan(p.tahun)); }
 
   /** Adakah mesyuarat peringkat ini mengadakan pengundian? Perwakilan: setiap tahun. Pusat (PAU): tahun pemilihan sahaja. */
-  function adaPemilihan(p, peringkat) { return !!E && !adalahSayap(peringkat) && (peringkat === 'pau' ? pemilihanAktif(p) : true); }
+  function adaPemilihan(p, peringkat) { return !!E && peringkat !== 'sayap_pau' && (peringkat === 'pau' ? pemilihanAktif(p) : true); }   // v6.2: sayap Cawangan dan Bahagian memilih wakil
 
   function pegangan(p) {
     if (J) { return { per: J.peringkatTertinggi(p), pw: J.perwakilanSah(p, 'cawangan'), pp: J.perwakilanSah(p, 'bahagian'), exB: J.exOfficio(p, 'bahagian'), exP: J.exOfficio(p, 'pau') }; }
@@ -239,12 +239,19 @@
     if (peringkat === 'cawangan') { return { ok: true }; }
     if (adalahSayap(peringkat)) {                                         // v6.1: mesyuarat sayap
       if (!sayapPemain(p)) { return { ok: false, sebab: 'Mesyuarat sayap hanya untuk laluan sayap (Pemuda, Puteri atau Wanita). Laluan anda ialah Utama / Induk.' }; }
-      return peringkat === 'sayap_cawangan' ? { ok: true } : bolehHadir(p, INDUK[peringkat]);    // sayap bahagian / pau: layak sama seperti mesyuarat utamanya
+      if (peringkat === 'sayap_cawangan') { return { ok: true }; }            // mesyuarat peringkat Cawangan: semua ahli sayap boleh hadir
+      var gs = pegangan(p), pws = p.perwakilan || {}, N = NAMA_SAYAP[sayapPemain(p)];
+      if (peringkat === 'sayap_bahagian') {                                  // hanya wakil sayap Cawangan tahun ini atau pemegang jawatan Bahagian/Pusat
+        return (pws.sayapCawangan === p.tahun || gs.exB.sah) ? { ok: true }
+          : { ok: false, sebab: 'Hanya wakil ' + N + ' Cawangan tahun ' + p.tahun + ' yang terpilih dan pemegang jawatan Bahagian/Pusat boleh hadir Mesyuarat ' + N + ' Bahagian.' };
+      }
+      return (pws.g2 === p.tahun || gs.exP.sah) ? { ok: true }               // sayap_pau: G2 tahun ini atau pemegang jawatan ex-officio
+        : { ok: false, sebab: 'Hanya G2 ' + N + ' (2 wakil Bahagian) tahun ' + p.tahun + ', Ketua Bahagian dan pemegang jawatan Pusat boleh hadir Perhimpunan ' + N + ' Pusat.' };
     }
     var g = pegangan(p);
     if (peringkat === 'bahagian') {
-      return (g.pw.sah || g.exB.sah) ? { ok: true }
-        : { ok: false, sebab: 'Hanya Perwakilan Cawangan tahun ' + p.tahun + ' yang terpilih dan pemegang jawatan Bahagian/Pusat boleh hadir. Mandat tahun lepas sudah luput.' };
+      return (g.pw.sah || g.exB.sah || (p.perwakilan && p.perwakilan.g10 === p.tahun)) ? { ok: true }
+        : { ok: false, sebab: 'Hanya Perwakilan Cawangan atau G10 sayap tahun ' + p.tahun + ' yang terpilih dan pemegang jawatan Bahagian/Pusat boleh hadir. Mandat tahun lepas sudah luput.' };
     }
     return (g.pp.sah || g.exP.sah) ? { ok: true }
       : { ok: false, sebab: 'Hanya Perwakilan Bahagian tahun ' + p.tahun + ' yang terpilih, Ketua Bahagian dan pemegang jawatan Pusat boleh hadir PAU.' };
@@ -351,7 +358,17 @@
       });
     }
 
-    if (adaPemilihan(p, peringkat)) {
+    if (adaPemilihan(p, peringkat) && adalahSayap(peringkat)) {            // v6.2: pemilihan wakil sayap
+      var Ns = NAMA_SAYAP[sayapPemain(p)], Es = typeof globalThis !== 'undefined' ? globalThis.MyPolitikElection : null;
+      agenda.push({
+        id: peringkat + '-' + p.tahun + '-pemilihan', jenis: 'pemilihan', kod: 'pemilihan_' + peringkat, sumber: 'pemilihan',
+        tajuk: peringkat === 'sayap_cawangan' ? 'Pemilihan wakil ' + Ns + ' Cawangan ke Mesyuarat ' + Ns + ' Bahagian (' + (Es && Es.kuotaSayapCawangan ? Es.kuotaSayapCawangan(p) : 3) + ' kerusi)'
+                                              : 'Pemilihan G10 (10 wakil ke Mesyuarat Bahagian) dan G2 (2 wakil ke Perhimpunan ' + Ns + ' Pusat)',
+        penerangan: 'Pengundian dijalankan apabila mesyuarat ditutup. Daftar pencalonan anda melalui tab Pemilihan sebelum itu.',
+        kerusi: null, status: 'menunggu', keputusan: null
+      });
+    }
+    else if (adaPemilihan(p, peringkat)) {
       var buka = pemilihanAktif(p), tajuk, perw = PERINGKAT[peringkat].perwakilan;
       var Eg = typeof globalThis !== 'undefined' ? globalThis.MyPolitikElection : null;      // kuota sebenar (Fasal 14.4.4 / 8.4.3)
       if (perw && Eg && Eg.kuotaCawangan) { perw = { kerusi: peringkat === 'cawangan' ? Eg.kuotaCawangan(p) : Eg.kuotaBahagian(p) }; }
@@ -415,6 +432,7 @@
     var g = pegangan(p);
     var b = { layak: false, lencana: null, sumber: '', sebab: '', tetingkap: bulanKe(p, 'bahagian') };
     if (g.pw.sah) { b.layak = true; b.lencana = 'Perwakilan Bahagian ' + p.tahun; b.sumber = 'Menang kerusi Perwakilan Cawangan ke Bahagian (sah tahun ' + p.tahun + ' sahaja)'; }
+    else if (p.perwakilan && p.perwakilan.g10 === p.tahun) { b.layak = true; b.lencana = 'G10 ' + (NAMA_SAYAP[sayapPemain(p)] || 'Sayap') + ' ' + p.tahun; b.sumber = 'Terpilih dalam G10 (10 wakil sayap) di Mesyuarat Sayap Bahagian (sah tahun ' + p.tahun + ' sahaja)'; }
     else if (g.exB.sah) { b.layak = true; b.sumber = 'Ex-officio sebagai ' + g.exB.sumber; }
     else { b.sebab = (g.pw.luput ? 'Mandat perwakilan tahun lepas sudah luput. ' : '') + 'Menangi kerusi Perwakilan Cawangan semasa Mesyuarat Cawangan (bulan 4-6) tahun ' + p.tahun + '.'; }
 
@@ -438,7 +456,14 @@
     if (adalahSayap(peringkat)) {                                          // v6.1: selepas mesyuarat sayap, mesyuarat utama dibuka
       var ut = INDUK[peringkat], db = usulDibawa(p, ut), wu = tetingkap(p, ut);
       langkah.push(db ? 'Usul "' + db.tajuk + '" diluluskan dan akan dibawa oleh sayap anda ke ' + PERINGKAT[ut].nama + '.' : 'Tiada usul sayap yang diluluskan, jadi tiada usul sayap dibawa ke ' + PERINGKAT[ut].nama + '.');
-      langkah.push('Anda kini boleh memulakan ' + PERINGKAT[ut].nama + (wu && wu.status === 'belum_tiba' ? ' (dibuka pada ' + wu.label.toLowerCase() + ').' : '.'));
+      var pw = p.perwakilan || {}, Nn = NAMA_SAYAP[sayapPemain(p)] || 'Sayap';
+      if (peringkat === 'sayap_cawangan') { langkah.push(pw.sayapCawangan === p.tahun ? 'Anda terpilih sebagai wakil ' + Nn + ' Cawangan ke Mesyuarat ' + Nn + ' Bahagian (bulan 7).' : 'Anda bukan wakil ' + Nn + ' Cawangan tahun ini, jadi tidak boleh hadir Mesyuarat ' + Nn + ' Bahagian kecuali memegang jawatan Bahagian/Pusat.'); }
+      if (peringkat === 'sayap_bahagian') {
+        langkah.push(pw.g10 === p.tahun ? 'Anda terpilih dalam G10 ' + Nn + ' dan layak hadir Mesyuarat Bahagian.' : 'Anda tidak termasuk dalam G10 ' + Nn + ' tahun ini.');
+        langkah.push(pw.g2 === p.tahun ? 'Anda terpilih dalam G2 ' + Nn + ' dan layak hadir Perhimpunan ' + Nn + ' Pusat (bulan 8).' : 'Anda tidak termasuk dalam G2 ' + Nn + ' tahun ini.');
+      }
+      if (bolehHadir(p, ut).ok) { langkah.push('Anda kini boleh memulakan ' + PERINGKAT[ut].nama + (wu && wu.status === 'belum_tiba' ? ' (dibuka pada ' + wu.label.toLowerCase() + ').' : '.')); }
+      else { langkah.push('Anda belum layak hadir ' + PERINGKAT[ut].nama + ' melalui laluan sayap. ' + bolehHadir(p, ut).sebab); }
     }
     else if (peringkat === 'cawangan') { buka('bahagian', 'Mesyuarat Bahagian', sp.bahagian); }
     else if (peringkat === 'bahagian') { buka('pau', 'Perhimpunan Agung (PAU)', sp.pau); }

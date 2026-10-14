@@ -99,6 +99,7 @@
     if (!p.perwakilan || typeof p.perwakilan !== 'object') { p.perwakilan = { cawangan: 0, bahagian: 0 }; }
     p.perwakilan.cawangan = parseInt(p.perwakilan.cawangan, 10) || 0;
     p.perwakilan.bahagian = parseInt(p.perwakilan.bahagian, 10) || 0;
+    ['sayapCawangan', 'g10', 'g2'].forEach(function (k) { p.perwakilan[k] = parseInt(p.perwakilan[k], 10) || 0; });   // v6.2: wakil sayap (G10 ke Bahagian, G2 ke Pusat)
     p.bilTindakan = Math.max(0, parseInt(p.bilTindakan, 10) || 0);
     p.amaranAktif = !!p.amaranAktif;
     // v3.6: tempoh keahlian (Fasal 15.5 dsb.), rekod penggal (Fasal 9.5) dan tataetika/disiplin (Fasal 20)
