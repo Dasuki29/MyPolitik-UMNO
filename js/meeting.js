@@ -242,8 +242,8 @@
       if (peringkat === 'sayap_cawangan') { return { ok: true }; }            // mesyuarat peringkat Cawangan: semua ahli sayap boleh hadir
       var gs = pegangan(p), pws = p.perwakilan || {}, N = NAMA_SAYAP[sayapPemain(p)];
       if (peringkat === 'sayap_bahagian') {                                  // hanya wakil sayap Cawangan tahun ini atau pemegang jawatan Bahagian/Pusat
-        return (pws.sayapCawangan === p.tahun || gs.exB.sah) ? { ok: true }
-          : { ok: false, sebab: 'Hanya wakil ' + N + ' Cawangan tahun ' + p.tahun + ' yang terpilih dan pemegang jawatan Bahagian/Pusat boleh hadir Mesyuarat ' + N + ' Bahagian.' };
+        return (pws.sayapCawangan === p.tahun || gs.exB.sah || (J && J.pegang && J.pegang(p, 'sayap_cawangan_' + sayapPemain(p)))) ? { ok: true }
+          : { ok: false, sebab: 'Hanya wakil ' + N + ' Cawangan tahun ' + p.tahun + ' yang terpilih, Ketua ' + N + ' Cawangan dan pemegang jawatan Bahagian/Pusat boleh hadir Mesyuarat ' + N + ' Bahagian.' };
       }
       return (pws.g2 === p.tahun || gs.exP.sah) ? { ok: true }               // sayap_pau: G2 tahun ini atau pemegang jawatan ex-officio
         : { ok: false, sebab: 'Hanya G2 ' + N + ' (2 wakil Bahagian) tahun ' + p.tahun + ', Ketua Bahagian dan pemegang jawatan Pusat boleh hadir Perhimpunan ' + N + ' Pusat.' };
@@ -290,6 +290,8 @@
 
   function bilHadir(p, peringkat) {
     if (peringkat === 'sayap_cawangan') {
+      var Eh = typeof globalThis !== 'undefined' ? globalThis.MyPolitikElection : null;     // v6.3: hadir = 35% ahli sayap dalam Cawangan
+      if (Eh && Eh.ahliSayap) { return Math.max(10, Math.round(Eh.ahliSayap(p) * CONFIG.TAHAP_HADIR_CAWANGAN)); }
       var j2 = p.cawanganInfo && p.cawanganInfo.jumlahAhli ? p.cawanganInfo.jumlahAhli : 100;
       return Math.max(20, Math.round(j2 * CONFIG.TAHAP_HADIR_SAYAP));
     }

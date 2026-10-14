@@ -154,7 +154,8 @@
       demografik: { jantina: d.jantina, umur: d.umur, kategori: d.label, kategoriKod: d.kod },
       cawanganInfo: {
         jumlahAhli: c.jumlahAhli, lelaki: c.lelaki, perempuan: c.perempuan,
-        bawah40: c.bawah40, atas40: c.atas40
+        bawah40: c.bawah40, atas40: c.atas40,
+        kumpulan: c.kumpulan ? { pemuda: c.kumpulan.pemuda, puteri: c.kumpulan.puteri, wanita: c.kumpulan.wanita, induk: c.kumpulan.induk, langsung: !!c.kumpulan.langsung } : null     // v6.3
       },
       avatar: avatarSah(input.avatar) ? input.avatar : (avatarSah(d.kod) ? d.kod : 'pemuda'),   // pilihan watak (kosmetik)
       sayap: SY && SY.sah(input.sayap) && (input.sayap === 'utama' || input.sayap === d.kod) ? input.sayap : (SY ? SY.cadangan(d.jantina, d.umur) : 'utama'),   // v5.9: laluan kerjaya (Utama / Pemuda / Puteri / Wanita)

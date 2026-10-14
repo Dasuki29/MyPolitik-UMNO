@@ -95,7 +95,8 @@
   /** Struktur penuh: Induk + tiga sayap, tiga peringkat setiap satu. */
   function getStruktur(p) {
     var laluan = SY && p ? SY.kod(p) : 'utama';
-    var hasil = { laluan: laluan, induk: {}, sayap: {} };
+    var info = p && p.cawanganInfo ? p.cawanganInfo : null, kg = info && info.kumpulan ? info.kumpulan : (D && D.pecahanKumpulan && info ? D.pecahanKumpulan(info) : null);
+    var hasil = { laluan: laluan, induk: {}, sayap: {}, ahli: kg ? { induk: kg.induk, pemuda: kg.pemuda, puteri: kg.puteri, wanita: kg.wanita, langsung: !!kg.langsung } : null };   // v6.3: ahli Cawangan ikut kumpulan
     PERINGKAT.forEach(function (k) { hasil.induk[k] = binaSatu(p, k, null); });
     Object.keys(NAMA_SAYAP).forEach(function (w) {
       var info = SY && SY.ISU ? SY.ISU[w] : { golongan: '', isu: [] };

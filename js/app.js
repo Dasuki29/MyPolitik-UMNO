@@ -1130,6 +1130,10 @@
         h += '<p class="note"><strong>' + esc(s.nama) + '</strong>: ' + esc(s.penerangan) + ' Isu yang diperjuangkan:</p><ul class="org-isu">' + s.isu.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' +
           OG.PERINGKAT.map(function (k) { return blok(s.peringkat[k]); }).join('');
       }
+      if (st.ahli) {
+        h += '<p class="note"><b>Ahli Cawangan anda mengikut kumpulan:</b> Induk (lelaki atas 40) ' + fmt(st.ahli.induk) + ' · Pemuda (lelaki bawah 40) ' + fmt(st.ahli.pemuda) + ' · Puteri (perempuan bawah 40) ' + fmt(st.ahli.puteri) + ' · Wanita (perempuan atas 40) ' + fmt(st.ahli.wanita) +
+          (st.ahli.langsung ? '' : '. Angka ini anggaran daripada data jantina dan umur (andaian kedua-duanya tidak bersandar)') + '.</p>';
+      }
       return h + '<p class="note">Nama pemimpin lain ialah watak simulasi (bukan individu sebenar). Hanya jawatan Ketua sayap boleh dipegang oleh pemain.</p>';
     }
     var pr = modal({ tajuk: 'Struktur Organisasi', isi: isi() });
