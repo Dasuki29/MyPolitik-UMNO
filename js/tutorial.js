@@ -143,7 +143,7 @@
           : 'Anda dalam kategori <b>' + esc(sy.nama) + '</b>. Kategori ini tiada pertandingan Ketua Sayap, tetapi anda masih boleh bertanding AJK Cawangan dan Perwakilan.')
       : 'Pemuda, Puteri dan Wanita mempunyai Ketua Sayap Cawangan masing-masing. Kategori anda ditentukan oleh jantina dan umur, dan bertukar secara automatik apabila masuk tahun baharu dan umur anda melepasi had kategori.';
     return [
-      { id: 'mula', tajuk: 'Selamat datang ke Nusa Politik', isi: 'Anda bermula sebagai <b>Ahli Biasa</b> di cawangan anda. Matlamat: bina pengaruh, menang pemilihan, dan naik hingga ke Perhimpunan Agung. Tutorial ringkas ini mengambil kira-kira dua minit.' },
+      { id: 'mula', tajuk: 'Selamat datang ke Nusa Politik', isi: 'Anda bermula sebagai <b>Ahli Biasa</b> di cawangan anda. Matlamat: bina pengaruh, menang pemilihan, dan naik hingga ke Perhimpunan Agung. Tutorial ringkas ini mengambil kira-kira dua minit. Untuk panduan lengkap (contoh perjalanan watak Amir), tekan butang <b>?</b> dan pilih <b>Mula Di Sini</b>.' },
       { id: 'ip', sasaran: '#r-ip', bekas: '.stat', tajuk: 'Pengaruh (IP)', isi: 'IP ialah kekuatan politik anda. IP menentukan kelayakan bertanding (AJK dan Sayap Cawangan perlu <b>50 IP</b>; jawatan lebih tinggi perlu lebih banyak, sehingga <b>420 IP</b> untuk Presiden) dan menjadi faktor utama kemenangan. Makin tinggi IP anda, makin <b>perlahan</b> ia bertambah.', petua: 'Cara paling mudah menambah IP: Ziarah Kasih (+10 IP pada permulaan).' },
       { id: 'myr', sasaran: '#r-myr', bekas: '.stat', tajuk: 'Dana (MYR)', isi: 'Dana digunakan untuk kempen, jamuan dan menyumbang kepada program. Dana <b>terkumpul</b> dan <b>tidak</b> ditetapkan semula; setiap bulan anda menerima elaun (RM 150 asas, ditambah elaun jawatan).' },
       { id: 'ap', sasaran: '#r-ap', bekas: '.stat', tajuk: 'Mata Tindakan (AP)', isi: 'Setiap tindakan menggunakan AP. AP <b>ditetapkan semula kepada 5</b> pada permulaan setiap bulan, jadi AP yang tidak digunakan tidak dibawa ke bulan berikutnya.', petua: 'Gunakan AP anda sebelum menekan Teruskan ke Bulan Seterusnya.' },
@@ -440,7 +440,7 @@
     kodeks.nod.setAttribute('aria-hidden', 'false');
     kodeks.topik = topikTopik(profilSemasa());
     kodeks.cari.value = '';
-    pilihTopik(topikId || kodeks.semasa || 'asas');
+    pilihTopik(topikId || kodeks.semasa || 'panduan');
     kodeks.cari.focus();
     return true;
   }
@@ -479,7 +479,7 @@
     var isi = el('div', 'tut-isi'); isi.setAttribute('tabindex', '0');
     panel.appendChild(kepala); panel.appendChild(nav); panel.appendChild(isi); nod.appendChild(panel);
     d.body.appendChild(nod);
-    kodeks = { nod: nod, nav: nav, isi: isi, cari: cari, topik: topikTopik(profilSemasa()), semasa: 'asas', fokusAsal: null };
+    kodeks = { nod: nod, nav: nav, isi: isi, cari: cari, topik: topikTopik(profilSemasa()), semasa: 'panduan', fokusAsal: null };
     nav.innerHTML = kodeks.topik.map(function (t) { return '<button type="button" data-topik="' + t.id + '">' + esc(t.tajuk) + '</button>'; }).join('');
     tutup.addEventListener('click', tutupBantuan);
     nod.addEventListener('click', function (ev) {
