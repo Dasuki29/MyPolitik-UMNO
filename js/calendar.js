@@ -284,6 +284,7 @@
     var p = S && S.loadPlayer();
     if (!p) { return gagal('tiada_profil', 'Tiada profil pemain.'); }
     if (p.tamat) { return gagal('kerjaya_tamat', 'Kerjaya anda telah tamat. Mulakan permainan baharu.'); }     // v5.0
+    if ((p.pru && p.pru.aktif) || (p.prk && p.prk.aktif)) { return gagal('pru_aktif', 'Pilihan raya sedang berlangsung. Selesaikan pencalonan, kempen dan keputusan dahulu.'); }     // v7.3
     var asal = snapshot(p), bulanLama = sah(p.bulan), tahunLama = p.tahun, peristiwa = [];
 
     peristiwa = peristiwa.concat(tutupMusim(p));
@@ -325,6 +326,13 @@
     if (MIS2 && MIS2.prosesTahunBaharu) { peristiwa = peristiwa.concat(MIS2.prosesTahunBaharu().peristiwa || []); }
     var BLK = tahunBaharu ? muat('MyPolitikBlok', 'blok.js') : null;                        // v6.6: Penetapan Calon, janji kuota sayap
     if (BLK && BLK.prosesTahunBaharu) { peristiwa = peristiwa.concat(BLK.prosesTahunBaharu().peristiwa || []); }
+
+    var KAB = muat('MyPolitikKabinet', 'kabinet.js');                                           // v7.4: elaun & acara pentadbiran bulanan
+    if (KAB && KAB.prosesBulan) { peristiwa = peristiwa.concat(KAB.prosesBulan().peristiwa || []); }
+    var PRU = muat('MyPolitikPRU', 'pru.js');                                                   // v7.3: pengisytiharan PRU/PRN & penilaian manifesto
+    if (PRU && PRU.prosesBulan) { peristiwa = peristiwa.concat(PRU.prosesBulan().peristiwa || []); }
+    var PRK = muat('MyPolitikPRK', 'prk.js');                                                   // v7.6: sentimen nasional & PRK pertengahan penggal
+    if (PRK && PRK.prosesBulan) { peristiwa = peristiwa.concat(PRK.prosesBulan().peristiwa || []); }
 
     peristiwa = peristiwa.concat(mesejMasuk(bulan, tahun, tahunBaharu));
     var akhir = S.loadPlayer();

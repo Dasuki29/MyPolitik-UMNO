@@ -366,7 +366,8 @@
 
   var W = window, S = W.MyPolitikSave, D = W.MyPolitikData, O = W.MyPolitikOrdinaryMember,
       I = W.MyPolitikIncumbent, J = W.MyPolitikJawatan, E = W.MyPolitikElection, M = W.MyPolitikMeeting, MAP = W.MyPolitikMap, ET = W.MyPolitikEtika, WK = W.MyPolitikWatak, HY = W.MyPolitikHayat, ST = W.MyPolitikStres, K = W.MyPolitikCalendar, EV = W.MyPolitikEvents, TUT = W.MyPolitikTutorial;
-  var SYP = W.MyPolitikSayap, BLK = W.MyPolitikBlok, MIS = W.MyPolitikMisi;                          // v6.5/v6.6 (Dashboard)
+  var SYP = W.MyPolitikSayap, BLK = W.MyPolitikBlok, MIS = W.MyPolitikMisi;
+  function PUIh(p) { var u = W.NusaPRU_UI; return u && u.kad ? u.kad(p) : ''; }                      // v7.3: kad PRU/PRN & Kabinet (js/pru-ui.js)                          // v6.5/v6.6 (Dashboard)
   var CFG = W.MYPOLITIK_CONFIG || {};
   var INDEX_URL = CFG.indexUrl || 'index.html';
 
@@ -438,7 +439,7 @@
 
   /** Paparkan peristiwa penting (jawatan, cabaran) sebagai modal, selebihnya toast. */
   async function urusPeristiwa(senarai) {
-    var penting = { disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
+    var penting = { pru_isytihar: 'Pilihan Raya Diisytiharkan', prk_isytihar: 'Pilihan Raya Kecil (PRK)', kabinet_rombak: 'Rombakan Kabinet', janji_nilai: 'Penilaian Manifesto', disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
                     kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', transisi_rasmi: 'Upacara Graduasi Sayap', transisi_amaran: 'Notis Rasmi Transisi', undi_tp_amaran: 'Amaran Undi Tidak Percaya', undi_tp_kalah: 'Kalah Undi Tidak Percaya', undi_tp_menang: 'Selamat Undi Tidak Percaya', blok_janji_mungkir: 'Janji Kuota Dimungkiri', penggal_tamat: 'Penggal Jawatan Tamat' };
@@ -505,7 +506,9 @@
       var semua = J ? J.ringkas(p) : [];
       jl.innerHTML = semua.length > 1 ? semua.slice(1).map(function (j) {
         return '<span class="badge-office badge-office--' + kelasLencana(j.jawatan) + '" title="' + esc(j.label) + '">' + esc(j.jawatan) + '</span>'; }).join(' ') : '';
-      jl.hidden = semua.length <= 1;
+      var lcn = W.NusaPRU_UI && W.NusaPRU_UI.lencana ? W.NusaPRU_UI.lencana(p) : '';                          // v7.3: lencana ADUN / MP / EXCO / Menteri
+      jl.innerHTML += lcn;
+      jl.hidden = semua.length <= 1 && !lcn;
     }
     var sb = $('p-sayap'), SYd = W.MyPolitikSayap;                                       // v5.9: lencana laluan sayap
     if (sb && SYd) {
@@ -710,7 +713,7 @@
     if (!mod) { return '<div class="card"><p class="empty">Modul tindakan tidak dimuatkan.</p></div>'; }
     var senarai = mod.senaraiTindakan(p), h = '';
     var tkb = K ? K.getTakwim(p) : null;
-    h += bannerDisiplin(p) + bannerUndiTP(p) + kadMisi(p) + kadSayap(p);
+    h += PUIh(p) + bannerDisiplin(p) + bannerUndiTP(p) + kadMisi(p) + kadSayap(p);
     if (tkb && tkb.bonusAkarUmbi) {
       h += '<div class="banner banner--gold"><strong>Musim Akar Umbi (bulan 1-3)</strong>Setiap tindakan memberi bonus +' + Math.round(tkb.bonusAkarUmbi * 100) + '% IP dan kesetiaan. Manfaatkan sebelum musim mesyuarat bermula pada bulan 4.</div>';
     }
@@ -868,7 +871,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
+    h += PUIh(p) + bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
@@ -1198,6 +1201,7 @@
       else if (a && a.amaran) { toast(a.mesej, 'ralat'); }
     }
     await urusPeristiwa(r.peristiwa);
+    if (W.NusaPRU_UI && W.NusaPRU_UI.selepasBulan) { await W.NusaPRU_UI.selepasBulan(r.peristiwa); }     // v7.3: PRU/PRN & Kabinet
     if (EV) { await tunjukAcara(EV.janaAcara({ pencetus: 'bulan' })); }       // acara rawak pergantian bulan
   }
 
@@ -1349,5 +1353,6 @@
     if (TUT) { TUT.init({ profil: p }); }                           // butang (?) + tutorial kali pertama
     if (EV && EV.getTertunggak()) { tunjukAcara(EV.getTertunggak()); }          // acara yang belum dijawab sebelum muat semula                                      // kemas kini masa nyata (juga antara tab pelayar)
   }
+  W.NusaUI = { modal: modal, toast: toast, render: render, esc: esc, fmt: fmt, lapor: urusPeristiwa };   // v7.3: dikongsi dengan js/pru-ui.js
   mula();
 })();
