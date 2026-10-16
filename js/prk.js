@@ -205,7 +205,9 @@
     var a = getPRK(p).aktif;
     if (!a || a.fasa !== 'kempen') { return null; }
     var pg = PRU().PENGGANDA[a.constituencyType];
+    var sent = a.sentimenSemasa * CONFIG.SENTIMEN_KESAN * (a.pertahan ? 1 : 0.8), s1 = clamp(30 + a.voterSupport * 0.4 + sent, 5, 95);      // v7.46: anggaran undi semasa (tanpa unsur rawak hari mengundi)
     return { aktif: a, hariSemasa: a.hari, hariBaki: a.hariBaki, sentimen: a.sentimenSemasa, profil: a.constituencyType,
+      pecahan: [{ nama: 'Anda (UMNO)', nilai: Math.round(s1 * 10) / 10, ke: 'anda' }, { nama: a.lawan, nilai: Math.round((100 - s1) * 10) / 10, ke: 'lawan' }],
       tindakan: ['ceramah', 'ziarah', 'digital', 'rehat', 'derma'].map(function (k) {
         var t = TINDAKAN[k], st = statusTindakan(a, t);
         return { id: t.id, ikon: t.ikon, nama: t.nama, dana: t.dana, jentera: t.jentera, gain: t.gain, stress: t.stress + CONFIG.STRESS_HARIAN, pengganda: t.pengganda ? pg[t.pengganda] : 1, boleh: st.boleh, sebab: st.sebab };
