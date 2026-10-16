@@ -1021,7 +1021,7 @@
     pt.status = 'memuat';
     host.innerHTML = '<div class="loading" role="status">Memuatkan data peta...</div>';
     try {
-      if (!pt.data) { var pp = S && S.loadPlayer(); pt.data = await D.loadUntukNegeri(pp && pp.negeri, { url: CFG.sheetCsvUrl, appsScriptUrl: CFG.appsScriptUrl }); }
+      if (!pt.data) { var pp = S && S.loadPlayer(); pt.data = await D.loadSemuaNegeri(pp && pp.negeri, { url: CFG.sheetCsvUrl, appsScriptUrl: CFG.appsScriptUrl }); }
       host.innerHTML = '';
       if (pt.instance) { pt.instance.destroy(); }
       pt.instance = await MAP.mount(host, { data: pt.data, mode: 'negeri' });
