@@ -93,7 +93,8 @@
     if (a.fasa === 'kempen') { return kadKempen(p, PRU.keadaanKempen(p)); }
     if (a.fasa === 'keputusan') { return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🗳️ Keputusan Pilihan Raya</h2><p class="note">Hari mengundi telah selesai.</p><button type="button" class="btn btn--primary btn--block" data-pru="keputusan">Lihat Keputusan</button></section>'; }
     return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🗳️ Pilihan Raya Diisytiharkan</h2><p class="note">Fasa: <b>' + ({ isytihar: 'Pencalonan', calon: 'Pencalonan', runding: 'Rundingan kerusi', manifesto: 'Manifesto & peruntukan' }[a.fasa] || a.fasa) + '</b>. Bulan tidak boleh dimajukan sehingga pilihan raya selesai.</p>' +
-      '<button type="button" class="btn btn--primary btn--block" data-pru="buka">Teruskan</button></section>';
+      '<button type="button" class="btn btn--primary btn--block" data-pru="buka">Teruskan</button>' +
+      (a.fasa === 'runding' || a.fasa === 'manifesto' || a.fasa === 'calon' ? '<button type="button" class="btn btn--ghost btn--block" style="margin-top:8px" data-pru="tarik">Tarik diri (tidak bertanding)</button>' : '') + '</section>';
   }
   function kadJanji(p) {
     var j = PRU.janjiStatus(p);
@@ -184,8 +185,9 @@
     var isi = '<p>Pilih <b>tepat 3 janji</b> manifesto. Janji yang sesuai dengan kawasan ' + PRU.IKON_PROFIL[prof] + ' <b>' + esc(PRU.PROFIL[prof]) + '</b> memberi bonus sokongan lebih besar. Janji dinilai 12 bulan selepas anda menang.</p><div class="pru-pilih" id="pru-janji">' +
       PRU.JANJI.map(function (j) { return '<label><input type="checkbox" name="janji" value="' + j.id + '"><span><b>' + j.ikon + ' ' + esc(j.nama) + '</b><small>Bonus kawasan ini +' + (j.sesuai[prof] || 0) + ' · kos pelaksanaan RM ' + fmt(j.kosBulan) + '/bulan · risiko dimungkiri ' + Math.round(j.ingkar * 100) + '%</small></span></label>'; }).join('') + '</div>' +
       '<p><b>Peruntukan kempen</b> (diambil daripada Dana anda RM ' + fmt(p.myr) + '; baki dipulangkan):</p><div class="pru-pilih" id="pru-dana">' +
-      (pil.pilihan.length ? pil.pilihan.map(function (n, i) { return '<label><input type="radio" name="dana" value="' + n + '"' + (i === 0 ? ' checked' : '') + '><span><b>RM ' + fmt(n) + '</b></span></label>'; }).join('') : '<p class="pru-ng">Dana tidak mencukupi (minimum RM ' + fmt(pil.min) + ').</p>') + '</div>';
-    var pr = modal({ tajuk: 'Manifesto & Peruntukan Kempen', isi: isi, butang: [{ label: 'Tunda', nilai: false }, { label: 'Mula Kempen 14 Hari', nilai: true, kelas: 'btn--gold', nonaktif: true }] });
+      (pil.pilihan.length ? pil.pilihan.map(function (n, i) { return '<label><input type="radio" name="dana" value="' + n + '"' + (i === 0 ? ' checked' : '') + '><span><b>RM ' + fmt(n) + '</b>' + (pil.bawahMin ? '<small>Bawah minimum RM ' + fmt(pil.min) + ': sokongan awal -' + pil.penalti.sokongan + '%, jentera -' + pil.penalti.jentera + '%</small>' : '') + '</span></label>'; }).join('') : '<p class="pru-ng">Dana tidak mencukupi (minimum RM ' + fmt(pil.min) + ').</p>') + '</div>' +
+      (pil.bawahMin ? '<p class="note">Dana anda kurang daripada minimum. Anda boleh bertanding dengan semua dana yang ada (kempen lebih lemah), atau menarik diri. Bulan tidak boleh dimajukan semasa pilihan raya.</p>' : '');
+    var pr = modal({ tajuk: 'Manifesto & Peruntukan Kempen', isi: isi, butang: [{ label: 'Tunda', nilai: false }, { label: 'Tarik Diri', nilai: 'tarik', kelas: 'btn--danger' }, { label: 'Mula Kempen 14 Hari', nilai: true, kelas: 'btn--gold', nonaktif: true }] });
     var kaki = W.document.getElementById('modal-kaki'), mula = kaki && kaki.querySelector('button:last-child'), isiEl = W.document.getElementById('modal-isi');
     function semak() { if (mula) { mula.disabled = !(isiEl.querySelectorAll('input[name=janji]:checked').length === 3 && pil.pilihan.length); } }
     isiEl.addEventListener('change', function (e) {
@@ -194,6 +196,7 @@
       semak();
     });
     var ya = await pr;
+    if (ya === 'tarik') { return { tarik: true }; }
     if (!ya) { return null; }
     var ids = [].map.call(isiEl.querySelectorAll('input[name=janji]:checked'), function (x) { return x.value; });
     var d = isiEl.querySelector('input[name=dana]:checked');
@@ -231,12 +234,20 @@
         } else if (a.fasa === 'manifesto') {
           var m = await modManifesto(p);
           if (!m) { break; }
+          if (m.tarik) { await tarikDiriPRU(); break; }
           var mk = PRU.mulaKempen(m.ids, m.dana);
           if (!mk.ok) { toast(mk.ralat, 'ralat'); continue; }
           segarkan(); toast('Kempen 14 hari bermula!', 'ok');
         } else { break; }
       }
     } finally { sibuk = false; segarkan(); }
+  }
+
+  /** v7.18: menarik diri selepas dicalonkan (supaya pemain tidak tersekat jika dana tidak cukup). */
+  async function tarikDiriPRU() {
+    var ya = await modal({ tajuk: 'Tarik Diri?', isi: '<p>Anda tidak akan bertanding pada pilihan raya ini. Reputasi Parti <b>-3</b> kerana menarik diri selepas dicalonkan. Bulan boleh dimajukan semula selepas itu.</p>', butang: [{ label: 'Batal', nilai: false }, { label: 'Ya, Tarik Diri', nilai: true, kelas: 'btn--danger' }] });
+    if (!ya) { return; }
+    var t = PRU.tidakBertanding(); toast(t.mesej || t.ralat, t.ok ? 'ok' : 'ralat'); segarkan();
   }
 
   async function kejutan() {
@@ -371,7 +382,7 @@
       return h + '</section>';
     }
     if (a.fasa === 'keputusan') { return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">⚡ Keputusan PRK ' + kenal + '</h2><button type="button" class="btn btn--primary btn--block" data-pru="prk-keputusan">Lihat Keputusan</button></section>'; }
-    return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">⚡ Pilihan Raya Kecil · ' + kenal + '</h2><p class="note">' + esc(r.sebab) + '. Bulan tidak boleh dimajukan sehingga PRK selesai.</p><button type="button" class="btn btn--primary btn--block" data-pru="prk-buka">Teruskan</button></section>';
+    return '<section class="card"><h2 class="card__title" style="margin:0 0 4px">⚡ Pilihan Raya Kecil · ' + kenal + '</h2><p class="note">' + esc(r.sebab) + '. Bulan tidak boleh dimajukan sehingga PRK selesai.</p><button type="button" class="btn btn--primary btn--block" data-pru="prk-buka">Teruskan</button>' + (a.fasa === 'calon' ? '<button type="button" class="btn btn--ghost btn--block" style="margin-top:8px" data-pru="prk-tarik">Tarik diri (tidak bertanding)</button>' : '') + '</section>';
   }
   async function alirPRK() {
     if (sibuk || !PK) { return; }
@@ -413,6 +424,11 @@
     toast(r.mesej, 'ok'); segarkan();
     if (r.tamat) { await selesaiPRK(); }
   }
+  async function tarikDiriPRK() {                                  // v7.18
+    var ya = await modal({ tajuk: 'Tarik Diri daripada PRK?', isi: '<p>Anda tidak akan bertanding dalam PRK ini. Bulan boleh dimajukan semula selepas itu.</p>', butang: [{ label: 'Batal', nilai: false }, { label: 'Ya, Tarik Diri', nilai: true, kelas: 'btn--danger' }] });
+    if (!ya) { return; }
+    var t = PK.tidakBertanding(); toast(t.mesej || t.ralat, t.ok ? 'ok' : 'ralat'); segarkan();
+  }
   async function selesaiPRK() {
     var r = PK.selesaikan();
     if (!r.ok) { toast(r.ralat, 'ralat'); segarkan(); return; }
@@ -452,7 +468,7 @@
     if (!t || t.disabled) { return; }
     var a = t.getAttribute('data-pru');
     if (a === 'buka') { alir(); } else if (a === 'tindak') { tindak(t.getAttribute('data-id')); } else if (a === 'kejutan') { sibuk = true; kejutan().then(function () { sibuk = false; segarkan(); }, function () { sibuk = false; }); }
-    else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'prk-buka') { alirPRK(); } else if (a === 'prk-tindak') { tindakPRK(t.getAttribute('data-id')); } else if (a === 'prk-selesai') { selesaiPRK(); } else if (a === 'prk-keputusan') { keputusanPRK(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
+    else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'tarik') { tarikDiriPRU(); } else if (a === 'prk-tarik') { tarikDiriPRK(); } else if (a === 'prk-buka') { alirPRK(); } else if (a === 'prk-tindak') { tindakPRK(t.getAttribute('data-id')); } else if (a === 'prk-selesai') { selesaiPRK(); } else if (a === 'prk-keputusan') { keputusanPRK(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
   });
 
   W.NusaPRU_UI = {  musim: musim, kad: kad, lencana: lencana, selepasBulan: selepasBulan, alir: alir, kejutan: kejutan, keputusan: keputusan, lobi: lobi, acara: acara, selesai: selesai };

@@ -277,8 +277,10 @@
     var p = S().loadPlayer(), pru = getPRU(p), a = pru.aktif;
     if (!a) { return { ok: false, ralat: 'Tiada pilihan raya aktif.' }; }
     if (a.fasa === 'kempen' || a.fasa === 'keputusan') { return { ok: false, ralat: 'Kempen sudah bermula.' }; }
+    var tarik = a.candidateType !== 'NONE' && a.fasa !== 'isytihar';        // v7.18: menarik diri selepas dicalonkan menjejas reputasi
     var jadi = tamatMusim(pru, p, { jenis: a.candidateType === 'NONE' ? 'NONE' : a.candidateType, hasil: 'tidak_bertanding', kerusi: a.kerusi ? a.kerusi.nama : '' });
-    return { ok: true, mesej: 'Anda tidak bertanding pada pilihan raya kali ini. Fokus pada jawatan parti.', hasil: jadi };
+    if (tarik) { S().applyEffects({ reputasi: -3 }, { kiraTindakan: false, log: { tindakan: 'pru_tarik', nama: 'Menarik diri selepas dicalonkan', peringkat: 'ahli' } }); }
+    return { ok: true, tarik: tarik, mesej: tarik ? 'Anda menarik diri daripada pilihan raya. Reputasi Parti -3 kerana menarik diri selepas dicalonkan.' : 'Anda tidak bertanding pada pilihan raya kali ini. Fokus pada jawatan parti.', hasil: jadi };
   }
 
   /* ------------------------------------------------------------------------
@@ -321,6 +323,10 @@
   }
   function peruntukanPilihan(p, a) {
     var min = CONFIG[a.candidateType].minPeruntukan, myr = Number(p.myr) || 0, senarai = [];
+    if (myr < min) {                                            // v7.18: dana kurang daripada minimum: boleh bertanding dengan semua dana, tetapi kempen lemah (elak pemain tersekat)
+      var s0 = 1 - myr / min;
+      return { min: min, pilihan: [myr], bawahMin: true, penalti: { sokongan: Math.round(10 * s0), jentera: Math.round(15 * s0) } };
+    }
     [min, 5000, 10000, 20000].forEach(function (n) { if (n >= min && n <= myr && senarai.indexOf(n) < 0) { senarai.push(n); } });
     if (myr >= min && senarai.indexOf(myr) < 0) { senarai.push(myr); }
     return { min: min, pilihan: senarai.sort(function (x, y) { return x - y; }) };
@@ -332,13 +338,14 @@
     ids = (ids || []).filter(function (x, i, ar) { return janjiId(x) && ar.indexOf(x) === i; });
     if (ids.length !== 3) { return { ok: false, ralat: 'Pilih tepat 3 janji manifesto.' }; }
     var pil = peruntukanPilihan(p, a), dana = Math.round(Number(peruntukan) || 0);
-    if (dana < pil.min) { return { ok: false, ralat: 'Peruntukan kempen minimum RM ' + pil.min.toLocaleString('ms-MY') + '.' }; }
+    if (dana < pil.min && !(pil.bawahMin && dana === Math.round(Number(p.myr) || 0))) { return { ok: false, ralat: 'Peruntukan kempen minimum RM ' + pil.min.toLocaleString('ms-MY') + '.' }; }
     if (dana > p.myr) { return { ok: false, ralat: 'Dana tidak mencukupi.' }; }
     var r = rng(o), profil = a.constituencyType, mb = bonusManifesto(profil, ids);
     var asas = 0.40 * a.partiPopulariti + 8 + Math.min(11, (Number(p.ip) || 0) / 80) + ((p.kesetiaan && p.kesetiaan.akarUmbi || 50) - 50) * 0.12 + ((Number(p.reputasi) || 50) - 50) * 0.05 + mb;
     a.manifestoChoice = ids.slice();
     a.voterSupport = clamp(bulat(asas * 0.8), 15, 70);
     a.campaignFunds = dana; a.jentera = clamp(60 + bulat((Number(p.kesetiaan && p.kesetiaan.akarUmbi) || 50) * 0.25), 40, 85);
+    if (pil.bawahMin) { a.voterSupport = clamp(a.voterSupport - pil.penalti.sokongan, 10, 70); a.jentera = clamp(a.jentera - pil.penalti.jentera, 25, 85); a.bajetRendah = true; }
     a.hari = 0; a.campaignDaysLeft = CONFIG.HARI; a.fasa = 'kempen';
     var n = CONFIG.KEJUTAN_BILANGAN[0] + Math.floor(r() * (CONFIG.KEJUTAN_BILANGAN[1] - CONFIG.KEJUTAN_BILANGAN[0] + 1)), hariSedia = [], h;
     for (h = 2; h <= CONFIG.HARI - CONFIG.HARI_FINAL - 1; h++) { hariSedia.push(h); }
