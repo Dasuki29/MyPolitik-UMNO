@@ -605,7 +605,7 @@
       return '<li class="f-' + kelas + (j.semasa ? ' is-semasa' : '') + (j.lepas ? ' is-lepas' : '') + '"' + (j.semasa ? ' aria-current="date"' : '') +
         ' title="' + esc(j.nama + (j.acara.length ? ': ' + j.acara.join(', ') : '')) + '"><b>' + j.bulan + '</b>' + esc(j.pendek) + '</li>';
     }).join('');
-    $('t-info').textContent = 'Setiap bulan baharu: AP ditetapkan semula kepada ' + K.CONFIG.AP_BULANAN + ' dan elaun bulanan ditambah ke dana.' +
+    $('t-info').textContent = 'Setiap bulan baharu: AP bertambah ' + K.CONFIG.AP_BULANAN + ' (baki dibawa, had ' + K.CONFIG.AP_MAKS + ') dan elaun bulanan ditambah ke dana.' +
       (tk.bonusAkarUmbi ? ' Bonus +' + Math.round(tk.bonusAkarUmbi * 100) + '% IP dan sokongan bagi tindakan sehingga bulan 3.' : '');
     btn.disabled = false;
     btn.innerHTML = tk.tahunBaharuSeterusnya
@@ -1232,7 +1232,7 @@
       tajuk: kepala,
       isi: '<div class="kv"><span>Bulan</span><b>' + pv.dari.bulan + '/' + pv.dari.tahun + ' &rarr; ' + pv.ke.bulan + '/' + pv.ke.tahun + '</b></div>' +
         '<div class="kv"><span>Fasa takwim</span><b>' + esc(pv.fasaBaharu.ringkas) + '</b></div>' +
-        '<div class="kv"><span>AP ditetapkan semula</span><b>' + p0.ap + ' &rarr; ' + rg.apBaharu + '</b></div>' +
+        '<div class="kv"><span>AP (terkumpul, had ' + K.CONFIG.AP_MAKS + ')</span><b>' + p0.ap + ' &rarr; ' + rg.apBaharu + '</b></div>' +
         '<div class="kv"><span>Elaun bulanan</span><b>+RM ' + fmt(rg.myr) + '</b></div>' +
         (rg.butiran.length > 1 ? '<p style="margin:6px 0 0;font-size:.8rem">' + rg.butiran.map(function (b) { return esc(b.nama) + ' RM ' + fmt(b.jumlah); }).join(' + ') + '</p>' : '') +
         (pv.tahunBaharu ? '<p style="margin-top:12px">Tahun bertukar dan kitaran pemilihan 3 tahun dikemas kini.</p>' : '') +

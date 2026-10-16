@@ -12,7 +12,7 @@
    Semua angka boleh diubah dalam CONFIG.
 
    Regenerasi pada setiap permulaan bulan:
-     AP   : ditetapkan semula kepada CONFIG.AP_BULANAN (baki lama tidak dibawa)
+     AP   : bertambah CONFIG.AP_BULANAN setiap bulan; baki dibawa ke bulan berikutnya sehingga had CONFIG.AP_MAKS (v7.23)
      MYR  : ditambah elaun bulanan (asas + tambahan mengikut peringkat jawatan)
 
    Pergantian bulan 12 -> bulan 1 menaikkan tahun dan mengemas kini kitaran
@@ -49,7 +49,8 @@
      ------------------------------------------------------------------------ */
   var CONFIG = {
     BULAN_NAMA: ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'],
-    AP_BULANAN: 5,                       // AP ditetapkan kepada nilai ini setiap bulan
+    AP_BULANAN: 5,                       // AP bertambah sebanyak ini setiap bulan (v7.23: baki dibawa)
+    AP_MAKS: 15,                         // had AP terkumpul (3 bulan); ubah di sini untuk laras keseimbangan
     DANA_ASAS: 150,                      // elaun bulanan semua pemain (MYR); v7.9: dikurangkan (dahulu 450)
     DANA_JAWATAN: { cawangan: 200, bahagian: 500, pusat: 1200 },   // tambahan bagi pemegang jawatan
     // v3.8: sokongan susut setiap bulan jika tidak dijaga. Pemegang jawatan menanggung susutan Akar Umbi tambahan.
@@ -155,7 +156,8 @@
       susut.akarUmbi -= Math.max(0, CONFIG.SUSUT_PEMEGANG_JAWATAN - syKurang);
     }
     if (root.MyPolitikSayap && root.MyPolitikSayap.sokonganDilindungi && root.MyPolitikSayap.sokonganDilindungi(p)) { susut.akarUmbi = 0; susut.ajk = 0; }   // v6.5: Skuad Sayang melindungi sokongan Cawangan
-    return { ap: CONFIG.AP_BULANAN - p.ap, apBaharu: CONFIG.AP_BULANAN, myr: d.jumlah, butiran: d.butiran, kesetiaan: susut };
+    var apBaharu = Math.max(Number(p.ap) || 0, Math.min(CONFIG.AP_MAKS, (Number(p.ap) || 0) + CONFIG.AP_BULANAN));   // v7.23: kumpul; tidak pernah mengurangkan baki sedia ada
+    return { ap: apBaharu - p.ap, apBaharu: apBaharu, myr: d.jumlah, butiran: d.butiran, kesetiaan: susut };
   }
 
   /**
@@ -293,12 +295,12 @@
     var rg = regenerasi(p), E = muat('MyPolitikElection', 'election.js'), r;
 
     if (tahunBaharu && E && E.majuTahun) {
-      r = E.majuTahun({ pulihAP: true });                 // tahun + 1, bulan = 1, AP dipulihkan, kitaran dikemas kini
+      r = E.majuTahun({ pulihAP: false });                // tahun + 1, bulan = 1, kitaran dikemas kini; v7.23: AP dikumpul melalui regenerasi (bukan ditetapkan semula)
       if (!r.ok) { return r; }
       peristiwa = peristiwa.concat(r.peristiwa || []);
       var JW0 = muat('MyPolitikJawatan', 'jawatan.js');                                      // v6.8: jawatan yang tidak dipertahankan luput SEBELUM elaun dikira
       if (JW0 && JW0.kemaskiniPenggal) { peristiwa = peristiwa.concat(JW0.kemaskiniPenggal().peristiwa || []); rg = regenerasi(S.loadPlayer()); }
-      r = S.applyEffects({ myr: rg.myr, kesetiaan: rg.kesetiaan }, { kiraTindakan: false, log: { tindakan: 'regenerasi', nama: 'Elaun bulan ' + bulan + ' ' + tahun, peringkat: 'bulan' } });
+      r = S.applyEffects({ ap: rg.ap, myr: rg.myr, kesetiaan: rg.kesetiaan }, { kiraTindakan: false, log: { tindakan: 'regenerasi', nama: 'Elaun bulan ' + bulan + ' ' + tahun, peringkat: 'bulan' } });
     } else {
       r = S.applyEffects({ ap: rg.ap, myr: rg.myr, kesetiaan: rg.kesetiaan }, {
         kiraTindakan: false, patch: tahunBaharu ? { bulan: bulan, tahun: tahun } : { bulan: bulan },
@@ -341,7 +343,7 @@
       fasa: getFasa(bulan), regenerasi: rg,
       perubahan: { ip: akhir.ip - asal.ip, myr: akhir.myr - asal.myr, ap: akhir.ap - asal.ap, reputasi: akhir.reputasi - asal.reputasi },
       peristiwa: peristiwa,
-      mesej: 'Bulan ' + bulan + ' (' + namaBulan(bulan) + ') ' + tahun + ': AP ' + CONFIG.AP_BULANAN + ', elaun +MYR ' + rg.myr.toLocaleString('ms-MY') + '. Sokongan susut jika tidak dijaga.',
+      mesej: 'Bulan ' + bulan + ' (' + namaBulan(bulan) + ') ' + tahun + ': AP +' + CONFIG.AP_BULANAN + ' (had ' + CONFIG.AP_MAKS + '), elaun +MYR ' + rg.myr.toLocaleString('ms-MY') + '. Sokongan susut jika tidak dijaga.',
       profil: akhir
     };
   }
