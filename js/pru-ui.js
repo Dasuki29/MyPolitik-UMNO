@@ -375,7 +375,7 @@
       var id = await modal({
         tajuk: '🏛️ Lobi Portfolio Kerajaan',
         isi: '<p>Parti membentuk kerajaan. Guna <b>IP</b> dan <b>Dana</b> untuk melobi satu portfolio. Lobi gagal = separuh kos hilang. Percubaan tinggal: <b>' + k.lobi.baki + '</b>.</p><p style="font-size:.85rem">IP: <b>' + fmt(p.ip) + '</b> · Dana: <b>RM ' + fmt(p.myr) + '</b></p><ul class="acara__pil">' +
-          k.portfolio.map(function (x) { return opsi(x.id, esc(x.nama), esc(x.tahapNama) + ' · kos IP ' + x.ip + ' + RM ' + fmt(x.myr) + ' · peluang ± ' + x.peluang + '% · elaun +RM ' + fmt(x.elaun.myr) + ' &amp; +' + x.elaun.ip + ' IP/bulan' + (x.boleh ? '' : '<br>' + esc(x.sebab)), x.boleh); }).join('') +
+          (k.portfolio.length ? '' : '<li class="muted" style="list-style:none">Tiada portfolio dibuka pada IP anda sekarang (minimum 250 IP).</li>') + k.portfolio.map(function (x) { return opsi(x.id, esc(x.nama), esc(x.tahapNama) + ' · kos IP ' + x.ip + ' + RM ' + fmt(x.myr) + ' · peluang ± ' + x.peluang + '% · elaun +RM ' + fmt(x.elaun.myr) + ' &amp; +' + x.elaun.ip + ' IP/bulan' + (x.boleh ? '' : '<br>' + esc(x.sebab)), x.boleh); }).join('') +
           opsi('LEPAS', 'Tidak melobi', 'Lepaskan peluang penggal ini.', true) + '</ul>',
         butang: []
       });
