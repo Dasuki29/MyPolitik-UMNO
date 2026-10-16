@@ -303,6 +303,16 @@
     }
     return '<b>Tiada majoriti</b> (perlu ' + ambang + '): ' + GABUNGAN.BN.pendek + ' ' + n.BN + ', ' + GABUNGAN.PH.pendek + ' ' + n.PH + ', ' + GABUNGAN.PN.pendek + ' ' + n.PN + '. Kerajaan minoriti atau gabungan baharu perlu dibentuk.';
   }
+  /** v7.55: kerusi mengikut gabungan (untuk Dewan Rakyat): { jumlah, ambang, BN, PH, PN, LAIN, rakan, kerajaanBN, tahun, bulan, dun? } atau null jika belum ada PRU. */
+  function kerusiGabungan(p) {
+    var k = p && p.kerusiNasional; if (!k || typeof k.parti !== 'number') { return null; }
+    var pp = pecahPembangkang(p, k, k.pembangkang, k.kerajaan, 'parlimen'), o = { jumlah: CONFIG.JUMLAH_PARLIMEN, ambang: CONFIG.MAJORITI, BN: k.parti + k.rakan, rakan: k.rakan, PH: pp.PH, PN: pp.PN, LAIN: k.bebas, kerajaanBN: (k.parti + k.rakan) >= CONFIG.MAJORITI, tahun: k.tahun, bulan: k.bulan };
+    if (k.dun) {
+      var amb = Math.floor(k.dun.jumlah / 2) + 1, pd = pecahPembangkang(p, k, k.dun.pembangkang, k.dun.kerajaan >= amb, 'dun');
+      o.dun = { jumlah: k.dun.jumlah, ambang: amb, BN: k.dun.kerajaan, PH: pd.PH, PN: pd.PN, LAIN: k.dun.bebas, kerajaanBN: k.dun.kerajaan >= amb };
+    }
+    return o;
+  }
   function htmlKerusi(p) {
     var k = p.kerusiNasional, r = kunciRekod(p);
     if (!k || !r) { return '<p class="pp-nota">Belum ada keputusan PRU. Anggaran kerusi muncul selepas pilihan raya pertama.</p>'; }
@@ -362,5 +372,5 @@
   }
   if (dok()) { if (dok().readyState === 'loading') { dok().addEventListener('DOMContentLoaded', function () { try { mula(); } catch (e) { /* abaikan */ } }); } else { try { mula(); } catch (e) { /* abaikan */ } } }
 
-  return { CONFIG: CONFIG, toast: toast, toastImpak: toastImpak, chipDaripada: chipDaripada, render: render, anggarKerusi: anggarKerusi, kemaskiniKerusi: kemaskiniKerusi, htmlKerusi: htmlKerusi, htmlSentimen: htmlSentimen, bukaLog: bukaLog, tutupLog: tutupLog, senyap: senyap, setSenyap: setSenyap, mula: mula };
+  return { CONFIG: CONFIG, toast: toast, toastImpak: toastImpak, chipDaripada: chipDaripada, render: render, anggarKerusi: anggarKerusi, kemaskiniKerusi: kemaskiniKerusi, htmlKerusi: htmlKerusi, kerusiGabungan: kerusiGabungan, htmlSentimen: htmlSentimen, bukaLog: bukaLog, tutupLog: tutupLog, senyap: senyap, setSenyap: setSenyap, mula: mula };
 });

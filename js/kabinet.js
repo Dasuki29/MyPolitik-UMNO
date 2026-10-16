@@ -261,6 +261,8 @@
     if (!k.hasGovernmentRole) { return { ok: false }; }
     k.governanceRating = clamp(k.governanceRating + (d.rating || 0), 0, 100);
     k.tekananPolitik = clamp(k.tekananPolitik + (d.tekanan || 0), 0, 100);
+    if (d.pop) { k.popularitiNasional = clamp(k.popularitiNasional + d.pop, 0, 100); }          // v7.55: Dewan Rakyat
+    if (d.rombak) { k.risikoRombak = clamp(k.risikoRombak + d.rombak, 0, 100); }
     simpan(k, {});
     return { ok: true };
   }
