@@ -1133,19 +1133,20 @@
   function nginst(t) { var N = W.MyPolitikNegeri; return t && t.getAttribute('data-b') === 'sayap' ? N.sayap : N; }
   async function urusNegeri(NG) {
     NG = NG || W.MyPolitikNegeri; if (!NG) { return; }
-    for (var g = 0; g < 14; g++) {
+    for (var g = 0; g < 20; g++) {
       var m = NG.menunggu(S.loadPlayer()); if (!m) { return; }
-      var tajuk = m.jenis === 'pilih_pengerusi' ? NG.tr('Lantik Pengerusi Badan Perhubungan') : 'Lantik ' + (m.tajukJawatan || m.jawatan);
+      var lain = m.jenis === 'pilih_negeri_lain', tajuk = lain ? NG.tr('Lantik Pengerusi Badan Perhubungan') + ' ' + m.negeriNama + ' (' + m.baki + ' negeri)' : m.jenis === 'pilih_pengerusi' ? NG.tr('Lantik Pengerusi Badan Perhubungan') : 'Lantik ' + (m.tajukJawatan || m.jawatan);
       var senarai = m.calon.map(function (c) { return '<li><button type="button" class="acara__opsi" data-pilih="' + esc(c.id) + '"><b>' + esc(c.nama) + '</b><br><small>' + esc(c.bahagian) + (c.ringkas ? ' &middot; ' + esc(c.ringkas) : (c.skor ? ' &middot; skor ' + c.skor : '')) + '</small></button></li>'; }).join('');
-      var nota = m.jenis === 'pilih_pengerusi' ? NG.tr('Pilih Ketua Bahagian yang akan menjadi Pengerusi.')
+      var nota = lain ? NG.tr('Sebagai Presiden, anda melantik Pengerusi bagi setiap negeri. Pilih Ketua Bahagian negeri ini. Setiap lantikan menambah sedikit sokongan Perwakilan.') : m.jenis === 'pilih_pengerusi' ? NG.tr('Pilih Ketua Bahagian yang akan menjadi Pengerusi.')
         : (m.sumber === 'luar' ? NG.tr('Lantikan <b>luar</b>: Ketua Sayap, Tokoh/ADUN atau Naib Ketua Bahagian. Setiap kategori memberi kesan berbeza.' + (m.wajibKecil ? ' Semua Ketua Bahagian sudah menjadi ahli wajib negeri ini.' : ''))
           : NG.tr('Pilih Ketua Bahagian untuk jawatan ini. Setiap lantikan menambah sedikit sokongan Perwakilan.'));
       var btn = [{ label: 'Kemudian', nilai: null }];
       if (m.pilihan) { btn.push({ label: 'Langkau jawatan ini', nilai: '__langkau' }); }
       if (m.jenis === 'lantik_ajk') { btn.push({ label: 'Lantik semua secara automatik', nilai: '__auto', kelas: 'btn--gold' }); }
+      if (lain) { btn.push({ label: 'Lantik semua negeri secara automatik', nilai: '__auto', kelas: 'btn--gold' }); }
       var v = await modal({ tajuk: tajuk, isi: '<p>' + nota + '</p><ul class="acara__senarai" style="list-style:none;padding:0;margin:.4rem 0">' + senarai + '</ul>', butang: btn });
       if (v === null || v === undefined) { return; }
-      var r = m.jenis === 'pilih_pengerusi' ? NG.pilihPengerusi(v) : (v === '__auto' ? NG.lantikAjk() : NG.lantikAjk(m.jawatan, v));
+      var r = lain ? (v === '__auto' ? NG.lantikSemuaLain() : NG.pilihPengerusi(v)) : m.jenis === 'pilih_pengerusi' ? NG.pilihPengerusi(v) : (v === '__auto' ? NG.lantikAjk() : NG.lantikAjk(m.jawatan, v));
       if (!r.ok) { toast(r.ralat, 'ralat'); return; }
       toast(r.mesej, 'ok');
     }
@@ -1491,9 +1492,17 @@
   function sediaNamaBahagian() {
     var G = W.MyPolitikGeo, NGs = W.MyPolitikNegeri; if (!G || !NGs || !NGs.setSumberBahagian) { return; }
     var nz = function (x) { return String(x || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
-    G.muat('parlimen').then(function () {
+    G.muat(['negeri', 'parlimen']).then(function () {
       var fs = G.getFitur('parlimen'), cache = {};
-      NGs.setSumberBahagian(function (p) {
+      NGs.setSumberBahagian(function (p, negeriLain) {
+        if (negeriLain) {                                            // v7.43: nama bahagian bagi negeri lain (Presiden)
+          var nk = 'N|' + nz(negeriLain); if (cache[nk]) { return cache[nk]; }
+          var WPK2 = ['14', '15', '16'], kodN = null;
+          if (/persekutuan/i.test(negeriLain)) { kodN = '14'; } else { var nf = G.getFitur('negeri').filter(function (f) { return nz(f.nama) === nz(negeriLain); })[0]; kodN = nf ? nf.id : null; }
+          var ls = fs.filter(function (f) { return kodN && (WPK2.indexOf(kodN) >= 0 ? WPK2.indexOf(f.negeri) >= 0 : f.negeri === kodN); }).map(function (f) { return f.nama; });
+          if (ls.length) { cache[nk] = ls; }
+          return ls;
+        }
         var k = nz(p.negeri) + '|' + nz(p.bahagian); if (cache[k]) { return cache[k]; }
         var wp = /kuala lumpur|putrajaya|labuan|wilayah/i.test(p.negeri || ''), kod = null;
         var sendiri = fs.filter(function (f) { return nz(f.nama).indexOf(nz(p.bahagian)) >= 0 || (nz(p.bahagian) && nz(p.bahagian).indexOf(nz(f.nama)) >= 0); })[0];
