@@ -485,7 +485,7 @@
     '.mpm-poli.is-pilih{stroke:#fff;stroke-width:2.6;filter:brightness(1.15)}',
     '.mpm-poli.is-rumah{stroke:var(--mpm-gold);stroke-width:1.8;stroke-dasharray:5 3}',
     '.mpm-poli.is-rumah.is-pilih{stroke:#fff;stroke-dasharray:none}',
-    '.mpm-garisdun{fill:none;stroke:#FFD84D;stroke-width:2.4;stroke-linejoin:round;pointer-events:none;paint-order:stroke}','.mpm-garisdun-halo{fill:none;stroke:rgba(0,0,0,.65);stroke-width:4.4;stroke-linejoin:round;pointer-events:none}','.mpm-poli--dm{stroke-width:.35}','.mpm-label.mpm-label--dun{font-size:44px;stroke-width:12px;font-weight:600}',
+    '.mpm-garisdun{fill:none;stroke:#FFD84D;stroke-width:2.4;stroke-linejoin:round;pointer-events:none;paint-order:stroke}','.mpm-garisdun-halo{fill:none;stroke:rgba(0,0,0,.65);stroke-width:4.4;stroke-linejoin:round;pointer-events:none}','.mpm-poli--dm{stroke-width:.35}',
     '.mpm-label{font:700 210px/1 var(--font-body,system-ui);fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.65);stroke-width:46px;text-anchor:middle;pointer-events:none;letter-spacing:.02em}',
     '.mpm-zum{position:absolute;top:10px;right:10px;display:grid;gap:4px;z-index:2}',
     '.mpm-zum button{width:36px;height:36px;border-radius:10px;border:1px solid var(--mpm-bd);background:rgba(22,24,30,.88);color:var(--mpm-tx);font:700 1.1rem/1 inherit;font-family:inherit;cursor:pointer;backdrop-filter:blur(4px)}',
@@ -916,14 +916,6 @@
         lap.items.forEach(function (it) {
           var f = it.f, kg = KOD_GEO_GAME[f.id], def = kg ? M.idxN[kg] : null; if (!def || !def.pendek || f.bbox[2] - f.bbox[0] < 380 || (f.id === '14' || f.id === '16')) { return; }
           var t = '<text class="mpm-label" x="' + Math.round((f.bbox[0] + f.bbox[2]) / 2) + '" y="' + Math.round((f.bbox[1] + f.bbox[3]) / 2 + 70) + '">' + esc(def.pendek) + '</text>';
-          if (adaTimur(f)) { timur += t; } else { barat += t; }
-        });
-      }
-      if (st.mode === 'dun' && lap.items.length <= 60) {
-        var lb = bboxGabung(lap.fit), fz = Math.max(12, Math.min(48, Math.round((lb[2] - lb[0]) / 46)));
-        lap.items.forEach(function (it) {
-          var f = it.f; if (f.bbox[2] - f.bbox[0] < fz * 4) { return; }
-          var t = '<text class="mpm-label mpm-label--dun" style="font-size:' + fz + 'px;stroke-width:' + Math.round(fz * .3) + 'px" x="' + Math.round((f.bbox[0] + f.bbox[2]) / 2) + '" y="' + Math.round((f.bbox[1] + f.bbox[3]) / 2) + '">' + esc(f.nama) + '</text>';
           if (adaTimur(f)) { timur += t; } else { barat += t; }
         });
       }
