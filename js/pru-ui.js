@@ -161,7 +161,7 @@
   }
   async function modPencalonan(p) {
     var r = PRU.ringkasan(p), a = r.aktif, kl = r.kelayakan;
-    var sebabLawan = a.kedua ? 'Anda menang kerusi ' + (a.pertama === 'DUN' ? 'DUN' : 'Parlimen') + '. Anda juga boleh bertanding kerusi ' + (a.pertama === 'DUN' ? 'Parlimen' : 'DUN') + ' serentak (memegang dua jawatan wakil rakyat)' : a.sebab === 'krisis' ? 'Krisis Pembubaran Dewan' : 'Tamat penggal 5 tahun';
+    var sebabLawan = a.sebab === 'krisis' ? 'Krisis Pembubaran Dewan' : 'Tamat penggal 5 tahun';
     function baris(jenis, nama) {
       var k = kl[jenis], ditolak = a.ditolak[jenis];
       return opsi(jenis, (jenis === 'DUN' ? '🏛️ ' : '🏢 ') + 'Kerusi ' + nama + ' <span class="badge">' + r.ikonProfil + ' ' + esc(r.profilNama) + '</span>',
@@ -170,7 +170,7 @@
     return modal({
       tajuk: 'Pengisytiharan Pilihan Raya',
       isi: '<p class="acara__ikon" aria-hidden="true">🗳️</p><p><b>' + sebabLawan + '.</b> Hari mengundi dalam 14 hari. Populariti parti: <b>' + a.partiPopulariti + '%</b>. Mohon dicalonkan bertanding:</p>' +
-        '<ul class="acara__pil">' + baris('DUN', 'DUN') + baris('PARLIMEN', 'Parlimen') + (a.kedua ? opsi('NONE', 'Cukup satu kerusi', 'Kerusi pertama anda kekal. Tiada kempen kedua.', true) : opsi('NONE', 'Tidak bertanding', 'Fokus jawatan parti. Tiada risiko kehilangan IP.', true)) + '</ul>' +
+        '<ul class="acara__pil">' + baris('DUN', 'DUN') + baris('PARLIMEN', 'Parlimen') + (kl.DUN.boleh && kl.PARLIMEN.boleh && !a.ditolak.DUN && !a.ditolak.PARLIMEN ? opsi('KEDUA', '🏛️🏢 Kedua-dua: Parlimen + DUN (serentak)', 'Satu kempen 14 hari, dua keputusan. Tumpuan terbahagi: sokongan -3%, jentera -8. Peluang diluluskan: Parlimen ' + kl.PARLIMEN.peluang + '%, DUN ' + kl.DUN.peluang + '%. Menang kedua-dua = dua jawatan wakil rakyat.', true) : '') + opsi('NONE', 'Tidak bertanding', 'Fokus jawatan parti. Tiada risiko kehilangan IP.', true) + '</ul>' +
         '<p style="font-size:.8rem">Keputusan pencalonan oleh Majlis Tertinggi bergantung IP, reputasi dan kedudukan parti.</p>',
       butang: []
     });
@@ -181,7 +181,7 @@
       tajuk: 'Rundingan Kerusi & Gabungan',
       isi: '<p class="acara__ikon" aria-hidden="true">🤝</p><p>Kerusi <b>' + esc(a.kerusi.nama) + '</b> turut dituntut oleh rakan gabungan. Jika rundingan gagal, undi terbahagi tiga (3-penjuru) dan kemenangan lebih sukar.</p><p style="font-size:.85rem">IP: <b>' + fmt(p.ip) + '</b> · Hubungan gabungan: <b>' + PRU.getPRU(p).hubunganGabungan + '</b>/100</p><ul class="acara__pil">' +
         opsi('berdepan', 'Runding berdepan', 'Kos IP ' + rk.berdepan.ip + ' · Berjaya ± ' + Math.round(rk.berdepan.jaya * 100) + '% → 1-lawan-1; gagal → 3-penjuru', p.ip >= rk.berdepan.ip) +
-        (a.candidateType === 'PARLIMEN' ? opsi('ganti', 'Tawar kerusi DUN sebagai ganti', 'Kos IP ' + rk.ganti.ip + ' · Berjaya ± ' + Math.round(rk.ganti.jaya * 100) + '% · anda melepaskan kerusi Parlimen ini', p.ip >= rk.ganti.ip) : '') +
+        (a.candidateType === 'PARLIMEN' && !a.kerusi2 ? opsi('ganti', 'Tawar kerusi DUN sebagai ganti', 'Kos IP ' + rk.ganti.ip + ' · Berjaya ± ' + Math.round(rk.ganti.jaya * 100) + '% · anda melepaskan kerusi Parlimen ini', p.ip >= rk.ganti.ip) : '') +
         opsi('abai', 'Bertanding juga (abaikan rakan)', 'Pasti 3-penjuru · hubungan gabungan −15 · Reputasi −3', true) + '</ul>',
       butang: []
     });
@@ -300,6 +300,11 @@
       h += '<h3 style="margin:12px 0 4px">Kesan</h3><div class="kv"><span>Pengaruh (IP)</span><b class="pru-ng">−100</b></div><p style="font-size:.85rem;margin-top:8px">Anda kekal dengan jawatan dalam parti. Boleh bertanding semula pada pilihan raya akan datang.</p>';
     }
     if (kp.siasatMsg) { h += '<p class="' + (kp.petisyen ? 'pru-ng' : '') + '" style="font-size:.85rem;margin-top:8px">' + esc(kp.siasatMsg) + '</p>'; }
+    if (kp.kedua) {                                                          // v7.55: kerusi kedua (kempen serentak)
+      var k2 = kp.kedua, m2 = k2.menang && !k2.petisyen;
+      h += '<hr><div class="pru-menang' + (m2 ? '' : ' pru-kalah') + '">' + (m2 ? '🎉 Menang kerusi kedua!' : 'Kalah kerusi kedua') + '</div><p style="text-align:center"><b>' + (m2 ? (k2.jenis === 'DUN' ? 'ADUN ' : 'Ahli Parlimen ') : 'Kerusi ') + esc(k2.kerusi || '') + '</b></p>' + pecahHtml(k2.pecah) +
+        '<div class="kv"><span>Majoriti</span><b>' + (k2.menang ? fmt(k2.majoriti) + ' undi' : 'kalah ' + fmt(k2.majoriti) + ' undi') + '</b></div>' + (m2 ? '<div class="kv"><span>Pengaruh (IP)</span><b class="pru-ok">+' + k2.bonusIp + '</b></div>' : '<p style="font-size:.85rem">Kekalahan kerusi kedua dikira separuh kesan.</p>');
+    }
     return h;
   }
   /* v7.22: keputusan nasional & rundingan kerajaan (Presiden parti) */
@@ -346,10 +351,9 @@
     if (!a || a.fasa !== 'keputusan' || !a.keputusan) { return; }
     await modal({ tajuk: 'Keputusan Pengundian', isi: htmlKeputusan(a.keputusan, a), butang: [{ label: 'Teruskan', nilai: true, kelas: 'btn--gold' }] });
     var buka = a.keputusan.kabinetBuka;
-    var tt = PRU.tutupKeputusan(); segarkan();
+    PRU.tutupKeputusan(); segarkan();
     if (PRU.nasionalTertunggak(S.loadPlayer())) { await nasional(); }
     else if (buka) { await lobi(); }
-    if (tt && tt.kedua) { toast('Anda boleh bertanding kerusi kedua (Parlimen + DUN).', 'ok'); await alir(); }
   }
   async function selesai() {
     var r = PRU.selesaikan();
