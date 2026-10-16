@@ -172,6 +172,7 @@
     if (pertahan) { return { terbuka: true, sebab: '', pertahan: true }; }
     if (d.kumpulan === 'sayap' && d.sayap !== sayapPemain(p)) { return { terbuka: false, sebab: 'Hanya untuk sayap ' + NAMA_SAYAP[d.sayap] + '.' }; }
     var sama = jawatanSamaPeringkat(p, d);                      // v5.7: satu jawatan setiap peringkat; calon mesti naik pangkat di peringkat itu
+    if (sama && penggalLamaTamat(p, sama)) { sama = null; }     // v7.44: jawatan penggal lama boleh ditukar semasa pemilihan (peraturan satu-jawatan terpakai selepas keputusan)
     if (sama && (sama.pangkat || 0) >= d.pangkat) {
       return { terbuka: false, sebab: 'Konflik peringkat: anda sudah memegang ' + sama.jawatan + ' di peringkat ' + LABEL_PERINGKAT[d.peringkat] + '. Hanya satu jawatan bagi setiap peringkat (boleh bertanding jawatan lebih tinggi di peringkat ini, atau jawatan di peringkat lain).' };
     }
@@ -209,6 +210,11 @@
   /* ------------------------------------------------------------------------
      KEPUTUSAN PEMILIHAN -> PATCH PROFIL
      ------------------------------------------------------------------------ */
+  /** v7.44: tahun pemilihan dan jawatan itu dimenangi pada penggal lalu = sedang tamat: pemegang boleh bertanding jawatan lain (termasuk yang lebih rendah / jawatan induk-sayap) di peringkat sama. */
+  function penggalLamaTamat(p, j) {
+    var E = pemilihanMod();
+    return !!(E && E.adalahTahunPemilihan && E.adalahTahunPemilihan(p.tahun) && Number(j.tahun) && Number(j.tahun) < Number(p.tahun));
+  }
   /** v5.7: jawatan (pangkat tertinggi) yang dipegang pada peringkat yang sama dengan d, kecuali d itu sendiri. */
   function jawatanSamaPeringkat(p, d) {
     var r = null;
@@ -260,7 +266,7 @@
     var tadiPegang = pegang(p, d.kod);
     var penggal = !!p.penggalSelesai;                                  // Fasal 9.5: simpan rekod satu penggal walaupun jawatan hilang
     var sama = jawatanSamaPeringkat(p, d);
-    if (menang && sama && (sama.pangkat || 0) > d.pangkat) { return {}; }   // menang dua jawatan sama peringkat dalam satu pusingan: yang lebih tinggi dikekalkan
+    if (menang && sama && (sama.pangkat || 0) > d.pangkat && !penggalLamaTamat(p, sama)) { return {}; }   // menang dua jawatan sama peringkat dalam satu pusingan: yang lebih tinggi dikekalkan
     var dilepas = [];
     senarai.forEach(function (j) {
       // v5.7: menang melepaskan jawatan LAMA di peringkat yang SAMA sahaja; peringkat lain dikekalkan.
