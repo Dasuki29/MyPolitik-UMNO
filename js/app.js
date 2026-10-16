@@ -630,9 +630,10 @@
     h += bar('Reputasi Parti', p.reputasi, false);
     $('s-kesetiaan').innerHTML = h;
 
-    var isu = p.isu || [];
+    var isu = (p.isu || []).slice().sort(function (a, b) { return (a && a.selesai ? 1 : 0) - (b && b.selesai ? 1 : 0); });   // v7.54: isu belum selesai dahulu; isu selesai ditanda
     $('s-isu').innerHTML = isu.length
       ? '<ul style="margin:0;padding-left:1.1rem;color:var(--text-muted);font-size:.88rem">' + isu.slice(0, 6).map(function (x) {
+          if (x && x.selesai) { return '<li style="opacity:.6;text-decoration:line-through" title="Diselesaikan melalui ' + (x.cara === 'manifesto' ? 'manifesto' : 'usul mesyuarat') + '">&#10003; ' + esc(x.tajuk) + '</li>'; }
           return '<li>' + esc(x && x.tajuk ? x.tajuk : x) + '</li>'; }).join('') + '</ul>'
       : '<p class="empty">Belum ada isu. Berbual di warung untuk mengumpul isu tempatan.</p>';
 
