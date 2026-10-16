@@ -429,6 +429,7 @@
 
   /* ---------- Toast & modal ---------- */
   function toast(teks, jenis) {
+    if (window.NusaPaparan && $('toasts')) { return window.NusaPaparan.toast(teks, jenis); }   // v7.26
     var st = $('toasts'), t = document.createElement('div');
     t.className = 'toast' + (jenis === 'ok' ? ' toast--success' : jenis === 'ralat' ? ' toast--danger' : '');
     t.textContent = teks;
@@ -1069,6 +1070,7 @@
     if (!p) { W.location.replace(INDEX_URL); return; }
     if (p.tamat) { paparLegasi(p); return; }                            // v5.0: kerjaya tamat
     renderHeader(p); renderSisi(p); renderTabs(p); renderPanel(p);
+    if (window.NusaPaparan) { window.NusaPaparan.render(p); }   // v7.26
     var bt = $('acara-tunggu'); if (bt) { bt.hidden = !(EV && EV.getTertunggak()); }
   }
   /** v5.0: Legacy Summary apabila kerjaya tamat (meninggal, bersara paksa atau had umur). */
