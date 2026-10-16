@@ -145,6 +145,7 @@
     if (bp && bp.bonusTahun === p.tahun) { s += bp.bonusSkor || 0; }
     return Math.round(clamp(s, 0, 100) * 10) / 10;
   }
+  function wanitaCtx() { return !!ctx.sayap && WN() !== 'Pemuda'; }                  // v7.41: Puteri/Wanita = nama perempuan
   function janaNama(rng, wanita) {
     var a = wanita ? NAMA_P[Math.floor(rng() * NAMA_P.length)] : NAMA_L[Math.floor(rng() * NAMA_L.length)];
     return (wanita ? '' : "Dato' ") + a + ' ' + NAMA_2[Math.floor(rng() * NAMA_2.length)];
@@ -154,7 +155,7 @@
   function senaraiCalon(p, bp, musim) {
     var n = bilBahagian(p), rng = S().rngBerbenih(String(p.id) + ctx.kunci + '|negeriBP|' + musim), out = [], ada = layak(p), pemainDi = Math.floor(rng() * n);
     for (var i = 0; i < n; i++) {
-      var nama = janaNama(rng, false), skor = 25 + rng() * 40;
+      var nama = janaNama(rng, wanitaCtx()), skor = 25 + rng() * 40;
       if (bp && bp.pengerusi && !bp.pengerusi.pemain && bp.pengerusi.id === 'b' + (i + 1)) { skor += CONFIG.BONUS_PENYANDANG; }
       if (ada && i === pemainDi) { out.push({ id: 'pemain', nama: p.nama || 'Anda', bahagian: p.bahagian || namaBhg(p, i, pemainDi), pemain: true, skor: skorPemain(p, bp) }); }
       else { out.push({ id: 'b' + (i + 1), nama: nama, bahagian: namaBhg(p, i, ada ? pemainDi : null), pemain: false, skor: Math.round(skor * 10) / 10 }); }
@@ -167,9 +168,9 @@
     var rng = S().rngBerbenih(String(p.id) + ctx.kunci + '|luar|' + benih), out = [], sayap = ['Ketua Pemuda Negeri', 'Ketua Wanita Negeri', 'Ketua Puteri Negeri'];
     if (ctx.sayap) { for (var q = 0; q < 3; q++) { out.push({ id: 'l-s' + q, nama: janaNama(rng, WN() !== 'Pemuda'), bahagian: 'Ketua Sayap Cawangan', kategori: 'sayap' }); } }
     else { sayap.forEach(function (s, i) { out.push({ id: 'l-s' + i, nama: janaNama(rng, i > 0), bahagian: s, kategori: 'sayap' }); }); }
-    for (var t = 0; t < 3; t++) { out.push({ id: 'l-t' + t, nama: janaNama(rng, t === 2), bahagian: ['ADUN', 'Bekas Exco', 'Tokoh Parti'][t], kategori: 'tokoh' }); }
+    for (var t = 0; t < 3; t++) { out.push({ id: 'l-t' + t, nama: janaNama(rng, wanitaCtx() || t === 2), bahagian: ['ADUN', 'Bekas Exco', 'Tokoh Parti'][t], kategori: 'tokoh' }); }
     var kolam = kolamBhg(p, true);
-    for (var k = 0; k < 3; k++) { out.push({ id: 'l-n' + k, nama: janaNama(rng, false), bahagian: 'Naib Ketua Bahagian ' + (kolam.length ? kolam[Math.floor(rng() * kolam.length)] : (k + 1)), kategori: 'naib' }); }
+    for (var k = 0; k < 3; k++) { out.push({ id: 'l-n' + k, nama: janaNama(rng, wanitaCtx()), bahagian: 'Naib Ketua Bahagian ' + (kolam.length ? kolam[Math.floor(rng() * kolam.length)] : (k + 1)), kategori: 'naib' }); }
     return out;
   }
 
@@ -191,6 +192,10 @@
       var c = senaraiCalon(p, bp, 'mula').filter(function (x) { return !x.pemain; })[0];
       bp.pengerusi = { id: c.id, nama: c.nama, bahagian: c.bahagian, pemain: false }; bp.tahunLantik = p.tahun; bp.musimLantik = 0;
       bp.ajk = ajkNpc(p, bp, c.id); bp.wajib = negeriKecil(p) ? wajibKB(p, bp, c.id) : [];
+    }
+    if (wanitaCtx() && !bp.namaP) {                                // v7.41: simpanan lama sayap perempuan menyimpan nama lelaki (Dato' ...): jana semula nama NPC secara tetap
+      var baiki = function (e) { if (e && !e.pemain && /^Dato' /.test(e.nama || '')) { e.nama = janaNama(S().rngBerbenih(String(p.id) + ctx.kunci + '|nmP|' + e.id), true); } };
+      baiki(bp.pengerusi); (bp.ajk || []).forEach(baiki); (bp.wajib || []).forEach(baiki); bp.namaP = 1;
     }
     return bp;
   }
