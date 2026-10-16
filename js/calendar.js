@@ -320,6 +320,9 @@
     var RVL = muat('MyPolitikRival', 'rival.js');                                               // v7.28: AI pencabar bergerak pada akhir setiap bulan
     if (RVL && RVL.tick) { peristiwa = peristiwa.concat(RVL.tick().peristiwa || []); }
 
+    var NGR = muat('MyPolitikNegeri', 'negeri.js');                                            // v7.34: lantikan Badan Perhubungan Negeri (bulan 9 tahun pemilihan)
+    if (NGR && NGR.prosesBulan) { peristiwa = peristiwa.concat(NGR.prosesBulan().peristiwa || []); }
+
     var HY = tahunBaharu ? muat('MyPolitikHayat', 'hayat.js') : null;                       // v5.0: umur +1 dan semakan kesihatan
     if (HY) {
       var ht = HY.prosesTahunBaharu();
