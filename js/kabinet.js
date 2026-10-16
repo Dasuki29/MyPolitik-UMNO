@@ -25,6 +25,7 @@
     try { if (typeof require === 'function') { return require('./' + fail); } } catch (e) { /* tidak dimuatkan */ }
     return null;
   }
+  function DATA() { return modul('MyPolitikKabinetData', 'kabinet-data.js'); }
   function S() { return modul('MyPolitikSave', 'save.js'); }
   function ST() { return modul('MyPolitikStres', 'stress.js'); }
   function ET() { return modul('MyPolitikEtika', 'etika.js'); }
@@ -34,7 +35,7 @@
   function antara(r, a, b) { return a + r() * (b - a); }
 
   var CONFIG = {
-    LOBI_PERCUBAAN: 3, LOBI_GAGAL_PULANG: 0.5,
+    LOBI_PERCUBAAN: 3, LOBI_GAGAL_PULANG: 0.5, HAD_PILIHAN: 5,                          // v7.42: had pilihan portfolio Parlimen dipaparkan
     RATING_AWAL: 50, TEKANAN_AWAL: 20,
     RATING_RENDAH: 30, BULAN_RENDAH_ROMBAK: 2,
     TEKANAN_TINGGI: 80, TEKANAN_SUSUT: 2,
@@ -70,6 +71,21 @@
       { id: 'm_pertanian',   tahap: 'MENTERI_PENUH', nama: 'Menteri Pertanian', ip: 600, myr: 10000, asas: 0.35, risiko: 'sederhana' }
     ]
   };
+  /** v7.42: senarai portfolio Parlimen daripada data/kabinet-persekutuan.csv (IP perlu = lajur IP).
+      Menteri Penuh = nilai CSV. Timbalan Menteri dijana daripada setiap Menteri (andaian: IP perlu = IP Menteri - 250, minimum 250).
+      Kos IP = IP perlu; Dana, peluang asas dan risiko ditentukan oleh IP (andaian, laras di sini). */
+  function jenisDariIP(ip) { return { myr: Math.round(ip * 16 / 500) * 500, asas: clamp(1.05 - ip * 0.0011, 0.3, 0.85), risiko: ip <= 350 ? 'rendah' : ip <= 550 ? 'sederhana' : 'tinggi' }; }
+  function binaParlimen() {
+    var D = DATA(); if (!D || !D.menteri || !D.menteri.length) { return null; }
+    var out = [];
+    D.menteri.forEach(function (m, i) {
+      var tm = Math.max(250, m.ip - 250), a = jenisDariIP(m.ip), b = jenisDariIP(tm);
+      out.push({ id: 'm_' + i, tahap: 'MENTERI_PENUH', nama: m.nama, ip: m.ip, myr: a.myr, asas: a.asas, risiko: a.risiko });
+      out.push({ id: 'tm_' + i, tahap: 'TIMBALAN_MENTERI', nama: m.nama.replace(/^Menteri /, 'Timbalan Menteri '), ip: tm, myr: b.myr, asas: b.asas, risiko: b.risiko });
+    });
+    return out;
+  }
+  var DARI_CSV = binaParlimen(); if (DARI_CSV) { PORTFOLIO.PARLIMEN = DARI_CSV; }
   function cariPortfolio(id) {
     var s = PORTFOLIO.DUN.concat(PORTFOLIO.PARLIMEN);
     for (var i = 0; i < s.length; i++) { if (s[i].id === id) { return s[i]; } }
@@ -170,10 +186,20 @@
   function peluang(p, def) {
     return clamp(def.asas + ((Number(p.ip) || 0) - def.ip) / (def.ip * 8) + ((Number(p.reputasi) || 50) - 50) * 0.003, 0.1, 0.95);
   }
+  /** v7.42: Parlimen: hanya portfolio dengan IP perlu <= IP pemain; paling HAMPIR dengan IP pemain dahulu, maks HAD_PILIHAN (rawak tetap bagi IP sama). */
+  function kolamPaparan(p, sumber) {
+    var semua = PORTFOLIO[sumber];
+    if (sumber !== 'PARLIMEN' || !DARI_CSV) { return semua; }
+    var ip = Number(p.ip) || 0, rg = S().rngBerbenih(String(p.id) + '|kabinet|' + p.tahun), kunci = {};
+    semua.forEach(function (d) { kunci[d.id] = rg(); });
+    return semua.filter(function (d) { return d.ip <= ip; })
+      .sort(function (x, y) { return (y.ip - x.ip) || (kunci[x.id] - kunci[y.id]); })
+      .slice(0, CONFIG.HAD_PILIHAN);
+  }
   function senaraiPortfolio(p) {
     var k = getKabinet(p);
     if (!k.lobi) { return []; }
-    return PORTFOLIO[k.lobi.sumber].map(function (d) {
+    return kolamPaparan(p, k.lobi.sumber).map(function (d) {
       var sebab = [];
       if ((Number(p.ip) || 0) < d.ip) { sebab.push('IP tidak cukup (perlu ' + d.ip + ')'); }
       if ((Number(p.myr) || 0) < d.myr) { sebab.push('Dana tidak cukup (perlu RM ' + d.myr.toLocaleString('ms-MY') + ')'); }
@@ -186,6 +212,7 @@
     if (!k.lobi || k.lobi.baki <= 0) { return { ok: false, ralat: 'Lobi tidak tersedia.' }; }
     if (!d || PORTFOLIO[k.lobi.sumber].indexOf(d) < 0) { return { ok: false, ralat: 'Portfolio tidak tersedia.' }; }
     var s = senaraiPortfolio(p).filter(function (x) { return x.id === id; })[0];
+    if (!s) { return { ok: false, ralat: 'Portfolio tidak tersedia pada IP anda sekarang.' }; }
     if (!s.boleh) { return { ok: false, ralat: s.sebab }; }
     var lulus = r() < peluang(p, d), kes;
     k.lobi.baki -= 1;
