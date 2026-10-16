@@ -901,11 +901,11 @@
   }
 
   var TAJUK_PERINGKAT = {
-    cawangan: ['Pemilihan Cawangan', 'Bulan 4-6 · jawatan Cawangan dan Perwakilan ke Bahagian (jawatan sayap dipilih dalam Mesyuarat Sayap)'],
-    bahagian: ['Pemilihan Bahagian', 'Bulan 7 · jawatan Bahagian dan Perwakilan ke PAU (jawatan sayap dipilih dalam Mesyuarat Sayap)'],
-    sayap_cawangan: ['Pemilihan Sayap Cawangan', 'Bulan 4-6 · Ketua Sayap Cawangan (tahun pemilihan) dan wakil sayap ke Mesyuarat Sayap Bahagian (laluan sayap sahaja)'],
-    sayap_bahagian: ['Pemilihan Sayap Bahagian', 'Bulan 7 · Ketua Sayap Bahagian (tahun pemilihan), G10 (10 wakil) ke Mesyuarat Bahagian dan G2 (2 wakil) ke Perhimpunan Sayap Pusat'],
-    sayap_pau: ['Pemilihan Ketua Sayap Pusat', 'Bulan 8 · dipilih dalam Perhimpunan Sayap (Pra-PAU), laluan sayap sahaja'],
+    cawangan: ['Pemilihan Cawangan', 'Bulan 4-6 · Ketua, Naib Ketua dan AJK Cawangan, serta Perwakilan ke Bahagian (jawatan sayap dipilih dalam Mesyuarat Sayap)'],
+    bahagian: ['Pemilihan Bahagian', 'Bulan 7 · Ketua, Timbalan Ketua, Naib Ketua dan AJK Bahagian, serta Perwakilan ke PAU (jawatan sayap dipilih dalam Mesyuarat Sayap)'],
+    sayap_cawangan: ['Pemilihan Sayap Cawangan', 'Bulan 4-6 · Ketua, Naib Ketua dan AJK Sayap Cawangan (tahun pemilihan) dan wakil sayap ke Mesyuarat Sayap Bahagian (laluan sayap sahaja)'],
+    sayap_bahagian: ['Pemilihan Sayap Bahagian', 'Bulan 7 · Ketua, Naib Ketua dan AJK Sayap Bahagian (tahun pemilihan), G10 (10 wakil) ke Mesyuarat Bahagian dan G2 (2 wakil) ke Perhimpunan Sayap Pusat'],
+    sayap_pau: ['Pemilihan Sayap Pusat', 'Bulan 8 · Ketua, Naib Ketua dan AJK Sayap Pusat, dipilih dalam Perhimpunan Sayap (Pra-PAU), laluan sayap sahaja'],
     pusat: ['Pemilihan Pusat (PAU)', 'Bulan 8 · Presiden, Timbalan Presiden, 3 Naib Presiden dan MKT']
   };
 
@@ -1331,7 +1331,7 @@
     var st = OG.getStruktur(p), tab = st.laluan === 'utama' ? 'induk' : st.laluan;
     function baris(x) { return '<div class="org-baris' + (x.pemain ? ' is-anda' : '') + '"><span>' + esc(x.jawatan) + '</span><span>' + esc(x.nama) + (x.pemain ? ' (anda)' : '') + '</span></div>'; }
     function blok(o) {
-      var h = '<div class="org-peringkat"><h3>' + esc(o.label) + '</h3>' + baris(o.ketua) + baris(o.naib);
+      var h = '<div class="org-peringkat"><h3>' + esc(o.label) + '</h3>' + baris(o.ketua) + (o.timbalan ? baris(o.timbalan) : '') + baris(o.naib);
       o.tambahan.forEach(function (x) { h += baris(x); });
       h += '<details class="org-ajk"><summary>' + esc(o.ajk[0].jawatan.replace(/ 1$/, '')) + ' (' + o.bilAjk + ' orang)</summary>' + o.ajk.map(baris).join('') + '</details></div>';
       return h;

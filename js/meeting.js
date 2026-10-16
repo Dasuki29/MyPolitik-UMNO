@@ -364,9 +364,9 @@
       var Ns = NAMA_SAYAP[sayapPemain(p)], Es = typeof globalThis !== 'undefined' ? globalThis.MyPolitikElection : null;
       agenda.push({
         id: peringkat + '-' + p.tahun + '-pemilihan', jenis: 'pemilihan', kod: 'pemilihan_' + peringkat, sumber: 'pemilihan',
-        tajuk: peringkat === 'sayap_cawangan' ? 'Pemilihan ' + (pemilihanAktif(p) ? 'Ketua ' + Ns + ' Cawangan dan ' : '') + 'wakil ' + Ns + ' Cawangan ke Mesyuarat ' + Ns + ' Bahagian (' + (Es && Es.kuotaSayapCawangan ? Es.kuotaSayapCawangan(p) : 3) + ' kerusi)'
-                                              : peringkat === 'sayap_pau' ? 'Pemilihan Ketua ' + Ns + ' (Pusat)'
-                                              : 'Pemilihan ' + (pemilihanAktif(p) ? 'Ketua ' + Ns + ' Bahagian, ' : '') + 'G10 (10 wakil ke Mesyuarat Bahagian) dan G2 (2 wakil ke Perhimpunan ' + Ns + ' Pusat)',
+        tajuk: peringkat === 'sayap_cawangan' ? 'Pemilihan ' + (pemilihanAktif(p) ? 'Ketua, Naib Ketua, AJK ' + Ns + ' Cawangan dan ' : '') + 'wakil ' + Ns + ' Cawangan ke Mesyuarat ' + Ns + ' Bahagian (' + (Es && Es.kuotaSayapCawangan ? Es.kuotaSayapCawangan(p) : 3) + ' kerusi)'
+                                              : peringkat === 'sayap_pau' ? 'Pemilihan Ketua, Naib Ketua dan AJK ' + Ns + ' (Pusat)'
+                                              : 'Pemilihan ' + (pemilihanAktif(p) ? 'Ketua, Naib Ketua, AJK ' + Ns + ' Bahagian, ' : '') + 'G10 (10 wakil ke Mesyuarat Bahagian) dan G2 (2 wakil ke Perhimpunan ' + Ns + ' Pusat)',
         penerangan: 'Pengundian dijalankan apabila mesyuarat ditutup. Daftar pencalonan anda melalui tab Pemilihan sebelum itu.',
         kerusi: null, status: 'menunggu', keputusan: null
       });

@@ -45,9 +45,11 @@
 
   // Cawangan
   tambah({ kod: 'ajk_cawangan',   jawatan: 'AJK Cawangan',   peringkat: 'cawangan', pangkat: 1, kerusi: 7, ipMin: 50 });
+  tambah({ kod: 'naib_ketua_cawangan', jawatan: 'Naib Ketua Cawangan', peringkat: 'cawangan', pangkat: 2.5, ipMin: 70, pangkatMin: 1, kesukaran: 4 });   // v7.39 (pangkat pecahan supaya tangga sedia ada tidak berubah)
   tambah({ kod: 'ketua_cawangan', jawatan: 'Ketua Cawangan', peringkat: 'cawangan', pangkat: 3, ipMin: 95, pangkatMin: 1, kesukaran: 8 });
   // Bahagian
   tambah({ kod: 'ajk_bahagian',        jawatan: 'AJK Bahagian',        peringkat: 'bahagian', pangkat: 4, kerusi: 15, ipMin: 140, pangkatMin: 1, perluBahagian: true, kesukaran: 6, keahlian: 36, fasal: 'Fasal 15.5' });
+  tambah({ kod: 'timbalan_ketua_bahagian', jawatan: 'Timbalan Ketua Bahagian', peringkat: 'bahagian', pangkat: 6.5, ipMin: 200, pangkatMin: 4, perluBahagian: true, kesukaran: 17, keahlian: 36, fasal: 'Fasal 15.5' });   // v7.39
   tambah({ kod: 'naib_ketua_bahagian', jawatan: 'Naib Ketua Bahagian', peringkat: 'bahagian', pangkat: 6, ipMin: 185, pangkatMin: 4, perluBahagian: true, kesukaran: 14, keahlian: 36, fasal: 'Fasal 15.5' });
   tambah({ kod: 'ketua_bahagian',      jawatan: 'Ketua Bahagian',      peringkat: 'bahagian', pangkat: 7, ipMin: 220, pangkatMin: 4, perluBahagian: true, kesukaran: 20, keahlian: 36, fasal: 'Fasal 15.5' });
   // Pusat (bulan 8, tahun pemilihan)
@@ -61,6 +63,13 @@
     tambah({ kod: 'sayap_cawangan_' + w, jawatan: 'Ketua ' + N + ' Cawangan', peringkat: 'cawangan', kumpulan: 'sayap', sayap: w, pangkat: 2, ipMin: 50, kesukaran: 3 });
     tambah({ kod: 'sayap_bahagian_' + w, jawatan: 'Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 5, ipMin: 160, pangkatMin: 2, perluBahagian: true, perluSayapCawangan: true, kesukaran: 12, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
     tambah({ kod: 'sayap_pusat_' + w,    jawatan: 'Ketua ' + N,             peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 9, ipMin: 280, pangkatMin: 5, perluPAU: true, kesukaran: 22, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    // v7.39: Naib Ketua dan AJK sayap bagi setiap peringkat (sayap tiada Timbalan)
+    tambah({ kod: 'sayap_ajk_cawangan_' + w,  jawatan: 'AJK ' + N + ' Cawangan',         peringkat: 'cawangan', kumpulan: 'sayap', sayap: w, pangkat: 1,   kerusi: 5,  ipMin: 40,  kesukaran: 0 });
+    tambah({ kod: 'sayap_naib_cawangan_' + w, jawatan: 'Naib Ketua ' + N + ' Cawangan', peringkat: 'cawangan', kumpulan: 'sayap', sayap: w, pangkat: 1.5, ipMin: 45, pangkatMin: 1, kesukaran: 2 });
+    tambah({ kod: 'sayap_ajk_bahagian_' + w,  jawatan: 'AJK ' + N + ' Bahagian',         peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 3.5, kerusi: 10, ipMin: 120, pangkatMin: 1, perluBahagian: true, kesukaran: 8, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    tambah({ kod: 'sayap_naib_bahagian_' + w, jawatan: 'Naib Ketua ' + N + ' Bahagian', peringkat: 'bahagian', kumpulan: 'sayap', sayap: w, pangkat: 4.5, ipMin: 145, pangkatMin: 1, perluBahagian: true, kesukaran: 10, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    tambah({ kod: 'sayap_ajk_pusat_' + w,     jawatan: 'AJK ' + N + ' Pusat',            peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 7.5, kerusi: 15, ipMin: 230, pangkatMin: 4, perluPAU: true, kesukaran: 12, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
+    tambah({ kod: 'sayap_naib_pusat_' + w,    jawatan: 'Naib Ketua ' + N,               peringkat: 'pusat',    kumpulan: 'sayap', sayap: w, pangkat: 8.5, ipMin: 260, pangkatMin: 4, perluPAU: true, kesukaran: 18, keahlian: 36, fasal: 'Peraturan ' + N + ' (3 tahun ahli)' });
   });
 
   function cariDef(kod) { for (var i = 0; i < KATALOG.length; i++) { if (KATALOG[i].kod === kod) { return KATALOG[i]; } } return null; }

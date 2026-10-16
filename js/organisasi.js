@@ -22,7 +22,7 @@
   var D = root.MyPolitikData || (typeof module === 'object' && typeof require === 'function' ? require('./data.js') : null);
   var SY = root.MyPolitikSayap || (typeof module === 'object' && typeof require === 'function' ? require('./sayap.js') : null);
 
-  var CONFIG = { AJK: { cawangan: 7, bahagian: 15, pusat: 25 } };
+  var CONFIG = { AJK: { cawangan: 7, bahagian: 15, pusat: 25 }, AJK_SAYAP: { cawangan: 5, bahagian: 10, pusat: 15 } };   // v7.39: AJK sayap (andaian)
   var PERINGKAT = ['cawangan', 'bahagian', 'pusat'];
   var LABEL = { cawangan: 'Peringkat Cawangan', bahagian: 'Peringkat Bahagian', pusat: 'Peringkat Pusat' };
   var NAMA_SAYAP = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita' };
@@ -38,7 +38,7 @@
   function tajuk(peringkat, sayap) {
     if (!sayap) {
       return peringkat === 'cawangan' ? { ketua: 'Ketua Cawangan', naib: 'Naib Ketua Cawangan', ajk: 'AJK Cawangan' }
-        : peringkat === 'bahagian' ? { ketua: 'Ketua Bahagian', naib: 'Naib Ketua Bahagian', ajk: 'AJK Bahagian' }
+        : peringkat === 'bahagian' ? { ketua: 'Ketua Bahagian', timbalan: 'Timbalan Ketua Bahagian', naib: 'Naib Ketua Bahagian', ajk: 'AJK Bahagian' }
         : { ketua: 'Presiden', naib: 'Timbalan Presiden', ajk: 'Ahli MKT' };
     }
     var N = NAMA_SAYAP[sayap], s = sufiks(peringkat);
@@ -57,10 +57,10 @@
 
   /** Kod jawatan katalog yang sepadan dengan slot Ketua / Naib / AJK. */
   function kodSlot(peringkat, sayap, slot) {
-    if (sayap) { return slot === 'ketua' ? 'sayap_' + peringkat + '_' + sayap : null; }
+    if (sayap) { return slot === 'ketua' ? 'sayap_' + peringkat + '_' + sayap : (slot === 'naib' || slot === 'ajk') ? 'sayap_' + slot + '_' + peringkat + '_' + sayap : null; }
     var peta = {
-      cawangan: { ketua: 'ketua_cawangan', naib: null, ajk: 'ajk_cawangan' },
-      bahagian: { ketua: 'ketua_bahagian', naib: 'naib_ketua_bahagian', ajk: 'ajk_bahagian' },
+      cawangan: { ketua: 'ketua_cawangan', naib: 'naib_ketua_cawangan', ajk: 'ajk_cawangan' },
+      bahagian: { ketua: 'ketua_bahagian', timbalan: 'timbalan_ketua_bahagian', naib: 'naib_ketua_bahagian', ajk: 'ajk_bahagian' },
       pusat:    { ketua: 'presiden', naib: 'timbalan_presiden', ajk: 'ahli_mkt' }
     };
     return peta[peringkat][slot];
@@ -70,19 +70,19 @@
 
   function binaSatu(p, peringkat, sayap) {
     var t = tajuk(peringkat, sayap), rng = D.createRng(benih(p) + '|' + peringkat + '|' + (sayap || 'induk'));
-    var bil = CONFIG.AJK[peringkat];
+    var bil = (sayap ? CONFIG.AJK_SAYAP : CONFIG.AJK)[peringkat];
     function slot(kunci) {
       var kod = kodSlot(peringkat, sayap, kunci), ada = kod && pemegang(p, kod);
       return { jawatan: t[kunci], nama: ada ? (p.nama || 'Anda') : nama(rng, jantinaSlot(sayap, rng)), pemain: !!ada };
     }
-    var ketua = slot('ketua'), naib = slot('naib');
+    var ketua = slot('ketua'), naib = slot('naib'), timbalan = t.timbalan ? slot('timbalan') : null;
     var kodAjk = kodSlot(peringkat, sayap, 'ajk'), pAjk = kodAjk && pemegang(p, kodAjk);
     var ajk = [];
     for (var i = 0; i < bil; i++) {
       var sendiri = pAjk && i === 0;
       ajk.push({ jawatan: t.ajk + ' ' + (i + 1), nama: sendiri ? (p.nama || 'Anda') : nama(rng, jantinaSlot(sayap, rng)), pemain: !!sendiri });
     }
-    var out = { peringkat: peringkat, label: LABEL[peringkat], ketua: ketua, naib: naib, ajk: ajk, bilAjk: bil, tambahan: [] };
+    var out = { peringkat: peringkat, label: LABEL[peringkat], ketua: ketua, timbalan: timbalan, naib: naib, ajk: ajk, bilAjk: bil, tambahan: [] };
     if (!sayap && peringkat === 'pusat') {            // Naib Presiden (3) ialah jawatan tambahan Induk di Pusat
       for (var n = 1; n <= 3; n++) {
         var nm = pemegang(p, 'naib_presiden') && n === 1;
