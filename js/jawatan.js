@@ -223,6 +223,10 @@
     return r;
   }
 
+  function kalendarMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikCalendar) { return g.MyPolitikCalendar; } try { return typeof require === 'function' ? require('./calendar.js') : null; } catch (e) { return null; } }
+  /** v7.48: tetingkap mesyuarat/pemilihan bagi jawatan ini (sayap: mesyuarat sayap; Ketua Sayap Pusat: Pra-PAU; utama pusat: PAU). */
+  function peringkatMusim(j) { return j.kumpulan === 'sayap' ? (j.peringkat === 'pusat' ? 'sayap_pau' : 'sayap_' + j.peringkat) : (j.peringkat === 'pusat' ? 'pau' : j.peringkat); }
+
   function pemilihanMod() { var g = typeof globalThis !== 'undefined' ? globalThis : null; if (g && g.MyPolitikElection) { return g.MyPolitikElection; } try { return typeof require === 'function' ? require('./election.js') : null; } catch (e) { return null; } }
 
   /**
@@ -238,7 +242,12 @@
     senarai.forEach(function (j) {
       if (j.kod === 'lama') { return; }
       if (j.kumpulan === 'sayap' && j.sayap && j.sayap !== sy) { dibuang.push({ j: j, sebab: 'tidak lagi layak dalam sayap ' + NAMA_SAYAP[j.sayap] }); return; }
-      if (lepas && lepas !== tahun && Number(j.tahun) && Number(j.tahun) < lepas) { dibuang.push({ j: j, sebab: 'penggal tamat pada pemilihan ' + lepas + ' dan tidak dipertahankan' }); }
+      if (lepas && lepas !== tahun && Number(j.tahun) && Number(j.tahun) < lepas) { dibuang.push({ j: j, sebab: 'penggal tamat pada pemilihan ' + lepas + ' dan tidak dipertahankan' }); return; }
+      // v7.48: penggal bermula selepas mesyuarat pemilihan dan tamat apabila MUSIM mesyuarat pemilihan seterusnya (peringkat itu) tamat, bukan pada 1 Januari.
+      if (lepas && lepas === tahun && Number(j.tahun) && Number(j.tahun) < tahun) {
+        var K = kalendarMod(), w = K && K.getTetingkap ? K.getTetingkap(peringkatMusim(j), p.bulan) : null;
+        if (w && w.status === 'tamat') { dibuang.push({ j: j, sebab: 'penggal tamat selepas ' + w.nama + ' ' + tahun + ' dan tidak dipertahankan' }); }
+      }
     });
     if (!dibuang.length) { return null; }
     var baki = senarai.filter(function (j) { return !dibuang.some(function (x) { return x.j === j; }); }), tangga = Number(p.pangkatUtamaLalu) || 0;
