@@ -280,7 +280,7 @@ body.has-bottom-nav { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-i
   text-transform: uppercase;
   margin-bottom: var(--space-3);
 }
-.hero h1 { font-size: 2rem; color: var(--white); margin-bottom: var(--space-3); }
+.hero h1 { font-size: 2rem; color: #fff; margin-bottom: var(--space-3); }
 .hero h1 span { color: var(--gold-light); }
 .hero p { color: rgba(255, 255, 255, .85); max-width: 52ch; margin-inline: auto; }
 .hero__cta { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-5); }
@@ -915,7 +915,7 @@ option { background: var(--bg-elev-2); color: var(--text); }
 .hero__art svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)); }
 .hero__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: .35rem .75rem; border-radius: 999px;
-  background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.16); color: var(--white);
+  background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.16); color: #fff;   /* v7.19: hero sentiasa gelap, jadi teks mesti putih (tema cerah menetapkan --white ke hitam) */
   font: 600 .78rem var(--font-body); }
 .chip b { color: var(--gold-light); }
 .chip svg { width: 14px; height: 14px; flex: none; }
