@@ -5,7 +5,7 @@
    Peringkat dalam satu tahun, mengikut urutan:
      1. Mesyuarat Cawangan   Usul Lokaliti. Pada tahun pemilihan: undi 5 perwakilan ke Bahagian.
      1b. Mesyuarat Sayap     (v6.0) Bulan 5-6, sebelum Bahagian. Hanya laluan sayap (Pemuda / Puteri / Wanita).
-                             Usul isu golongan sayap itu. Tiada pemilihan (jawatan sayap dipilih dalam mesyuarat lain).
+                             Usul isu golongan sayap itu. v7.27: pada tahun pemilihan, kepimpinan sayap (Ketua Sayap Cawangan / Bahagian / Pusat) juga dipilih di sini, bersama wakil sayap.
      2. Mesyuarat Bahagian   Usul Kerusi PRU / Politik. Pada tahun pemilihan: undi 10 perwakilan ke PAU.
      3. PAU                  Usul Dasar Nasional dan Ucapan Dasar.
 
@@ -225,7 +225,7 @@
   function pemilihanAktif(p) { return !!(E && E.adalahTahunPemilihan(p.tahun)); }
 
   /** Adakah mesyuarat peringkat ini mengadakan pengundian? Perwakilan: setiap tahun. Pusat (PAU): tahun pemilihan sahaja. */
-  function adaPemilihan(p, peringkat) { return !!E && peringkat !== 'sayap_pau' && (peringkat === 'pau' ? pemilihanAktif(p) : true); }   // v6.2: sayap Cawangan dan Bahagian memilih wakil
+  function adaPemilihan(p, peringkat) { return !!E && ((peringkat === 'pau' || peringkat === 'sayap_pau') ? pemilihanAktif(p) : true); }   // v6.2: sayap Cawangan dan Bahagian memilih wakil
 
   function pegangan(p) {
     if (J) { return { per: J.peringkatTertinggi(p), pw: J.perwakilanSah(p, 'cawangan'), pp: J.perwakilanSah(p, 'bahagian'), exB: J.exOfficio(p, 'bahagian'), exP: J.exOfficio(p, 'pau') }; }
@@ -364,8 +364,9 @@
       var Ns = NAMA_SAYAP[sayapPemain(p)], Es = typeof globalThis !== 'undefined' ? globalThis.MyPolitikElection : null;
       agenda.push({
         id: peringkat + '-' + p.tahun + '-pemilihan', jenis: 'pemilihan', kod: 'pemilihan_' + peringkat, sumber: 'pemilihan',
-        tajuk: peringkat === 'sayap_cawangan' ? 'Pemilihan wakil ' + Ns + ' Cawangan ke Mesyuarat ' + Ns + ' Bahagian (' + (Es && Es.kuotaSayapCawangan ? Es.kuotaSayapCawangan(p) : 3) + ' kerusi)'
-                                              : 'Pemilihan G10 (10 wakil ke Mesyuarat Bahagian) dan G2 (2 wakil ke Perhimpunan ' + Ns + ' Pusat)',
+        tajuk: peringkat === 'sayap_cawangan' ? 'Pemilihan ' + (pemilihanAktif(p) ? 'Ketua ' + Ns + ' Cawangan dan ' : '') + 'wakil ' + Ns + ' Cawangan ke Mesyuarat ' + Ns + ' Bahagian (' + (Es && Es.kuotaSayapCawangan ? Es.kuotaSayapCawangan(p) : 3) + ' kerusi)'
+                                              : peringkat === 'sayap_pau' ? 'Pemilihan Ketua ' + Ns + ' (Pusat)'
+                                              : 'Pemilihan ' + (pemilihanAktif(p) ? 'Ketua ' + Ns + ' Bahagian, ' : '') + 'G10 (10 wakil ke Mesyuarat Bahagian) dan G2 (2 wakil ke Perhimpunan ' + Ns + ' Pusat)',
         penerangan: 'Pengundian dijalankan apabila mesyuarat ditutup. Daftar pencalonan anda melalui tab Pemilihan sebelum itu.',
         kerusi: null, status: 'menunggu', keputusan: null
       });
@@ -374,8 +375,8 @@
       var buka = pemilihanAktif(p), tajuk, perw = PERINGKAT[peringkat].perwakilan;
       var Eg = typeof globalThis !== 'undefined' ? globalThis.MyPolitikElection : null;      // kuota sebenar (Fasal 14.4.4 / 8.4.3)
       if (perw && Eg && Eg.kuotaCawangan) { perw = { kerusi: peringkat === 'cawangan' ? Eg.kuotaCawangan(p) : Eg.kuotaBahagian(p) }; }
-      if (peringkat === 'cawangan') { tajuk = 'Pemilihan Cawangan: ' + (buka ? 'jawatan Cawangan dan Sayap, serta ' : '') + 'perwakilan ke Bahagian (' + perw.kerusi + ' kerusi)'; }
-      else if (peringkat === 'bahagian') { tajuk = 'Pemilihan Bahagian: ' + (buka ? 'jawatan Bahagian dan Sayap, serta ' : '') + 'perwakilan ke PAU (' + perw.kerusi + ' kerusi)'; }
+      if (peringkat === 'cawangan') { tajuk = 'Pemilihan Cawangan: ' + (buka ? 'jawatan Cawangan, serta ' : '') + 'perwakilan ke Bahagian (' + perw.kerusi + ' kerusi)'; }
+      else if (peringkat === 'bahagian') { tajuk = 'Pemilihan Bahagian: ' + (buka ? 'jawatan Bahagian, serta ' : '') + 'perwakilan ke PAU (' + perw.kerusi + ' kerusi)'; }
       else { tajuk = 'Pemilihan Pusat: Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap'; }
       agenda.push({
         id: peringkat + '-' + p.tahun + '-pemilihan', jenis: 'pemilihan', kod: 'pemilihan_' + peringkat, sumber: 'pemilihan', tajuk: tajuk,

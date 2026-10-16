@@ -901,11 +901,12 @@
   }
 
   var TAJUK_PERINGKAT = {
-    cawangan: ['Pemilihan Cawangan', 'Bulan 4-6 · jawatan Cawangan, Sayap Cawangan dan Perwakilan ke Bahagian'],
-    bahagian: ['Pemilihan Bahagian', 'Bulan 7 · jawatan Bahagian, Sayap Bahagian dan Perwakilan ke PAU'],
-    sayap_cawangan: ['Pemilihan Wakil Sayap Cawangan', 'Bulan 4-6 · wakil sayap ke Mesyuarat Sayap Bahagian (laluan sayap sahaja)'],
-    sayap_bahagian: ['Pemilihan G10 dan G2 Sayap Bahagian', 'Bulan 7 · G10 (10 wakil) ke Mesyuarat Bahagian dan G2 (2 wakil) ke Perhimpunan Sayap Pusat'],
-    pusat: ['Pemilihan Pusat (PAU)', 'Bulan 8 · Presiden, Timbalan Presiden, 3 Naib Presiden, MKT dan Ketua Sayap']
+    cawangan: ['Pemilihan Cawangan', 'Bulan 4-6 · jawatan Cawangan dan Perwakilan ke Bahagian (jawatan sayap dipilih dalam Mesyuarat Sayap)'],
+    bahagian: ['Pemilihan Bahagian', 'Bulan 7 · jawatan Bahagian dan Perwakilan ke PAU (jawatan sayap dipilih dalam Mesyuarat Sayap)'],
+    sayap_cawangan: ['Pemilihan Sayap Cawangan', 'Bulan 4-6 · Ketua Sayap Cawangan (tahun pemilihan) dan wakil sayap ke Mesyuarat Sayap Bahagian (laluan sayap sahaja)'],
+    sayap_bahagian: ['Pemilihan Sayap Bahagian', 'Bulan 7 · Ketua Sayap Bahagian (tahun pemilihan), G10 (10 wakil) ke Mesyuarat Bahagian dan G2 (2 wakil) ke Perhimpunan Sayap Pusat'],
+    sayap_pau: ['Pemilihan Ketua Sayap Pusat', 'Bulan 8 · dipilih dalam Perhimpunan Sayap (Pra-PAU), laluan sayap sahaja'],
+    pusat: ['Pemilihan Pusat (PAU)', 'Bulan 8 · Presiden, Timbalan Presiden, 3 Naib Presiden dan MKT']
   };
 
   function panelPemilihan(p) {
@@ -921,7 +922,7 @@
     var daftar = st.pertandingan.filter(function (e) { return e.didaftar && !e.selesai; });
     if (!daftar.some(function (e) { return e.kod === state.kodSimulasi; })) { state.kodSimulasi = daftar.length ? daftar[0].kod : ''; }
 
-    ['cawangan', 'sayap_cawangan', 'bahagian', 'sayap_bahagian', 'pusat'].forEach(function (lv) {
+    ['cawangan', 'sayap_cawangan', 'bahagian', 'sayap_bahagian', 'sayap_pau', 'pusat'].forEach(function (lv) {
       var baris = st.pertandingan.filter(function (e) { return e.peringkat === lv; });
       if (!baris.length) { return; }
       h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">' + TAJUK_PERINGKAT[lv][0] + '</h2><p class="note">' + TAJUK_PERINGKAT[lv][1] + '. Hanya satu jawatan bagi setiap peringkat boleh dipegang (jika kedua-dua jawatan utama dan sayap dimenangi, yang lebih tinggi dikekalkan); perwakilan dipertandingkan bersama.</p>';
