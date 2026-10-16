@@ -87,7 +87,8 @@
     var r = PRU.ringkasan(p), a = r.aktif, h = '';
     if (!a) {
       var bl = r.bulanKePRU;
-      var tek = r.status ? '<b>' + (r.status.jenis === 'ADUN' ? 'ADUN' : 'Ahli Parlimen') + ' ' + esc(r.status.kerusi) + '</b> · ' : '';
+      var tek = (r.semuaStatus || []).map(function (s) { return '<b>' + (s.jenis === 'ADUN' ? 'ADUN' : 'Ahli Parlimen') + ' ' + esc(s.kerusi) + '</b>'; }).join(' + ');
+      tek = tek ? tek + ' · ' : '';
       h = '<div class="banner' + (bl <= 12 && bl >= 0 ? ' banner--gold' : '') + '"><strong>🗳️ PRU/PRN: ' + BULAN[(r.bulanPRU || 1) - 1] + ' ' + r.tahunPRU + '</strong>' + tek +
         (bl > 0 ? bl + ' bulan lagi' : 'Bila-bila masa') + ' · kawasan ' + r.ikonProfil + ' ' + esc(r.profilNama) + '. Kelayakan: DUN ' + (r.kelayakan.DUN.boleh ? '✓' : '✗ (IP ' + r.kelayakan.DUN.ipMin + ' + jawatan)') + ', Parlimen ' + (r.kelayakan.PARLIMEN.boleh ? '✓' : '✗ (IP ' + r.kelayakan.PARLIMEN.ipMin + ' + Ketua Bahagian)') + '.</div>';
       return h;
@@ -149,7 +150,7 @@
   }
   function lencana(p) {
     var h = '', pru = PRU.getPRU(p), kb = KB ? KB.getKabinet(p) : null;
-    if (pru.status) { h += '<span class="badge-office badge-office--menteri" title="Kerusi ' + esc(pru.status.kerusi) + '">' + (pru.status.jenis === 'ADUN' ? 'ADUN' : 'Ahli Parlimen') + '</span> '; }
+    PRU.semuaStatus(p).forEach(function (s) { h += '<span class="badge-office badge-office--menteri" title="Kerusi ' + esc(s.kerusi) + '">' + (s.jenis === 'ADUN' ? 'ADUN' : 'Ahli Parlimen') + '</span> '; });    // v7.55: dua jawatan wakil rakyat dipapar serentak
     if (kb && kb.hasGovernmentRole) { h += '<span class="badge-office badge-office--menteri">' + esc(kb.portfolioName) + '</span>'; }
     return h;
   }
@@ -160,7 +161,7 @@
   }
   async function modPencalonan(p) {
     var r = PRU.ringkasan(p), a = r.aktif, kl = r.kelayakan;
-    var sebabLawan = a.sebab === 'krisis' ? 'Krisis Pembubaran Dewan' : 'Tamat penggal 5 tahun';
+    var sebabLawan = a.kedua ? 'Anda menang kerusi ' + (a.pertama === 'DUN' ? 'DUN' : 'Parlimen') + '. Anda juga boleh bertanding kerusi ' + (a.pertama === 'DUN' ? 'Parlimen' : 'DUN') + ' serentak (memegang dua jawatan wakil rakyat)' : a.sebab === 'krisis' ? 'Krisis Pembubaran Dewan' : 'Tamat penggal 5 tahun';
     function baris(jenis, nama) {
       var k = kl[jenis], ditolak = a.ditolak[jenis];
       return opsi(jenis, (jenis === 'DUN' ? '🏛️ ' : '🏢 ') + 'Kerusi ' + nama + ' <span class="badge">' + r.ikonProfil + ' ' + esc(r.profilNama) + '</span>',
@@ -169,7 +170,7 @@
     return modal({
       tajuk: 'Pengisytiharan Pilihan Raya',
       isi: '<p class="acara__ikon" aria-hidden="true">🗳️</p><p><b>' + sebabLawan + '.</b> Hari mengundi dalam 14 hari. Populariti parti: <b>' + a.partiPopulariti + '%</b>. Mohon dicalonkan bertanding:</p>' +
-        '<ul class="acara__pil">' + baris('DUN', 'DUN') + baris('PARLIMEN', 'Parlimen') + opsi('NONE', 'Tidak bertanding', 'Fokus jawatan parti. Tiada risiko kehilangan IP.', true) + '</ul>' +
+        '<ul class="acara__pil">' + baris('DUN', 'DUN') + baris('PARLIMEN', 'Parlimen') + (a.kedua ? opsi('NONE', 'Cukup satu kerusi', 'Kerusi pertama anda kekal. Tiada kempen kedua.', true) : opsi('NONE', 'Tidak bertanding', 'Fokus jawatan parti. Tiada risiko kehilangan IP.', true)) + '</ul>' +
         '<p style="font-size:.8rem">Keputusan pencalonan oleh Majlis Tertinggi bergantung IP, reputasi dan kedudukan parti.</p>',
       butang: []
     });
@@ -345,9 +346,10 @@
     if (!a || a.fasa !== 'keputusan' || !a.keputusan) { return; }
     await modal({ tajuk: 'Keputusan Pengundian', isi: htmlKeputusan(a.keputusan, a), butang: [{ label: 'Teruskan', nilai: true, kelas: 'btn--gold' }] });
     var buka = a.keputusan.kabinetBuka;
-    PRU.tutupKeputusan(); segarkan();
+    var tt = PRU.tutupKeputusan(); segarkan();
     if (PRU.nasionalTertunggak(S.loadPlayer())) { await nasional(); }
     else if (buka) { await lobi(); }
+    if (tt && tt.kedua) { toast('Anda boleh bertanding kerusi kedua (Parlimen + DUN).', 'ok'); await alir(); }
   }
   async function selesai() {
     var r = PRU.selesaikan();

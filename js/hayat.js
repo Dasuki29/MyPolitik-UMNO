@@ -142,7 +142,7 @@
       .sort(function (u, v) { return (u.t - v.t) || (u.b - v.b); }).map(function (o) { return o.x; });
     var dilantik = kb.filter(function (r) { return r.hasil === 'dilantik'; }).map(function (r) { return r.nama; });
     var uniq = dilantik.filter(function (n, i) { return dilantik.indexOf(n) === i; });
-    var st = pru.status ? jenisNama(pru.status.jenis) + (pru.status.kerusi ? ' ' + pru.status.kerusi : '') : null;
+    var st = [pru.status, pru.statusKedua].filter(Boolean).map(function (s) { return jenisNama(s.jenis) + (s.kerusi ? ' ' + s.kerusi : ''); }).join(' + ') || null;
     return { bertanding: sj.filter(function (r) { return r.hasil !== 'tidak_bertanding'; }).length + pk.length, menang: pm.length + km.length,
       kalah: sj.filter(function (r) { return r.hasil === 'kalah'; }).length + pk.filter(function (r) { return r.hasil === 'kalah'; }).length,
       prkBertanding: pk.length, prkMenang: km.length, kerusi: kerusi, statusSemasa: st, jawatanKerajaan: uniq,

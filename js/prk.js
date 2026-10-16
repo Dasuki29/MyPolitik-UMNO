@@ -86,10 +86,10 @@
   /* ----------------------------------------------- 1. PENCETUS KEKOSONGAN */
   /** Jenis kerusi yang boleh kosong: bukan kerusi yang sedang anda pegang. */
   function jenisBoleh(p) {
-    var st = PRU().getPRU(p).status, senarai = ['DUN', 'PARLIMEN'];
+    var sts = PRU().semuaStatus ? PRU().semuaStatus(p) : [], senarai = ['DUN', 'PARLIMEN'];
     if (!p.dun) { senarai = ['PARLIMEN']; }                                  // v7.14: Wilayah Persekutuan tiada DUN
-    if (st && st.jenis === 'ADUN') { senarai = senarai.filter(function (x) { return x !== 'DUN'; }); }
-    if (st && st.jenis === 'MP') { senarai = senarai.filter(function (x) { return x !== 'PARLIMEN'; }); }
+    if (sts.some(function (s) { return s.jenis === 'ADUN'; })) { senarai = senarai.filter(function (x) { return x !== 'DUN'; }); }
+    if (sts.some(function (s) { return s.jenis === 'MP'; })) { senarai = senarai.filter(function (x) { return x !== 'PARLIMEN'; }); }
     return senarai;
   }
   /**
@@ -260,7 +260,8 @@
       kes.reputasi = CONFIG.MENANG.reputasi;
       var kes2 = p.kesetiaan || {};
       patch.kesetiaan = Object.assign({}, kes2, { akarUmbi: clamp((Number(kes2.akarUmbi) || 50) + CONFIG.MENANG.akarUmbi, 0, 100), ajk: clamp((Number(kes2.ajk) || 50) + CONFIG.MENANG.ajk, 0, 100) });
-      pru.status = { jenis: a.jenis === 'DUN' ? 'ADUN' : 'MP', kerusi: a.nama, sejakTahun: p.tahun, sejakBulan: p.bulan, kerajaan: !!(pru.status && pru.status.kerajaan), prk: true };
+      var stPrk = { jenis: a.jenis === 'DUN' ? 'ADUN' : 'MP', kerusi: a.nama, sejakTahun: p.tahun, sejakBulan: p.bulan, kerajaan: !!(pru.status && pru.status.kerajaan), prk: true };
+      if (pru.status && pru.status.jenis !== stPrk.jenis) { pru.statusKedua = stPrk; } else { pru.status = stPrk; }      // v7.55: menang PRK jenis lain = kerusi kedua
       k.stabil = kb && kb.hasGovernmentRole ? 'KPI Portfolio +' + CONFIG.MENANG.kabRating + '%, risiko rombakan ' + CONFIG.MENANG.kabRombak : 'Sokongan akar umbi & AJK kukuh';
     } else {
       var f = a.pertahan ? CONFIG.KALAH.penaltiPertahan : 1;
