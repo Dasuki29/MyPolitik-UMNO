@@ -61,3 +61,5 @@
 .pp-pop__baris{padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.8rem}.pp-pop__baris .pp-chips{margin-top:.25rem}
 .pp-pop__kaki{display:flex;flex-direction:column;gap:.3rem;margin-top:.5rem}
 .pp-pop__kaki button{min-height:40px;border:1px solid var(--border);border-radius:8px;background:none;color:inherit;font-size:.78rem;cursor:pointer}
+/* Pil dan senarai ringkas disembunyikan semasa tetingkap acara/menu terbuka, supaya tidak menutup pilihan. */
+body.modal-open .pp-loceng,body.modal-open .pp-pop{display:none}
