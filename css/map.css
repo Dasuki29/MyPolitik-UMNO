@@ -10,3 +10,26 @@
 #peta-host .mpm-poli:hover{filter:brightness(1.18)}
 #peta-host .mpm-tip{font-size:12px;line-height:1.4}
 @media (max-width:600px){#peta-host .mpm-kanvas{min-height:300px}}
+
+/* v7.20: peta mengikut skema. Gelap = rupa asal; cerah = laut biru cair + gaya poster (border hitam) */
+html[data-skema="cerah"] #peta-host.mpm{
+  --mpm-laut:#E3ECF6; --mpm-kosong:#D3DBE6; --mpm-garis:rgba(17,17,17,.38);
+}
+html[data-skema="cerah"] #peta-host .mpm-kanvas{border:2px solid #111;box-shadow:none}
+html[data-skema="cerah"] #peta-host .mpm-poli:hover:not(.is-kosong){stroke:#111;stroke-width:1.6}
+html[data-skema="cerah"] #peta-host .mpm-poli.is-pilih{stroke:#111;stroke-width:2.8}
+html[data-skema="cerah"] #peta-host .mpm-poli.is-rumah.is-pilih{stroke:#111}
+html[data-skema="cerah"] #peta-host .mpm-garisdun{stroke:rgba(17,17,17,.5)}
+html[data-skema="cerah"] #peta-host .mpm-label{fill:#111;stroke:rgba(255,255,255,.9)}
+html[data-skema="cerah"] #peta-host .mpm-zum button{background:#fff;color:#111;border:2px solid #111;backdrop-filter:none}
+html[data-skema="cerah"] #peta-host .mpm-zum button:hover{background:#FFE15A;color:#111;border-color:#111}
+html[data-skema="cerah"] #peta-host .mpm-tip{background:#fff;color:#111;border:2px solid #111;box-shadow:3px 3px 0 #111;backdrop-filter:none}
+html[data-skema="cerah"] #peta-host .mpm-tip b.n{color:#111}
+html[data-skema="cerah"] #peta-host .mpm-tip .s,
+html[data-skema="cerah"] #peta-host .mpm-tip .b span{color:#555}
+html[data-skema="cerah"] #peta-host .mpm-tip .b strong{color:#111}
+html[data-skema="cerah"] #peta-host .mpm-tip .rm{color:#8A5F00}
+/* gelap: pastikan teks tooltip & butang putih (tidak bergantung pembolehubah tema) */
+html[data-skema="gelap"] #peta-host .mpm-tip,
+html[data-skema="gelap"] #peta-host .mpm-zum button{color:#fff}
+html[data-skema="gelap"] #peta-host .mpm-tip .b strong{color:#fff}
