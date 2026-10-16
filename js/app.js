@@ -481,7 +481,7 @@
 
   /** Paparkan peristiwa penting (jawatan, cabaran) sebagai modal, selebihnya toast. */
   async function urusPeristiwa(senarai) {
-    var penting = { pru_isytihar: 'Pilihan Raya Diisytiharkan', prk_isytihar: 'Pilihan Raya Kecil (PRK)', kabinet_rombak: 'Rombakan Kabinet', janji_nilai: 'Penilaian Manifesto', disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
+    var penting = { lantikan_negeri: 'Lantikan Pimpinan Negeri', pru_isytihar: 'Pilihan Raya Diisytiharkan', prk_isytihar: 'Pilihan Raya Kecil (PRK)', kabinet_rombak: 'Rombakan Kabinet', janji_nilai: 'Penilaian Manifesto', disiplin: 'Tataetika & Disiplin', hukuman: 'Keputusan Lembaga Disiplin', jawatan_baharu: 'Jawatan Baharu', jawatan_hilang: 'Kehilangan Jawatan', cabaran_jawatan: 'Jawatan Anda Dicabar',
                     kelayakan_dibuka: 'Kelayakan Dibuka', perwakilan_terpilih: 'Terpilih Sebagai Perwakilan',
                     pemilihan_dibuka: 'Tahun Pemilihan', tahun_pentadbiran: 'Tahun Pentadbiran',
                     kategori_bertukar: 'Kategori Keahlian Bertukar', fasa_bulan: 'Takwim Bulan Baharu', mesyuarat_ditutup_auto: 'Mesyuarat Ditutup Automatik', mesyuarat_terlepas: 'Mesyuarat Terlepas', pemilihan_auto: 'Pengundian Dijalankan', blok_janji_tunai: 'Janji Kuota Ditunaikan', transisi_rasmi: 'Upacara Graduasi Sayap', transisi_amaran: 'Notis Rasmi Transisi', undi_tp_amaran: 'Amaran Undi Tidak Percaya', undi_tp_kalah: 'Kalah Undi Tidak Percaya', undi_tp_menang: 'Selamat Undi Tidak Percaya', blok_janji_mungkir: 'Janji Kuota Dimungkiri', penggal_tamat: 'Penggal Jawatan Tamat' };
@@ -914,7 +914,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += PUIh(p, 'pemilihan') + bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + (window.MyPolitikRival ? window.MyPolitikRival.htmlKad(p) : '') + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
+    h += PUIh(p, 'pemilihan') + bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + (window.MyPolitikRival ? window.MyPolitikRival.htmlKad(p) : '') + (window.MyPolitikNegeri ? window.MyPolitikNegeri.htmlKad(p) + window.MyPolitikNegeri.sayap.htmlKad(p) : '') + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }
@@ -1129,6 +1129,52 @@
     if (r.ok && EV) { await tunjukAcara(EV.selepasAktiviti()); }              // acara rawak selepas aktiviti
   }
 
+  /** v7.34: pop-up keputusan Badan Perhubungan Negeri (pemain sebagai Presiden memilih Pengerusi / sebagai Pengerusi melantik AJK). */
+  function nginst(t) { var N = W.MyPolitikNegeri; return t && t.getAttribute('data-b') === 'sayap' ? N.sayap : N; }
+  async function urusNegeri(NG) {
+    NG = NG || W.MyPolitikNegeri; if (!NG) { return; }
+    for (var g = 0; g < 14; g++) {
+      var m = NG.menunggu(S.loadPlayer()); if (!m) { return; }
+      var tajuk = m.jenis === 'pilih_pengerusi' ? NG.tr('Lantik Pengerusi Badan Perhubungan') : 'Lantik ' + (m.tajukJawatan || m.jawatan);
+      var senarai = m.calon.map(function (c) { return '<li><button type="button" class="acara__opsi" data-pilih="' + esc(c.id) + '"><b>' + esc(c.nama) + '</b><br><small>' + esc(c.bahagian) + (c.ringkas ? ' &middot; ' + esc(c.ringkas) : (c.skor ? ' &middot; skor ' + c.skor : '')) + '</small></button></li>'; }).join('');
+      var nota = m.jenis === 'pilih_pengerusi' ? NG.tr('Pilih Ketua Bahagian yang akan menjadi Pengerusi.')
+        : (m.sumber === 'luar' ? NG.tr('Lantikan <b>luar</b>: Ketua Sayap, Tokoh/ADUN atau Naib Ketua Bahagian. Setiap kategori memberi kesan berbeza.' + (m.wajibKecil ? ' Semua Ketua Bahagian sudah menjadi ahli wajib negeri ini.' : ''))
+          : NG.tr('Pilih Ketua Bahagian untuk jawatan ini. Setiap lantikan menambah sedikit sokongan Perwakilan.'));
+      var btn = [{ label: 'Kemudian', nilai: null }];
+      if (m.pilihan) { btn.push({ label: 'Langkau jawatan ini', nilai: '__langkau' }); }
+      if (m.jenis === 'lantik_ajk') { btn.push({ label: 'Lantik semua secara automatik', nilai: '__auto', kelas: 'btn--gold' }); }
+      var v = await modal({ tajuk: tajuk, isi: '<p>' + nota + '</p><ul class="acara__senarai" style="list-style:none;padding:0;margin:.4rem 0">' + senarai + '</ul>', butang: btn });
+      if (v === null || v === undefined) { return; }
+      var r = m.jenis === 'pilih_pengerusi' ? NG.pilihPengerusi(v) : (v === '__auto' ? NG.lantikAjk() : NG.lantikAjk(m.jawatan, v));
+      if (!r.ok) { toast(r.ralat, 'ralat'); return; }
+      toast(r.mesej, 'ok');
+    }
+  }
+
+  /** v7.34: pop-up lobi Presiden selepas keputusan pemilihan Bahagian (hanya Ketua Bahagian). paksa = dibuka dari kad. */
+  async function tawarkanLobi(NG) {
+    NG = NG || W.MyPolitikNegeri; if (!NG) { return; }
+    var of = NG.tawaranLobi(S.loadPlayer()); if (!of) { return; }
+    var butang = [{ label: 'Lobi Presiden', nilai: 'lobi', kelas: 'btn--gold' }, { label: 'Tidak melobi', nilai: 'tidak' }];
+    var a = await modal({ tajuk: of.tajuk,
+      isi: '<p>' + of.teks + '</p>' +
+        '<div class="kv"><span>' + NG.tr('Kedekatan dengan Presiden') + ' ' + esc(of.presiden) + '</span><b>' + of.dekat + '%</b></div>' +
+        '<p class="note">' + NG.tr('Jika tidak melobi, Reputasi +1 (dilihat tidak gila kuasa). Anda masih boleh menggunakan Dekati Presiden kemudian.') + '</p>', butang: butang.map(function (x) { return x.nilai === 'lobi' ? { label: NG.tr('Lobi Presiden'), nilai: 'lobi', kelas: 'btn--gold' } : x; }) });
+    if (a === null || a === undefined) { return; }                                // ditutup: tawaran kekal sehingga bulan 8
+    var jenis = 'tidak';
+    if (a === 'lobi') {
+      var senarai = of.pilihan.map(function (c) { return '<li><button type="button" class="acara__opsi" data-pilih="' + esc(c.id) + '"><b>' + esc(c.label) + '</b><br><small>' + esc(c.huraian) + '</small></button></li>'; }).join('');
+      var v = await modal({ tajuk: NG.tr('Melobi Presiden') + ' ' + esc(of.presiden), isi: '<p>' + NG.tr('Bagaimana anda mahu mendekati Presiden?') + '</p><ul class="acara__senarai" style="list-style:none;padding:0;margin:.4rem 0">' + senarai + '</ul>', butang: [{ label: 'Batal', nilai: null }] });
+      if (v === null || v === undefined) { return; }
+      jenis = v;
+    }
+    var r = NG.lobi(jenis);
+    if (!r.ok) { toast(r.ralat, 'ralat'); return; }
+    var babak = (r.babak || []).map(function (b) { return '<p><b>' + esc(b.siapa) + ':</b> ' + esc(b.teks) + '</p>'; }).join('');
+    await modal({ tajuk: jenis === 'tidak' ? 'Fokus pada Bahagian' : 'Hasil Lobi', isi: babak + '<p class="note">' + esc(r.mesej) + '</p>' });
+    render();
+  }
+
   async function operasiPemilihan(fn, kunciMesej) {
     var r = fn(); if (kunciMesej) { state.mesej[kunciMesej] = r.ok ? esc(r.mesej) : ''; }
     render(); await lapor(r);
@@ -1224,6 +1270,7 @@
     render();
     if (!r.ok) { toast(r.ralat, 'ralat'); return; }
     await tunjukRingkasan(r.ringkasan);
+    if (/bahagian/.test(lvl) && W.MyPolitikNegeri) { await tawarkanLobi(W.MyPolitikNegeri); await tawarkanLobi(W.MyPolitikNegeri.sayap); }                  // v7.34: lobi Presiden selepas keputusan Bahagian
   }
 
   async function lanjutBulan() {
@@ -1260,6 +1307,8 @@
       else if (a && a.amaran) { toast(a.mesej, 'ralat'); }
     }
     await urusPeristiwa(r.peristiwa);
+    if (W.MyPolitikNegeri) { await tawarkanLobi(W.MyPolitikNegeri); await tawarkanLobi(W.MyPolitikNegeri.sayap); await urusNegeri(W.MyPolitikNegeri); await urusNegeri(W.MyPolitikNegeri.sayap); }   // v7.34/36: lobi & lantikan (induk dan sayap)
+    //                                            // v7.34: Presiden/Pengerusi membuat lantikan
     if (W.NusaPRU_UI && W.NusaPRU_UI.selepasBulan) { await W.NusaPRU_UI.selepasBulan(r.peristiwa); }     // v7.3: PRU/PRN & Kabinet
     if (EV) { await tunjukAcara(EV.janaAcara({ pencetus: 'bulan' })); }       // acara rawak pergantian bulan
   }
@@ -1348,6 +1397,10 @@
     else if (act === 'blok-runding') { rundingBlok(t.getAttribute('data-calon'), t.getAttribute('data-tuntut')); }
     else if (act === 'tindakan-sayap') { tindakanSayap(t.getAttribute('data-id')); }
     else if (act === 'tindakan') { tindakan(t.getAttribute('data-id')); }
+    else if (act === 'dekati-presiden') { var dk = nginst(t).dekatiPresiden(); render(); if (dk.ok) { toast(dk.mesej, 'ok'); } else { toast(dk.ralat, 'ralat'); } }
+    else if (act === 'urus-negeri') { urusNegeri(nginst(t)).then(render); }
+    else if (act === 'lobi-presiden') { tawarkanLobi(nginst(t)); }
+    else if (act === 'negeri-tindak') { var nt = nginst(t).tindakan(t.getAttribute('data-id')); render(); if (nt.ok) { toast(nt.mesej, 'ok'); } else { toast(nt.ralat, 'ralat'); } }
     else if (act === 'ke-tab') { setTab(t.getAttribute('data-v')); }
     else if (act === 'ulang-peta') { muatPeta(true); }
     else if (act === 'daftar') { operasiPemilihan(function () { return E.daftarBertanding(kod); }); }
