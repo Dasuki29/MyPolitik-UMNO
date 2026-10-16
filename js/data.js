@@ -456,7 +456,7 @@
     senarai.sort(function (a, b) { return a.kod < b.kod ? -1 : 1; });
     senarai.forEach(function (p) {
       p.nama = p.nama || ('Parlimen ' + p.kod);
-      p.negeri = hopts.negeriNama || p._negeriSheet || negeriDariKod(p.kod);     // v7.14: nama tab = nama negeri (lajur Negeri boleh kosong)
+      p.negeri = (hopts.negeriNama ? namaNegeriTab(hopts.negeriNama) : '') || p._negeriSheet || negeriDariKod(p.kod);     // v7.14: nama tab = nama negeri (lajur Negeri boleh kosong)
       delete p._negeriSheet; delete p._d;
       p.dun.sort(function (a, b) { return a.kod < b.kod ? -1 : 1; });
       // v7.14: Wilayah Persekutuan (KL, Putrajaya, Labuan) hanya ada Parlimen: semua lajur DUN kosong
@@ -621,6 +621,9 @@
    * v7.14: senarai tab negeri daripada Apps Script (?senarai=1). Pulang { tab:[nama...], sumber:'apps-script'|'cache' }
    * atau null jika Apps Script lama (tiada sokongan senarai) / tidak tersedia. Tab bermula dengan '_' diabaikan oleh Apps Script.
    */
+  /** v7.21: tab Sheet boleh bernama 'Perlis DM' (akhiran DM = daerah mengundi); nama negeri = tanpa akhiran. */
+  function namaNegeriTab(t) { return String(t == null ? '' : t).replace(/\s+DM$/i, '').trim(); }
+
   async function loadSenaraiTab(opts) {
     opts = opts || {};
     var as = opts.appsScriptUrl || CONFIG.APPS_SCRIPT_URL;
@@ -643,7 +646,7 @@
   async function loadUntukNegeri(negeri, opts) {
     opts = opts || {};
     var sen = null; try { sen = await loadSenaraiTab(opts); } catch (e) { sen = null; }
-    var tab = sen && negeri ? sen.tab.filter(function (t) { return t.toLowerCase() === String(negeri).toLowerCase(); })[0] : null;
+    var tab = sen && negeri ? sen.tab.filter(function (t) { return namaNegeriTab(t).toLowerCase() === String(negeri).toLowerCase(); })[0] : null;
     return loadPartyData(tab ? Object.assign({}, opts, { tab: tab }) : opts);
   }
 
@@ -965,6 +968,7 @@
 
     // data sumber
     loadPartyData: loadPartyData,
+    namaNegeriTab: namaNegeriTab,
     loadSenaraiTab: loadSenaraiTab,
     loadUntukNegeri: loadUntukNegeri,
     fetchSheetCSV: fetchSheetCSV,

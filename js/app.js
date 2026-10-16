@@ -281,7 +281,7 @@
     if (sen && sen.tab.length) {                                  // v7.14: Sheet berbilang tab (satu tab = satu negeri)
       state.tab = sen.tab; state.cacheTab = {}; state.data = { negeri: [], bahagian: [] };
       kosongkanSemua();
-      isi(el.negeri, 'Pilih negeri', sen.tab.map(function (n) { return { id: n, nama: n }; }), function (n) { return n.nama; });
+      isi(el.negeri, 'Pilih negeri', sen.tab.map(function (n) { return { id: n, nama: D.namaNegeriTab(n) }; }), function (n) { return n.nama; });
       setStatus(sen.sumber === 'cache' ? 'cache' : 'sheet', (sen.sumber === 'cache' ? 'Senarai negeri daripada salinan tersimpan' : 'Data langsung daripada Google Sheets') + ' (' + sen.tab.length + ' negeri). Data negeri dimuat apabila dipilih.');
       el.submit.disabled = false;
       return;
