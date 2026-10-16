@@ -43,14 +43,16 @@
     POP_AWAL: 50, POP_RENDAH: 30, POP_IP_BAGI: 10, POP_IP_MIN: -3, POP_IP_MAKS: 5,       // populariti nasional -> bonus IP bulanan
     ROMBAK_AMBANG: 60, ROMBAK_SUSUT: 3, ROMBAK_POP_RENDAH: 4, ROMBAK_PELUANG_MIN: 0.1, ROMBAK_PELUANG_MAKS: 0.6,
     DILEMA_PELUANG: 0.5,                                                                  // sebahagian acara bulanan ialah dilema
-    CDF: { BULANAN: { EXCO_NEGERI: 3000, TIMBALAN_MENTERI: 5000, MENTERI_PENUH: 8000 }, TOPI_BULAN: 2, HAD_KALI: 2, RM_SEIP: 200,
+    CDF: { BULANAN: { EXCO_NEGERI: 3000, TIMBALAN_MENTERI: 5000, MENTERI_PENUH: 8000, TIMBALAN_PM: 9000, PERDANA_MENTERI: 12000 }, TOPI_BULAN: 2, HAD_KALI: 2, RM_SEIP: 200,
            PILIHAN: [2000, 5000, 10000], KECIL: 2000, RATING_BESAR: -2, TEKANAN_BESAR: 3, ROMBAK_BESAR: 4, TERSADAI_RATING: -2 }
   };
 
   var TAHAP = {
     EXCO_NEGERI: { nama: 'EXCO Negeri', elaun: { myr: 1500, ip: 8 } },
     TIMBALAN_MENTERI: { nama: 'Timbalan Menteri', elaun: { myr: 2500, ip: 12 } },
-    MENTERI_PENUH: { nama: 'Menteri Penuh', elaun: { myr: 4000, ip: 20 } }
+    MENTERI_PENUH: { nama: 'Menteri Penuh', elaun: { myr: 4000, ip: 20 } },
+    TIMBALAN_PM: { nama: 'Timbalan Perdana Menteri', elaun: { myr: 6000, ip: 25 } },        // v7.22: hanya melalui rundingan kerajaan (Presiden)
+    PERDANA_MENTERI: { nama: 'Perdana Menteri', elaun: { myr: 8000, ip: 30 } }
   };
   var PORTFOLIO = {
     DUN: [
@@ -205,6 +207,18 @@
     if (!rs.ok) { return { ok: false, ralat: rs.ralat }; }
     return { ok: true, dilantik: false, tutup: tutup, mesej: 'Lobi ' + d.nama + ' gagal. Separuh kos hilang.' + (tutup ? ' Peluang lobi penggal ini habis.' : ' Baki percubaan: ' + k.lobi.baki + '.') };
   }
+  /** v7.22: Presiden parti dilantik terus ke jawatan tertinggi kerajaan (tanpa lobi/kos). tahap: 'PERDANA_MENTERI' | 'TIMBALAN_PM'. */
+  function lantikKanan(tahap) {
+    var t = TAHAP[tahap];
+    if (tahap !== 'PERDANA_MENTERI' && tahap !== 'TIMBALAN_PM') { return { ok: false, ralat: 'Jawatan tidak sah.' }; }
+    var p = S().loadPlayer(), k = getKabinet(p);
+    k.hasGovernmentRole = true; k.roleLevel = tahap; k.portfolioName = t.nama; k.portfolioId = ''; k.governanceRating = CONFIG.RATING_AWAL; k.tekananPolitik = CONFIG.TEKANAN_AWAL;
+    k.bulanBerjawatan = 0; k.ratingRendah = 0; k.lobi = null; k.acara = null;
+    k.popularitiNasional = CONFIG.POP_AWAL; k.risikoRombak = 0; k.ratingLalu = CONFIG.RATING_AWAL; k.cdfBaki = CONFIG.CDF.BULANAN[tahap]; k.cdfBulan = 0; k.cdfJumlah = 0;
+    k.sejarah = (k.sejarah || []).concat([{ tahun: p.tahun, bulan: p.bulan, nama: t.nama, hasil: 'dilantik' }]).slice(-10);
+    var res = simpan(k, {}, { log: { tindakan: 'lantik_kanan', nama: 'Dilantik: ' + t.nama, peringkat: 'ahli' } });
+    return { ok: !!(res && res.ok), ralat: res && res.ralat, mesej: 'Dilantik sebagai ' + t.nama + '. Elaun bulanan bermula.' };
+  }
   function lepaskanLobi() {
     var p = S().loadPlayer(), k = getKabinet(p);
     if (!k.lobi) { return { ok: false }; }
@@ -353,7 +367,7 @@
   return {
     CONFIG: CONFIG, TAHAP: TAHAP, PORTFOLIO: PORTFOLIO, ACARA: ACARA,
     setRng: function (f) { rngLalai = f || Math.random; },
-    getKabinet: getKabinet, bukaLobi: bukaLobi, senaraiPortfolio: senaraiPortfolio, lobiPortfolio: lobiPortfolio, lepaskanLobi: lepaskanLobi, salurCDF: salurCDF, pilihanCDF: pilihanCDF, labelKPI: labelKPI,
+    getKabinet: getKabinet, lantikKanan: lantikKanan, bukaLobi: bukaLobi, senaraiPortfolio: senaraiPortfolio, lobiPortfolio: lobiPortfolio, lepaskanLobi: lepaskanLobi, salurCDF: salurCDF, pilihanCDF: pilihanCDF, labelKPI: labelKPI,
     laras: laras, tamatPenggal: tamatPenggal, prosesBulan: prosesBulan, acaraSemasa: acaraSemasa, jawabAcara: jawabAcara, ringkasan: ringkasan
   };
 });
