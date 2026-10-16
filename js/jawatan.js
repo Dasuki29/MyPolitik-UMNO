@@ -92,8 +92,9 @@
   /** kumpulan (pilihan): 'utama' hanya mengira jawatan utama, supaya jawatan sayap tidak melangkau tangga jawatan utama (v3.8). */
   function pangkatTertinggi(p, kumpulan) {
     var asas = getJawatan(p).reduce(function (m, j) { return (kumpulan && j.kumpulan !== kumpulan) ? m : Math.max(m, j.pangkat || 0); }, 0);
-    var exMkt = p && p.negeriBP && p.negeriBP.pengerusi && p.negeriBP.pengerusi.pemain && (!kumpulan || kumpulan === 'utama') ? 8 : 0;      // v7.34: Pengerusi Badan Perhubungan Negeri = ahli MKT ex-officio (pangkat 8)
-    return Math.max(asas, exMkt);
+    var exMkt = p && p.negeriBP && p.negeriBP.pengerusi && p.negeriBP.pengerusi.pemain && (!kumpulan || kumpulan === 'utama') ? 8 : 0;
+    var exSayap = p && p.negeriSayap && p.negeriSayap.pengerusi && p.negeriSayap.pengerusi.pemain && (!kumpulan || kumpulan === 'sayap') ? 6 : 0;      // v7.36: Ketua Sayap Negeri (pangkat 6, antara Ketua Sayap Bahagian dan Ketua Sayap Pusat)      // v7.34: Pengerusi Badan Perhubungan Negeri = ahli MKT ex-officio (pangkat 8)
+    return Math.max(asas, exMkt, exSayap);
   }
   function jawatanTertinggi(p) {
     var t = null;

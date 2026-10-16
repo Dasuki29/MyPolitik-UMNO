@@ -7,6 +7,9 @@
                     pengerusi:{id,nama,bahagian,pemain}, wajib:[{id,nama,bahagian}], ajk:[{jawatan,id,nama,bahagian,kategori}],
                     menunggu:null|'pilih_pengerusi'|'lantik_ajk', calon:[...], luar:[...], posts:[...], langkau:[...], sejarah:[], pruDilihat }
 
+   SAYAP (v7.36): mekanik SAMA untuk Pemuda/Puteri/Wanita melalui MyPolitikNegeri.sayap (p.negeriSayap). Pemberi lantikan = Ketua Sayap Pusat;
+   layak = Ketua Sayap Bahagian (sayap_bahagian_<sayap>); Pengerusi = Ketua <Sayap> Negeri. Istilah diterjemah pada sempadan output (tr()).
+
    NEGERI: Wilayah Persekutuan = Kuala Lumpur + Putrajaya + Labuan (13 bahagian, satu Badan Perhubungan).
    NEGERI KECIL (6 bahagian atau kurang, cth Perlis, Melaka): semua Ketua Bahagian automatik menjadi ahli (WAJIB, bukan lantikan).
      Pengerusi memilih Timbalan & Naib daripada mereka, dan melantik LUAR (Setiausaha, Bendahari, Ketua Penerangan, AJK) daripada
@@ -40,6 +43,7 @@
   var JAWATAN_BESAR = ['Timbalan Pengerusi', 'Naib Pengerusi', 'Setiausaha', 'Bendahari', 'Ketua Penerangan'];
   var BIL_BAHAGIAN = { johor: 26, kedah: 15, kelantan: 14, melaka: 6, 'negeri sembilan': 8, pahang: 14, 'pulau pinang': 13, perak: 24, perlis: 3,
     selangor: 22, terengganu: 8, sabah: 25, sarawak: 31, 'wilayah persekutuan': 13 };
+  var NAMA_SAYAP = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita' };
   var NAMA_L = ['Ismail', 'Faizal', 'Rosli', 'Hafiz', 'Azman', 'Kamarul', 'Zulkifli', 'Razak', 'Shahrul', 'Mazlan', 'Fadzil', 'Hisham', 'Nasir', 'Amran', 'Jamal', 'Idris'];
   var NAMA_P = ['Norhayati', 'Salmah', 'Rohana', 'Zaleha', 'Aminah', 'Faridah', 'Suraya', 'Marlina', 'Haslinda', 'Rosnah'];
   var NAMA_2 = ['Harun', 'Rahman', 'Hamid', 'Yusof', 'Ahmad', 'Daud', 'Ibrahim', 'Othman', 'Jaafar', 'Salleh', 'Mansor', 'Abdullah', 'Zakaria', 'Hashim'];
@@ -61,13 +65,33 @@
     runding: { label: 'Runding Kerusi BN Negeri', ap: 4, myr: 5000, had: 'tahun', kesan: { reputasi: 3, ip: 6 }, mesej: 'Rundingan kerusi dengan rakan komponen berjalan lancar.' }
   };
 
+  function bina(ctx) {
+  /* terjemah istilah induk -> sayap pada sempadan output sahaja (data tersimpan kekal istilah induk) */
+  function WN() { var p0 = S() && S().loadPlayer(); return (p0 && NAMA_SAYAP[p0.sayap]) || 'Sayap'; }
+  function tr(t) {
+    if (!ctx.sayap || typeof t !== 'string') { return t; }
+    var W = WN(), K = 'Ketua ' + W;
+    return t.replace(/Lobi Naib Presiden & Ahli MKT/g, 'Lobi Naib ' + K + ' & Majlis Tertinggi').replace(/Naib Ketua Bahagian/g, 'Naib ' + K + ' Bahagian')
+      .replace(/Ketua-Ketua Bahagian/g, 'Ketua-Ketua ' + W + ' Bahagian').replace(/Ketua Bahagian/g, K + ' Bahagian')
+      .replace(/Pengerusi Badan Perhubungan UMNO/g, K + ' Negeri UMNO').replace(/Pengerusi Badan Perhubungan Negeri/g, K + ' Negeri').replace(/Pengerusi Badan Perhubungan/g, K + ' Negeri')
+      .replace(/Badan Perhubungan UMNO/g, W + ' UMNO Negeri').replace(/Badan Perhubungan/g, W + ' Negeri').replace(/Pengerusi/g, K + ' Negeri')
+      .replace(/Presiden/g, K).replace(/MKT/g, 'Majlis Tertinggi ' + W).replace(/PAU/g, 'Perhimpunan Sayap');
+  }
+  function trObj(o) {
+    if (!ctx.sayap) { return o; }
+    if (typeof o === 'string') { return tr(o); }
+    if (Array.isArray(o)) { return o.map(trObj); }
+    if (o && typeof o === 'object') { var r = {}; Object.keys(o).forEach(function (k) { r[k] = (k === 'id' || k === 'jawatan' || k === 'jenis' || k === 'kategori' || k === 'sumber') ? o[k] : trObj(o[k]); }); return r; }
+    return o;
+  }
+
   function S() { return root.MyPolitikSave || (typeof require === 'function' ? tryReq('./save.js') : null); }
   function tryReq(f) { try { return require(f); } catch (e) { return null; } }
   function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function adaJawatan(p, kod) { return ((p && p.jawatanList) || []).some(function (j) { return j.kod === kod; }); }
-  function layak(p) { return adaJawatan(p, 'ketua_bahagian'); }
-  function sayaPresiden(p) { return adaJawatan(p, 'presiden'); }
+  function layak(p) { return ctx.aktif(p) && adaJawatan(p, ctx.kodKB(p)); }
+  function sayaPresiden(p) { return ctx.aktif(p) && adaJawatan(p, ctx.kodPemberi(p)); }
   function tahunPemilihan(p) { var E = root.MyPolitikElection || (typeof require === 'function' ? tryReq('./election.js') : null); return !!(E && E.adalahTahunPemilihan && E.adalahTahunPemilihan(p.tahun)); }
   function tahap(p) { var k = p && p.settings && p.settings.difficultyLevel; return CONFIG.PELUANG_GUGUR[k] ? k : 'NORMAL'; }
 
@@ -88,8 +112,8 @@
   function namaPresiden(p) {
     if (sayaPresiden(p)) { return p.nama || 'Anda'; }
     var OG = root.MyPolitikOrganisasi;
-    try { if (OG && OG.getStruktur) { return OG.getStruktur(p).induk.pusat.ketua.nama; } } catch (e) { /* jatuh ke lalai */ }
-    return 'Presiden Parti';
+    try { if (OG && OG.getStruktur) { var st = OG.getStruktur(p); return (ctx.sayap ? st.sayap[p.sayap].peringkat.pusat : st.induk.pusat).ketua.nama; } } catch (e) { /* jatuh ke lalai */ }
+    return ctx.sayap ? 'Ketua Sayap' : 'Presiden Parti';
   }
 
   /* ---- Calon ---- */
@@ -108,7 +132,7 @@
 
   /** Senarai Ketua Bahagian dengan skor. musim = benih supaya NPC stabil. */
   function senaraiCalon(p, bp, musim) {
-    var n = bilBahagian(p), rng = S().rngBerbenih(String(p.id) + '|negeriBP|' + musim), out = [], ada = layak(p), pemainDi = Math.floor(rng() * n);
+    var n = bilBahagian(p), rng = S().rngBerbenih(String(p.id) + ctx.kunci + '|negeriBP|' + musim), out = [], ada = layak(p), pemainDi = Math.floor(rng() * n);
     for (var i = 0; i < n; i++) {
       var nama = janaNama(rng, false), skor = 25 + rng() * 40;
       if (bp && bp.pengerusi && !bp.pengerusi.pemain && bp.pengerusi.id === 'b' + (i + 1)) { skor += CONFIG.BONUS_PENYANDANG; }
@@ -120,8 +144,9 @@
 
   /** Calon lantikan luar (bukan Ketua Bahagian). */
   function calonLuar(p, benih) {
-    var rng = S().rngBerbenih(String(p.id) + '|luar|' + benih), out = [], sayap = ['Ketua Pemuda Negeri', 'Ketua Wanita Negeri', 'Ketua Puteri Negeri'];
-    sayap.forEach(function (s, i) { out.push({ id: 'l-s' + i, nama: janaNama(rng, i > 0), bahagian: s, kategori: 'sayap' }); });
+    var rng = S().rngBerbenih(String(p.id) + ctx.kunci + '|luar|' + benih), out = [], sayap = ['Ketua Pemuda Negeri', 'Ketua Wanita Negeri', 'Ketua Puteri Negeri'];
+    if (ctx.sayap) { for (var q = 0; q < 3; q++) { out.push({ id: 'l-s' + q, nama: janaNama(rng, WN() !== 'Pemuda'), bahagian: 'Ketua Sayap Cawangan', kategori: 'sayap' }); } }
+    else { sayap.forEach(function (s, i) { out.push({ id: 'l-s' + i, nama: janaNama(rng, i > 0), bahagian: s, kategori: 'sayap' }); }); }
     for (var t = 0; t < 3; t++) { out.push({ id: 'l-t' + t, nama: janaNama(rng, t === 2), bahagian: ['ADUN', 'Bekas Exco', 'Tokoh Parti'][t], kategori: 'tokoh' }); }
     for (var k = 0; k < 3; k++) { out.push({ id: 'l-n' + k, nama: janaNama(rng, false), bahagian: 'Naib Ketua Bahagian ' + (k + 1), kategori: 'naib' }); }
     return out;
@@ -130,7 +155,7 @@
   function wajibKB(p, bp, kecualiId) { return senaraiCalon(p, bp, 'wajib').filter(function (c) { return !c.pemain && c.id !== kecualiId; }).map(function (c) { return { id: c.id, nama: c.nama, bahagian: c.bahagian }; }); }
 
   function ajkNpc(p, bp, kecuali) {
-    var rng = S().rngBerbenih(String(p.id) + '|ajkNPC|' + (bp.tahunLantik || 0) + '|' + kecuali), kb = wajibKB(p, bp, kecuali), luar = calonLuar(p, 'npc' + (bp.tahunLantik || 0)), out = [];
+    var rng = S().rngBerbenih(String(p.id) + ctx.kunci + '|ajkNPC|' + (bp.tahunLantik || 0) + '|' + kecuali), kb = wajibKB(p, bp, kecuali), luar = calonLuar(p, 'npc' + (bp.tahunLantik || 0)), out = [];
     function ambil(arr) { var x = arr[Math.floor(rng() * arr.length)] || arr[0]; arr.splice(arr.indexOf(x), 1); return x; }
     jawatanKB(p).forEach(function (j) { if (kb.length) { var x = ambil(kb); out.push({ jawatan: j, id: x.id, nama: x.nama, bahagian: x.bahagian }); } });
     if (negeriKecil(p)) { JAWATAN_LUAR_KECIL.forEach(function (j) { if (luar.length) { var x = ambil(luar); out.push({ jawatan: j, id: x.id, nama: x.nama, bahagian: x.bahagian, kategori: x.kategori }); } }); }
@@ -138,7 +163,7 @@
   }
 
   function keadaan(p) {
-    var bp = p.negeriBP && typeof p.negeriBP === 'object' ? p.negeriBP : null;
+    var bp = p[ctx.kunci] && typeof p[ctx.kunci] === 'object' ? p[ctx.kunci] : null;
     if (!bp) { bp = { tahunLantik: 0, musimLantik: 0, dekat: 15, dekatBulan: '', lobiTahun: 0, bonusTahun: 0, bonusSkor: 0, guna: {}, pengerusi: null, wajib: [], ajk: [], menunggu: null, calon: [], luar: [], posts: [], langkau: [], sejarah: [], pruDilihat: ((p.pru && p.pru.sejarah) || []).length }; }
     if (!bp.guna) { bp.guna = {}; }
     if (!bp.pengerusi) {                                           // permulaan: Pengerusi NPC sedia ada (bukan pemain)
@@ -149,8 +174,10 @@
     return bp;
   }
 
+  function patchBP(bp) { var o = {}; o[ctx.kunci] = bp; return o; }
   function simpan(bp, kesan, log, patchLain) {
-    var patch = { negeriBP: bp }; if (patchLain) { Object.keys(patchLain).forEach(function (k) { patch[k] = patchLain[k]; }); }
+    if (log && log.nama) { log = JSON.parse(JSON.stringify(log)); log.nama = tr(log.nama); }
+    var patch = {}; patch[ctx.kunci] = bp; if (patchLain) { Object.keys(patchLain).forEach(function (k) { patch[k] = patchLain[k]; }); }
     return S().applyEffects(kesan || {}, { kiraTindakan: false, patch: patch, log: log || undefined });
   }
 
@@ -161,7 +188,7 @@
   }
 
   function lantik(p, bp, sebab) {
-    var ev = [], calon = senaraiCalon(p, bp, 'lantik' + p.tahun + (sebab || '')), rng = S().rngBerbenih(String(p.id) + '|pilih|' + p.tahun + '|' + (sebab || '')), menang;
+    var ev = [], calon = senaraiCalon(p, bp, 'lantik' + p.tahun + (sebab || '')), rng = S().rngBerbenih(String(p.id) + ctx.kunci + '|pilih|' + p.tahun + '|' + (sebab || '')), menang;
     if (sayaPresiden(p)) {                                         // pemain ialah Presiden: pilih Pengerusi negeri sendiri
       bp.menunggu = 'pilih_pengerusi'; bp.calon = calon.filter(function (c) { return !c.pemain; }).slice(0, 6);
       bp.tahunLantik = p.tahun; bp.musimLantik = p.tahun;
@@ -195,8 +222,8 @@
   function prosesBulan(opts) {
     opts = opts || {};
     var s = S(), p = s && s.loadPlayer(), ev = [];
-    if (!p || p.tamat) { return { peristiwa: ev }; }
-    var bp = keadaan(p), rng = opts.rng || s.rngBerbenih(String(p.id) + '|negeriTick|' + p.tahun + '|' + p.bulan), kesan = {};
+    if (!p || p.tamat || !ctx.aktif(p)) { return { peristiwa: ev }; }
+    var bp = keadaan(p), rng = opts.rng || s.rngBerbenih(String(p.id) + ctx.kunci + '|negeriTick|' + p.tahun + '|' + p.bulan), kesan = {};
     var baru = (Number(p.bulan) === CONFIG.BULAN_LANTIK && tahunPemilihan(p) && bp.musimLantik !== p.tahun);
     var sej = (p.pru && p.pru.sejarah) || [], kalahBaru = sej.length > (bp.pruDilihat || 0) && sej[sej.length - 1].hasil === 'kalah';
     bp.pruDilihat = sej.length;
@@ -230,9 +257,12 @@
   function tawaranLobi(p) {
     p = p || (S() && S().loadPlayer());
     if (!p || p.tamat || sayaPresiden(p) || !layak(p) || !tahunPemilihan(p)) { return null; }
-    var b = Number(p.bulan) || 1, bp = p.negeriBP || {};
+    var b = Number(p.bulan) || 1, bp = p[ctx.kunci] || {};
     if (b < CONFIG.BULAN_LOBI_MULA || b > CONFIG.BULAN_LOBI_TAMAT || bp.lobiTahun === p.tahun) { return null; }
-    return { jenis: 'lobi', negeri: namaNegeri(p), dekat: bp.dekat === undefined ? 15 : bp.dekat, presiden: namaPresiden(p), bahagian: p.bahagian || '',
+    var W0 = ctx.sayap ? WN() : '', tajuk = ctx.sayap ? 'Anda Ketua ' + W0 + ' Bahagian ' + (p.bahagian || '') : 'Anda Ketua Bahagian ' + (p.bahagian || '');
+    var teks = ctx.sayap ? 'Keputusan pemilihan sayap Bahagian telah selesai. Sebagai Ketua ' + W0 + ' Bahagian, anda layak dilantik <b>Ketua ' + W0 + ' Negeri ' + namaNegeri(p) + '</b>. Ketua ' + W0 + ' akan membuat lantikan selepas Perhimpunan Sayap (bulan 9).'
+      : 'Keputusan pemilihan Bahagian telah selesai. Sebagai Ketua Bahagian, anda layak dilantik <b>Pengerusi Badan Perhubungan UMNO ' + namaNegeri(p) + '</b>. Presiden akan membuat lantikan selepas PAU (bulan 9).';
+    return { jenis: 'lobi', tajuk: tajuk, teks: teks, negeri: namaNegeri(p), dekat: bp.dekat === undefined ? 15 : bp.dekat, presiden: namaPresiden(p), bahagian: p.bahagian || '',
       pilihan: Object.keys(LOBI).map(function (k) { return { id: k, label: LOBI[k].label, huraian: LOBI[k].huraian }; }) };
   }
 
@@ -257,7 +287,7 @@
     var d = LOBI[jenis]; if (!d) { return { ok: false, ralat: 'Pilihan tidak sah.' }; }
     if ((Number(p.ap) || 0) < d.ap) { return { ok: false, ralat: 'Mata Tindakan (AP) tidak mencukupi.' }; }
     if ((Number(p.myr) || 0) < d.myr) { return { ok: false, ralat: 'Wang (MYR) tidak mencukupi.' }; }
-    var rng = opts.rng || s.rngBerbenih(String(p.id) + '|lobi|' + p.tahun + '|' + jenis), kesan = { ap: -d.ap, myr: -d.myr }, patch = {}, nota = '', babak = [];
+    var rng = opts.rng || s.rngBerbenih(String(p.id) + ctx.kunci + '|lobi|' + p.tahun + '|' + jenis), kesan = { ap: -d.ap, myr: -d.myr }, patch = {}, nota = '', babak = [];
     var nama = p.nama || 'Anda', baris = DIALOG[jenis][Math.floor(rng() * DIALOG[jenis].length)].replace('{nama}', nama);
     bp.dekat = clamp(bp.dekat + d.dekat, 0, 100); bp.lobiTahun = p.tahun;
     babak.push({ siapa: 'Anda', teks: jenis === 'mengadap' ? 'Saya datang menghadap Presiden untuk melaporkan perkembangan bahagian.' : jenis === 'mkt' ? 'Saya menemui beberapa pemimpin MKT untuk mendapatkan sokongan.' : jenis === 'sumbangan' ? 'Bahagian kami menyumbang kepada dana parti negeri.' : 'Saya membawa laporan prestasi bahagian untuk perhatian Presiden.' });
@@ -287,7 +317,7 @@
     var bp = keadaan(p), kunci = p.tahun + '-' + p.bulan, kali = bp.dekatBulan && bp.dekatBulan.indexOf(kunci + ':') === 0 ? parseInt(bp.dekatBulan.split(':')[1], 10) : 0;
     if (kali >= CONFIG.DEKAT_MAKS_BULAN) { return { ok: false, ralat: 'Had ' + CONFIG.DEKAT_MAKS_BULAN + ' kali bulan ini telah dicapai.' }; }
     bp.dekat = clamp(bp.dekat + CONFIG.DEKAT_NAIK, 0, 100); bp.dekatBulan = kunci + ':' + (kali + 1);
-    var r = s.applyEffects({ ap: -CONFIG.KOS_AP, myr: -CONFIG.KOS_MYR }, { kiraTindakan: true, patch: { negeriBP: bp }, log: { tindakan: 'dekati_presiden', nama: 'Dekati Presiden ' + namaPresiden(p), peringkat: 'negeri' } });
+    var r = s.applyEffects({ ap: -CONFIG.KOS_AP, myr: -CONFIG.KOS_MYR }, { kiraTindakan: true, patch: patchBP(bp), log: { tindakan: 'dekati_presiden', nama: 'Dekati Presiden ' + namaPresiden(p), peringkat: 'negeri' } });
     if (!r.ok) { return { ok: false, ralat: r.ralat }; }
     return { ok: true, mesej: 'Anda mendekati Presiden ' + namaPresiden(p) + '. Kedekatan kini ' + bp.dekat + '%.' };
   }
@@ -349,14 +379,14 @@
 
   /** Keputusan menunggu pemain (untuk pop-up): null | { jenis, jawatan?, sumber?, pilihan?, calon[] }. */
   function menunggu(p) {
-    p = p || (S() && S().loadPlayer()); if (!p || !p.negeriBP) { return null; }
-    var bp = p.negeriBP;
+    p = p || (S() && S().loadPlayer()); if (!p || !p[ctx.kunci]) { return null; }
+    var bp = p[ctx.kunci];
     if (bp.menunggu === 'pilih_pengerusi') { return { jenis: 'pilih_pengerusi', calon: bp.calon || [] }; }
     if (bp.menunggu === 'lantik_ajk') {
       var x = postBaki(bp)[0]; if (!x) { return null; }
       var dipakai = bp.ajk.map(function (a) { return a.id; });
       var kolam = (x.sumber === 'luar' ? bp.luar : bp.calon) || [];
-      return { jenis: 'lantik_ajk', jawatan: x.jawatan, sumber: x.sumber, pilihan: !!x.pilihan, wajibKecil: negeriKecil(p),
+      return { jenis: 'lantik_ajk', jawatan: x.jawatan, tajukJawatan: tr(x.jawatan), sumber: x.sumber, pilihan: !!x.pilihan, wajibKecil: negeriKecil(p),
         calon: kolam.filter(function (c) { return dipakai.indexOf(c.id) < 0; }).slice(0, 9).map(function (c) {
           return { id: c.id, nama: c.nama, bahagian: c.bahagian, skor: c.skor, kategori: c.kategori, ringkas: x.sumber === 'luar' && KATEGORI_LUAR[c.kategori] ? KATEGORI_LUAR[c.kategori].label + ' · ' + KATEGORI_LUAR[c.kategori].ringkas : 'Perwakilan +1' }; }) };
     }
@@ -371,23 +401,23 @@
   }
 
   function htmlKad(p) {
-    if (!p) { return ''; }
-    var st = status(p), bp = st.bp, h = '<div class="card pp-negeri"><h3>Badan Perhubungan UMNO ' + esc(st.negeri) + '</h3>';
+    if (!p || !ctx.aktif(p)) { return ''; }
+    var st = status(p), bp = st.bp, h = '<div class="card pp-negeri" data-b="' + ctx.id + '"><h3>Badan Perhubungan UMNO ' + esc(st.negeri) + '</h3>';
     h += '<p class="note">Peringkat negeri tiada pengundian: Pengerusi dilantik oleh Presiden daripada Ketua-Ketua Bahagian (lantikan baharu bulan ' + CONFIG.BULAN_LANTIK + ' tahun pemilihan).' + (st.kecil ? ' Negeri kecil: semua Ketua Bahagian menjadi ahli wajib.' : '') + '</p>';
     h += '<div class="kv"><span>Presiden</span><b>' + esc(st.presiden) + '</b></div>';
     h += '<div class="kv"><span>Pengerusi</span><b>' + esc(bp.pengerusi.nama) + (bp.pengerusi.pemain ? ' (anda)' : '') + ' &middot; ' + esc(bp.pengerusi.bahagian) + '</b></div>';
     if (st.layak && !st.sayaPresiden) {
       h += '<div class="kv"><span>Kedekatan dengan Presiden</span><b>' + bp.dekat + '%</b></div><div class="rv-m"><i class="a" style="width:' + bp.dekat + '%"></i><i class="b" style="width:' + (100 - bp.dekat) + '%"></i></div>';
       h += '<div class="kv"><span>Kedudukan anda</span><b>#' + st.kedudukan + ' / ' + st.jumlah + ' Ketua Bahagian (skor ' + st.skor + ')</b></div>';
-      if (tawaranLobi(p)) { h += '<button type="button" class="btn btn--gold" data-act="lobi-presiden">Lobi Presiden</button> '; }
-      h += '<button type="button" class="btn btn--gold" data-act="dekati-presiden">Dekati Presiden (' + CONFIG.KOS_AP + ' AP, RM ' + CONFIG.KOS_MYR.toLocaleString('ms-MY') + ')</button>';
+      if (tawaranLobi(p)) { h += '<button type="button" class="btn btn--gold" data-act="lobi-presiden" data-b="' + ctx.id + '">Lobi Presiden</button> '; }
+      h += '<button type="button" class="btn btn--gold" data-act="dekati-presiden" data-b="' + ctx.id + '">Dekati Presiden (' + CONFIG.KOS_AP + ' AP, RM ' + CONFIG.KOS_MYR.toLocaleString('ms-MY') + ')</button>';
     } else if (!st.sayaPresiden) { h += '<p class="note">Anda belum layak dilantik: hanya <b>Ketua Bahagian</b> negeri ini layak menjadi Pengerusi.</p>'; }
     var m = menunggu(p);
-    if (m) { h += '<button type="button" class="btn btn--gold" data-act="urus-negeri" style="margin-top:.5rem">' + (m.jenis === 'pilih_pengerusi' ? 'Lantik Pengerusi' : 'Lantik AJK (' + esc(m.jawatan) + ')') + '</button>'; }
+    if (m) { h += '<button type="button" class="btn btn--gold" data-act="urus-negeri" data-b="' + ctx.id + '" style="margin-top:.5rem">' + (m.jenis === 'pilih_pengerusi' ? 'Lantik Pengerusi' : 'Lantik AJK (' + esc(m.jawatan) + ')') + '</button>'; }
     if (st.sayaPengerusi) {
       h += '<p class="note" style="margin-top:.6rem"><b>Kuasa Pengerusi</b> (ex-officio MKT; +' + CONFIG.BONUS_IP + ' IP dan +' + CONFIG.BONUS_AJK + ' sokongan AJK sebulan)</p><div class="pp-negeri__tindak">' + Object.keys(TINDAKAN).map(function (k) {
         var d = TINDAKAN[k], guna = bp.guna[k] === (d.had === 'bulan' ? p.tahun + '-' + p.bulan : String(p.tahun));
-        return '<button type="button" class="btn btn--ghost" data-act="negeri-tindak" data-id="' + k + '"' + (guna ? ' disabled' : '') + '>' + esc(d.label) + '<small> ' + d.ap + ' AP' + (d.myr ? ', RM ' + d.myr.toLocaleString('ms-MY') : '') + (d.had === 'bulan' ? ' &middot; sebulan' : ' &middot; setahun') + '</small></button>'; }).join(' ') + '</div>';
+        return '<button type="button" class="btn btn--ghost" data-act="negeri-tindak" data-b="' + ctx.id + '" data-id="' + k + '"' + (guna ? ' disabled' : '') + '>' + esc(d.label) + '<small> ' + d.ap + ' AP' + (d.myr ? ', RM ' + d.myr.toLocaleString('ms-MY') : '') + (d.had === 'bulan' ? ' &middot; sebulan' : ' &middot; setahun') + '</small></button>'; }).join(' ') + '</div>';
     }
     if (bp.wajib && bp.wajib.length) {
       h += '<details class="org-ajk"><summary>Ahli wajib: Ketua Bahagian (' + bp.wajib.length + ')</summary>' + bp.wajib.map(function (a) {
@@ -397,10 +427,23 @@
       h += '<details class="org-ajk"><summary>AJK Badan Perhubungan (' + bp.ajk.length + ')</summary>' + bp.ajk.map(function (a) {
         return '<div class="org-baris"><span>' + esc(a.jawatan) + '</span><span>' + esc(a.nama) + ' &middot; ' + esc(a.bahagian) + '</span></div>'; }).join('') + '</details>';
     }
-    return h + '</div>';
+    return tr(h + '</div>');
   }
 
-  return { CONFIG: CONFIG, LOBI: LOBI, TINDAKAN: TINDAKAN, prosesBulan: prosesBulan, tawaranLobi: tawaranLobi, lobi: lobi, dekatiPresiden: dekatiPresiden, tindakan: tindakan,
+  var API = { CONFIG: CONFIG, LOBI: LOBI, TINDAKAN: TINDAKAN, prosesBulan: prosesBulan, tawaranLobi: tawaranLobi, lobi: lobi, dekatiPresiden: dekatiPresiden, tindakan: tindakan,
     pilihPengerusi: pilihPengerusi, lantikAjk: lantikAjk, menunggu: menunggu, status: status, htmlKad: htmlKad, layak: layak, negeriKecil: negeriKecil, namaNegeri: namaNegeri,
-    _senaraiCalon: senaraiCalon, _keadaan: keadaan, _bil: bilBahagian };
+    _senaraiCalon: senaraiCalon, _keadaan: keadaan, _bil: bilBahagian, id: ctx.id, aktif: ctx.aktif, tr: tr };
+  if (ctx.sayap) {
+    ['prosesBulan', 'tawaranLobi', 'lobi', 'dekatiPresiden', 'tindakan', 'pilihPengerusi', 'lantikAjk', 'menunggu'].forEach(function (k) { var f = API[k]; API[k] = function () { return trObj(f.apply(null, arguments)); }; });
+  }
+  return API;
+  }
+
+  var CTX_INDUK = { id: 'induk', kunci: 'negeriBP', sayap: false, aktif: function () { return true; }, kodKB: function () { return 'ketua_bahagian'; }, kodPemberi: function () { return 'presiden'; } };
+  var CTX_SAYAP = { id: 'sayap', kunci: 'negeriSayap', sayap: true, aktif: function (p) { return !!p && NAMA_SAYAP[p.sayap] !== undefined; },
+    kodKB: function (p) { return 'sayap_bahagian_' + p.sayap; }, kodPemberi: function (p) { return 'sayap_pusat_' + p.sayap; } };
+  var induk = bina(CTX_INDUK), sayap = bina(CTX_SAYAP), prosesInduk = induk.prosesBulan;
+  induk.prosesBulan = function (o) { var a = prosesInduk(o), b2 = sayap.prosesBulan(o); return { peristiwa: (a.peristiwa || []).concat(b2.peristiwa || []) }; };
+  induk.sayap = sayap;
+  return induk;
 });
