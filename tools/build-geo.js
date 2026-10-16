@@ -34,7 +34,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SUMBER = path.join(__dirname, '..', 'data-sumber');
+const SUMBER = process.env.SUMBER_DIR || path.join(__dirname, '..', 'data-sumber');          // SUMBER_DIR: laluan lain untuk fail mentah (pilihan)
 const KELUAR = path.join(__dirname, '..', 'data');
 
 /* ---- Tetapan ---- */
@@ -47,8 +47,12 @@ const KESUKARAN = {                                                  // heuristi
   beratSaizPemilih: 0.6,                                             // kawasan besar = lebih sukar dipengaruhi
   beratBukanBumi: 0.4                                                // campuran etnik lebih tinggi = lebih sukar
 };
-const LAPISAN_DM = [                                                 // fail DM per negeri (medan: kod_dm, daerah_mengundi, pemilih, kod_dun, dun, kod_parlimen, parlimen, state)
-  { fail: 'dm_selangor.geojson', negeri: '10' }
+const LAPISAN_DM = [                                                 // fail DM per negeri (medan: kod_dm, daerah_mengundi, pemilih, kod_dun, dun, kod_parlimen, parlimen, state). Sarawak belum ada.
+  { fail: 'dm_johor.geojson', negeri: '1' }, { fail: 'dm_kedah.geojson', negeri: '2' }, { fail: 'dm_kelantan.geojson', negeri: '3' },
+  { fail: 'dm_melaka.geojson', negeri: '4' }, { fail: 'dm_n9.geojson', negeri: '5' }, { fail: 'dm_pahang.geojson', negeri: '6' },
+  { fail: 'dm_pp.geojson', negeri: '7' }, { fail: 'dm_perak.geojson', negeri: '8' }, { fail: 'dm_perlis.geojson', negeri: '9' },
+  { fail: 'dm_selangor.geojson', negeri: '10' }, { fail: 'dm_terengganu.geojson', negeri: '11' }, { fail: 'dm_sabah.geojson', negeri: '12' },
+  { fail: 'dm_kl.geojson', negeri: '14' }, { fail: 'dm_labuan.geojson', negeri: '15' }, { fail: 'dm_putrajaya.geojson', negeri: '16' }
 ];
 const PEMILIH_UMUR_ANGGARAN = 'warganegara x peratus umur 18+ (banci 2020)';
 
@@ -92,12 +96,12 @@ function dp(pts, tol) {                                              // Douglas-
 }
 function luas(g) { let s = 0; for (let i = 0; i < g.length - 1; i++) { s += g[i][0] * g[i + 1][1] - g[i + 1][0] * g[i][1]; } return Math.abs(s) / 2; }
 
-function binaLaluan(poligon, peringkat) {                          // poligon = [gelang luar, lubang...]
+function binaLaluan(poligon, peringkat, toleransi) {                          // poligon = [gelang luar, lubang...]
   const bahagian = []; const bbox = [Infinity, Infinity, -Infinity, -Infinity]; let titik = 0;
   const kelompok = poligon.map((r, i) => ({ i, r: r.map(unjur) }));
   const terbesar = kelompok[0];
   kelompok.forEach(({ i, r }) => {
-    let g = dp(r, TOLERANSI[peringkat]).map(([x, y]) => [Math.round(x), Math.round(y)]);
+    let g = dp(r, toleransi == null ? TOLERANSI[peringkat] : toleransi).map(([x, y]) => [Math.round(x), Math.round(y)]);
     g = g.filter((p, k) => k === 0 || p[0] !== g[k - 1][0] || p[1] !== g[k - 1][1]);
     if (g.length > 1 && g[0][0] === g[g.length - 1][0] && g[0][1] === g[g.length - 1][1]) { g.pop(); }
     if (g.length < 3) { return; }
@@ -119,6 +123,10 @@ function binaFitur(f, peringkat) {
     const r = binaLaluan(h.p, peringkat); d += r.d; titik += r.titik;
     if (r.d) { bbox[0] = Math.min(bbox[0], r.bbox[0]); bbox[1] = Math.min(bbox[1], r.bbox[1]); bbox[2] = Math.max(bbox[2], r.bbox[2]); bbox[3] = Math.max(bbox[3], r.bbox[3]); }
   });
+  if (!d && peringkat === 'dm') {                                  // DM sangat kecil hilang selepas dipermudahkan: ulang tanpa Douglas-Peucker
+    const r = binaLaluan(hasil[0].p, peringkat, 0); d = r.d; titik = r.titik;
+    if (d) { bbox[0] = r.bbox[0]; bbox[1] = r.bbox[1]; bbox[2] = r.bbox[2]; bbox[3] = r.bbox[3]; }
+  }
   return { d, bbox, titik };
 }
 
@@ -204,8 +212,8 @@ function utama() {
       if (!f.geometry) { amaran.push('tiada geometri ' + id); return; }
       if (ada[id]) { amaran.push('kod_dm berganda ' + id); return; }
       ada[id] = true;
-      const r = binaFitur(f, 'dm'), kodDun = L.negeri + '_N.' + String(pr.kod_dun).replace(/^N\./, '');
-      if (!demo.dun[kodDun]) { amaran.push('DUN tiada dalam banci: ' + kodDun + ' (' + id + ')'); }
+      const r = binaFitur(f, 'dm'), kodDun = pr.kod_dun ? L.negeri + '_N.' + String(pr.kod_dun).replace(/^N\./, '') : null;      // Wilayah Persekutuan: tiada DUN
+      if (kodDun && !demo.dun[kodDun]) { amaran.push('DUN tiada dalam banci: ' + kodDun + ' (' + id + ')'); }
       maksX = Math.max(maksX, r.bbox[2]); maksY = Math.max(maksY, r.bbox[3]);
       fitur.push({ id, nama: pr.daerah_mengundi, negeri: L.negeri, parlimen: pr.kod_parlimen, dun: kodDun, bbox: r.bbox, d: r.d });
       dmDemo[id] = { kod: id, nama: pr.daerah_mengundi, negeri: L.negeri, parlimen: pr.kod_parlimen, dun: kodDun, namaDun: pr.dun, namaParlimen: pr.parlimen, pemilih: pr.pemilih };

@@ -21,7 +21,7 @@
      NAMA_KAWASAN, KOD_KAWASAN, JUMLAH_PEMILIH (ANGGARAN), JUMLAH_PENDUDUK,
      LUAS_KM2, PERATUS_BUMI, PERATUS_CINA, PERATUS_INDIA, PERATUS_LAIN,
      PENDAPATAN_MEDIAN, KADAR_KEMISKINAN, TAHAP_KESUKARAN (1-5, heuristik)
-   Peringkat 'dm' (hanya negeri yang fail dm-<kod>.json ada, kini Selangor) memberi NAMA_DM dan
+   Peringkat 'dm' (negeri yang fail dm-<kod>.json ada: semua kecuali Sarawak) memberi NAMA_DM dan
    JUMLAH_PEMILIH sebenar (ANGGARAN=false). Peringkat lain: JUMLAH_PEMILIH ialah anggaran (ANGGARAN=true).
    Kunci DM sepadan dengan ID Sheet: '097/013/001' -> '097/13/01'.
 
