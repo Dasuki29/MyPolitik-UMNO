@@ -78,10 +78,10 @@
 
   /* ---------- Status ---------- */
   function peranKabinet(p) { var K = KB(); return K ? K.getKabinet(p) : { hasGovernmentRole: false, roleLevel: 'NONE' }; }
-  function statusADUN(p) { var P = PRU(), st = P && p ? P.getPRU(p).status : null; return !!(st && st.jenis === 'ADUN'); }
+  function statusADUN(p) { var P = PRU(); return !!(P && p && P.pegang && P.pegang(p, 'ADUN')); }
   function exco(p) { var k = peranKabinet(p); return !!(k.hasGovernmentRole && k.roleLevel === 'EXCO_NEGERI'); }
-  /** Tab DUN: ADUN atau EXCO Negeri, dan bukan Ahli Parlimen / Menteri (Dewan Rakyat diutamakan). */
-  function aktif(p) { var d = DW(); return !!p && !p.tamat && (statusADUN(p) || exco(p)) && !(d && d.aktif(p)); }
+  /** Dewan DUN: ADUN atau EXCO Negeri. Jika turut Ahli Parlimen/Menteri, UI memberi butang tukar antara dua dewan. */
+  function aktif(p) { return !!p && !p.tamat && (statusADUN(p) || exco(p)); }
   function bolehBentang(p) { return exco(p); }
   function kerusi(p) {
     var A = PAP(); if (!A || !A.kerusiGabungan) { return null; }
@@ -307,9 +307,9 @@
 
   function ringkasan(p) {
     var d = getSidang(p), k = kerusi(p), sb = senaraiBentang(p);
-    return { aktif: aktif(p), dun: true, kerusi: k, ambang: k ? k.ambang : 0, kerajaan: adaKerajaan(p), kestabilan: aktif(p) ? kestabilan(p) : null, rating: rating(p),
+    return { aktif: aktif(p), dun: true, peranan2: statusADUN(p) ? 'ADUN' : 'EXCO', kerusi: k, ambang: k ? k.ambang : 0, kerajaan: adaKerajaan(p), kestabilan: aktif(p) ? kestabilan(p) : null, rating: rating(p),
       menteri: exco(p), bolehBentang: bolehBentang(p), bentang: sb, undi: undiSemasa(p), tp: tpSemasa(p), soalan: soalanSemasa(p), sejarah: d.sejarah || [],
-      peranan: statusADUN(p) ? 'ADUN' : 'EXCO', portfolio: peranKabinet(p).portfolioName || '',
+      peranan: statusADUN(p) ? 'ADUN' : 'EXCO', portfolio: exco(p) ? (peranKabinet(p).portfolioName || '') : '',
       label: { dewan: 'Dewan Undangan Negeri', usul: 'Enakmen', ketua: 'Menteri Besar', tab: 'DUN', negeri: p.negeri || '' } };
   }
 

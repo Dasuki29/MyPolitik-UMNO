@@ -9,7 +9,11 @@
   var D0 = W.MyPolitikDewan, N = W.MyPolitikDUN, S = W.MyPolitikSave, D = D0;
   if (!D0 || !S) { return; }
   /** Pilih enjin: Dewan Rakyat (MP/Menteri) atau DUN (ADUN/EXCO); API kedua-duanya sama. */
-  function pilih(p) { D = D0.aktif(p) ? D0 : (N && N.aktif(p) ? N : D0); return D; }
+  var pilihan = 'RAKYAT';      // dewan yang dipapar apabila pemain memegang dua kerusi (Parlimen + DUN)
+  function kedua(p) { return !!(N && D0.aktif(p) && N.aktif(p)); }
+  /** Jika dua dewan aktif, papar dewan yang ada soalan/usul menunggu. */
+  function utamakan(p, fn) { if (kedua(p)) { var m = [D0, N].filter(function (x) { return x.aktif(p) && x[fn](p); })[0]; if (m) { pilihan = m === N ? 'DUN' : 'RAKYAT'; } } }
+  function pilih(p) { D = D0.aktif(p) && !(kedua(p) && pilihan === 'DUN') ? D0 : (N && N.aktif(p) ? N : D0); return D; }
   var BULAN = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
   var WARNA = { BN: '#2D50B8', PH: '#D7263D', PN: '#0B2A5B', LAIN: '#7A808C' };
 
@@ -28,7 +32,7 @@
     '.dw-undi div{border:2px solid var(--garis,var(--border));border-radius:6px;padding:6px;background:var(--bg-elev-2)}.dw-undi b{display:block;font-size:1.25rem}' +
     '.dw-tp{border:3px solid var(--red);background:var(--bg-elev-1)}.dw-list{display:grid;gap:8px;margin:8px 0;padding:0;list-style:none}' +
     '.dw-list button{width:100%;text-align:left}.dw-sej{margin:6px 0 0;padding:0;list-style:none;font-size:.8rem}.dw-sej li{border-left:4px solid var(--garis,var(--border));padding-left:8px;margin:4px 0;color:var(--text-muted)}' +
-    '.dw-lulus{color:#14994F;font-weight:800}.dw-gagal{color:#D3162F;font-weight:800}';
+    '.dw-tukar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.dw-lulus{color:#14994F;font-weight:800}.dw-gagal{color:#D3162F;font-weight:800}';
   (function () { var s = W.document.createElement('style'); s.textContent = CSS; W.document.head.appendChild(s); })();
 
   function bar(label, nilai, bahaya) {
@@ -50,8 +54,9 @@
   function panel(p) {
     try {
       var r = pilih(p).ringkasan(p), L = r.label || { dewan: 'Dewan Rakyat', usul: 'RUU', ketua: 'kerajaan' };
+      var sw = kedua(p) ? '<div class="dw-tukar" role="group" aria-label="Pilih dewan"><button type="button" class="btn btn--sm ' + (D === D0 ? 'btn--primary' : 'btn--ghost') + '" data-dewan="tukar" data-id="RAKYAT">🏛️ Dewan Rakyat</button> <button type="button" class="btn btn--sm ' + (D === N ? 'btn--primary' : 'btn--ghost') + '" data-dewan="tukar" data-id="DUN">🏢 DUN' + (p.negeri ? ' ' + esc(p.negeri) : '') + '</button></div>' : '';
       if (!r.aktif) { return '<div class="banner"><strong>Dewan Rakyat</strong>Tab ini terbuka apabila anda menjadi Ahli Parlimen, Menteri, ADUN atau EXCO Negeri.</div>'; }
-      var k = r.kerusi, h = '';
+      var k = r.kerusi, h = sw;
       h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🏛️ ' + esc(L.dewan) + (L.negeri ? ' · ' + esc(L.negeri) : '') + '</h2>';
       if (!k) { return h + '<p class="note">Belum ada keputusan PRU untuk dipaparkan.</p></section>'; }
       h += '<p class="note">' + esc(r.peranan === 'MP' ? 'Ahli Parlimen' : r.peranan === 'ADUN' ? 'ADUN' : r.peranan === 'EXCO' ? 'EXCO Negeri' : 'Menteri') + (r.portfolio ? ' · ' + esc(r.portfolio) : '') + ' · ' + (r.kerajaan ? '<b>Kerajaan: BN</b>' : 'Bukan kerajaan BN') + ' · majoriti ' + r.ambang + '/' + k.jumlah + '</p>';
@@ -131,7 +136,7 @@
     segarkan();
   }
   async function soalan() {
-    pilih(S.loadPlayer());
+    utamakan(S.loadPlayer(), 'soalanSemasa'); pilih(S.loadPlayer());
     var s = D.soalanSemasa(S.loadPlayer());
     if (!s) { return; }
     function ringkas(j) {
@@ -151,7 +156,7 @@
 
   /* ---------- Selepas bulan berganti ---------- */
   async function selepasBulan(peristiwa) {
-    var s = peristiwa || []; pilih(S.loadPlayer());
+    var s = peristiwa || []; utamakan(S.loadPlayer(), s.some(function (e) { return e.jenis === 'dewan_tp'; }) ? 'tpSemasa' : 'soalanSemasa'); pilih(S.loadPlayer());
     if (s.some(function (e) { return e.jenis === 'dewan_tp'; })) { await modal({ tajuk: '⚠️ Usul Undi Tidak Percaya', isi: '<p>' + esc(((s.filter(function (e) { return e.jenis === 'dewan_tp'; })[0] || {}).mesej) || 'Pembangkang mengemukakan usul undi tidak percaya.') + ' Buka tab <b>' + (N && N.aktif(S.loadPlayer()) ? 'DUN' : 'Dewan Rakyat') + '</b>.</p>' }); if (U() && U().gotoTab) { U().gotoTab('dewan'); } return true; }
     if (s.some(function (e) { return e.jenis === 'dewan_soalan'; })) { await soalan(); return true; }
     return false;
@@ -162,7 +167,7 @@
     if (!t || t.disabled) { return; }
     var a = t.getAttribute('data-dewan'), id = t.getAttribute('data-id'); pilih(S.loadPlayer());
     if (a === 'bentang') { bentang(id); } else if (a === 'lobi') { lobi(id); } else if (a === 'undi') { mulaUndi(); } else if (a === 'tarik') { tarik(); }
-    else if (a === 'tp') { tindakTP(id); } else if (a === 'soalan') { soalan(); }
+    else if (a === 'tukar') { pilihan = id === 'DUN' ? 'DUN' : 'RAKYAT'; segarkan(); } else if (a === 'tp') { tindakTP(id); } else if (a === 'soalan') { soalan(); }
   });
 
   function guna(p) { return pilih(p); }
