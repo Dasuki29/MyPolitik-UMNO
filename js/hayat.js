@@ -99,6 +99,7 @@
      ------------------------------------------------------------------------ */
   var GELARAN = [
     { kod: 'presiden', ikon: '\uD83C\uDFDB\uFE0F', nama: 'Presiden Parti', huraian: 'Mencapai kerusi tertinggi parti.', semak: function (c) { return /^Presiden$/i.test(c.jawatan || ''); } },
+    { kod: 'perdana_menteri', ikon: '\uD83D\uDC51', nama: 'Perdana Menteri', huraian: 'Pernah memimpin kerajaan sebagai Perdana Menteri.', semak: function (c) { return !!c.pernahPM; } },
     { kod: 'menteri', ikon: '\uD83D\uDCBC', nama: 'Menteri / EXCO', huraian: 'Pernah dilantik memegang portfolio kerajaan.', semak: function (c) { return (c.bilKabinet || 0) > 0; } },
     { kod: 'tokoh_pusat', ikon: '\u2B50', nama: 'Tokoh Pusat', huraian: 'Pernah memimpin di peringkat Pusat.', semak: function (c) { return c.pangkat >= 10; } },
     { kod: 'wakil_rakyat', ikon: '\uD83D\uDDF3\uFE0F', nama: 'Wakil Rakyat', huraian: 'Pernah memenangi kerusi ADUN atau Ahli Parlimen.', semak: function (c) { return (c.bilMenang || 0) > 0; } },
@@ -159,6 +160,7 @@
     var statusDisiplin = et ? et.status : 'baik', salah = et ? et.salah : 0, modal = et ? et.modal : 50;
     var gelarList = anugerahGelaran({ umur: umur, tahunBerkhidmat: Math.max(0, p.tahun - CONFIG.TAHUN_MULA), pangkat: top.pangkat || 0, jawatan: top.jawatan,
       akarUmbi: akarUmbi, reputasi: p.reputasi || 0, modal: modal, salah: salah, status: statusDisiplin, myr: p.myr || 0,
+      pernahPM: pr.jawatanKerajaan.indexOf('Perdana Menteri') >= 0 || pr.kabinetSemasa === 'Perdana Menteri',
       bilMenang: pr.menang, bilKabinet: pr.jawatanKerajaan.length + (pr.kabinetSemasa && pr.jawatanKerajaan.indexOf(pr.kabinetSemasa) < 0 ? 1 : 0) });
     return {
       kesetiaanAkarUmbi: akarUmbi, statusDisiplin: statusDisiplin, gelarList: gelarList,

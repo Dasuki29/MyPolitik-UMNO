@@ -32,6 +32,8 @@
     '.pru-log{margin:8px 0 0;padding:0;list-style:none;font-size:.8rem}.pru-log li{border-left:4px solid var(--garis,var(--border));padding-left:8px;margin:4px 0;color:var(--text-muted)}' +
     '.pru-final{background:var(--red);color:#fff;border:2px solid var(--garis,#111);padding:6px 10px;font-weight:900;font-size:.8rem;text-transform:uppercase;margin:10px 0 8px;text-align:center}' +
     '.pru-menang{background:#14994F;color:#fff;border:3px solid var(--garis,#111);padding:10px;text-align:center;font-weight:900;font-size:1.1rem;text-transform:uppercase;margin-bottom:8px}' +
+    '.pru-nas{display:flex;height:28px;border:2px solid var(--garis,var(--border));border-radius:6px;overflow:hidden;margin:8px 0}.pru-nas div{display:grid;place-items:center;color:#fff;font-size:.72rem;font-weight:800;min-width:0;white-space:nowrap;overflow:hidden}' +
+    '.pru-nas .p{background:#C8102E}.pru-nas .r{background:#2B6CB0}.pru-nas .b{background:#555}' +
     '.pru-kalah{background:#555}.pru-ok{color:#14994F;font-weight:800}.pru-ng{color:#D3162F;font-weight:800}' +
     '.pru-jns{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}.pru-pilih{display:grid;gap:8px;margin:8px 0}' +
     '.pru-pilih label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:2px solid var(--garis,var(--border));border-radius:6px;cursor:pointer;background:var(--bg-elev-2)}' +
@@ -139,8 +141,11 @@
     try {
       if (jenis === 'pilihanraya') { return musim(p) ? kadPRK(p) + (PRU.getPRU(p).aktif ? kadPRU(p) : '') : '<div class="banner"><strong>Bukan musim pilihan raya</strong>Tab ini hanya aktif semasa PRU/PRN atau PRK.</div>'; }
       if (jenis === 'pemilihan') { return musim(p) ? bannerMusim(p) : kadPRU(p); }
-      return bannerMusim(p) + kadJanji(p) + kadKabinet(p);
+      return bannerNasional(p) + bannerMusim(p) + kadJanji(p) + kadKabinet(p);
     } catch (e) { return ''; }
+  }
+  function bannerNasional(p) {      // v7.22: keputusan nasional menunggu Presiden (cth. pemain memuat semula halaman)
+    return PRU.nasionalTertunggak(p) ? '<div class="banner banner--gold"><strong>🗳️ Keputusan nasional menunggu</strong>Anda Presiden parti: tentukan pembentukan kerajaan. <button type="button" class="btn btn--sm btn--gold" data-pru="nasional">Lihat Keputusan Nasional</button></div>' : '';
   }
   function lencana(p) {
     var h = '', pru = PRU.getPRU(p), kb = KB ? KB.getKabinet(p) : null;
@@ -215,7 +220,7 @@
           var j = await modPencalonan(p);
           if (!j) { break; }
           if (j === 'NONE') {
-            var tb = PRU.tidakBertanding(); toast(tb.mesej || tb.ralat, tb.ok ? 'ok' : 'ralat'); segarkan(); break;
+            var tb = PRU.tidakBertanding(); toast(tb.mesej || tb.ralat, tb.ok ? 'ok' : 'ralat'); segarkan(); if (tb.nasional) { await nasional(); } break;
           }
           var r = PRU.pilihKerusi(j);
           if (!r.ok) { toast(r.ralat, 'ralat'); continue; }
@@ -223,7 +228,7 @@
           if (!r.diluluskan) {
             var p2 = S.loadPlayer(), k2 = PRU.kelayakan(p2), a2 = PRU.getPRU(p2).aktif;
             var masihBoleh = ['DUN', 'PARLIMEN'].some(function (z) { return !a2.ditolak[z] && k2[z].boleh; });
-            if (!masihBoleh) { var t2 = PRU.tidakBertanding(); toast('Tiada kerusi lain yang layak. ' + (t2.mesej || ''), 'ralat'); segarkan(); break; }
+            if (!masihBoleh) { var t2 = PRU.tidakBertanding(); toast('Tiada kerusi lain yang layak. ' + (t2.mesej || ''), 'ralat'); segarkan(); if (t2.nasional) { await nasional(); } break; }
           }
         } else if (a.fasa === 'runding') {
           var o = await modRunding(p);
@@ -248,6 +253,7 @@
     var ya = await modal({ tajuk: 'Tarik Diri?', isi: '<p>Anda tidak akan bertanding pada pilihan raya ini. Reputasi Parti <b>-3</b> kerana menarik diri selepas dicalonkan. Bulan boleh dimajukan semula selepas itu.</p>', butang: [{ label: 'Batal', nilai: false }, { label: 'Ya, Tarik Diri', nilai: true, kelas: 'btn--danger' }] });
     if (!ya) { return; }
     var t = PRU.tidakBertanding(); toast(t.mesej || t.ralat, t.ok ? 'ok' : 'ralat'); segarkan();
+    if (t.nasional) { await nasional(); }
   }
 
   async function kejutan() {
@@ -295,13 +301,53 @@
     if (kp.siasatMsg) { h += '<p class="' + (kp.petisyen ? 'pru-ng' : '') + '" style="font-size:.85rem;margin-top:8px">' + esc(kp.siasatMsg) + '</p>'; }
     return h;
   }
+  /* v7.22: keputusan nasional & rundingan kerajaan (Presiden parti) */
+  function htmlNasional(n) {
+    var j = n.jumlah, pc = function (x) { return Math.max(0, x / j * 100).toFixed(1) + '%'; };
+    var ket = n.status === 'MAJORITI' ? '<b>Majoriti mutlak.</b> Parti anda membentuk kerajaan sendirian.'
+      : n.status === 'GABUNGAN' ? '<b>Tiada majoriti mutlak.</b> Parti + rakan = ' + (n.parti + n.rakan) + ' kerusi (cukup ' + n.majoriti + '). Rundingan pembentukan kerajaan diperlukan.'
+      : '<b>Gabungan anda ' + (n.parti + n.rakan) + ' kerusi</b>, kurang daripada ' + n.majoriti + '. Parti anda menjadi pembangkang.';
+    return '<p style="font-size:.85rem">Anda Presiden parti. ' + j + ' kerusi Parlimen; majoriti mudah <b>' + n.majoriti + '</b>.</p>' +
+      '<div class="pru-nas"><div class="p" style="width:' + pc(n.parti) + '">Parti ' + n.parti + '</div>' + (n.rakan ? '<div class="r" style="width:' + pc(n.rakan) + '">Rakan ' + n.rakan + '</div>' : '') + '<div class="b" style="width:' + pc(n.pembangkang) + '">Lawan ' + n.pembangkang + '</div></div>' +
+      '<div class="kv"><span>🔴 Parti anda</span><b>' + n.parti + ' kerusi</b></div><div class="kv"><span>🔵 Rakan gabungan</span><b>' + n.rakan + ' kerusi</b></div><div class="kv"><span>⚫ Pembangkang</span><b>' + n.pembangkang + ' kerusi</b></div>' +
+      '<p style="font-size:.85rem;margin-top:8px">' + ket + '</p>' +
+      (n.bolehPM || n.status === 'PEMBANGKANG' ? '' : '<p style="font-size:.8rem;color:var(--text-muted)">Anda bukan Ahli Parlimen yang menang, jadi tidak layak menjadi Perdana Menteri.</p>') +
+      '<p style="font-size:.72rem;color:var(--text-muted)">Anggaran permainan, bukan data pilihan raya sebenar.</p>';
+  }
+  async function nasional() {
+    var p = S.loadPlayer(), n = PRU.nasionalTertunggak(p);
+    if (!n) { return; }
+    await modal({ tajuk: '🗳️ Keputusan Nasional', isi: htmlNasional(n), butang: [{ label: n.status === 'PEMBANGKANG' ? 'Teruskan' : n.status === 'MAJORITI' && n.bolehPM ? 'Teruskan' : 'Runding Pembentukan Kerajaan', nilai: true, kelas: 'btn--gold' }] });
+    var pil;
+    if (n.status === 'PEMBANGKANG') { pil = 'PEMBANGKANG'; }
+    else if (n.status === 'MAJORITI' && n.bolehPM) { pil = 'PM'; }
+    else {
+      pil = await modal({
+        tajuk: n.bolehPM ? '👑 Siapa Jadi Perdana Menteri?' : '🏛️ Pembentukan Kerajaan',
+        isi: '<p style="font-size:.85rem">Parti ' + n.parti + ' daripada ' + (n.parti + n.rakan) + ' kerusi gabungan. Hubungan gabungan <b>' + n.hubungan + '</b>/100.</p><ul class="acara__pil">' +
+          (n.bolehPM ? opsi('PM', '👑 Tuntut jawatan Perdana Menteri', 'Peluang berjaya ± ' + n.peluangPM + '%. Gagal: hubungan gabungan ' + PRU.CONFIG.NASIONAL.GAGAL_PM_HUBUNGAN + ' dan anda menerima Timbalan PM.', true) : '') +
+          (n.bolehPM ? opsi('TPM', '🤝 Terima Timbalan Perdana Menteri', 'Selamat. Rakan gabungan memegang jawatan Perdana Menteri.', true) : '') +
+          opsi('KABINET', '🗂️ Pilih portfolio kabinet', 'Lobi Menteri seperti biasa (guna IP dan Dana).', true) +
+          opsi('PEMBANGKANG', '🪧 Jadi pembangkang', 'Tolak gabungan. Kerajaan dibentuk tanpa anda.', true) + '</ul>',
+        butang: []
+      });
+      if (!pil) { pil = 'PEMBANGKANG'; }
+    }
+    var r = PRU.rundingKerajaan(pil);
+    if (!r.ok) { toast(r.ralat, 'ralat'); segarkan(); return; }
+    segarkan();
+    await modal({ tajuk: r.hasil === 'PM' ? '👑 Perdana Menteri Malaysia' : r.hasil === 'TPM' ? '🤝 Timbalan Perdana Menteri' : r.hasil === 'KABINET' ? '🗂️ Kabinet' : '🪧 Pembangkang', isi: '<p>' + esc(r.mesej) + '</p>' + (r.hasil === 'PM' || r.hasil === 'TPM' ? '<p style="font-size:.85rem">Elaun bulanan, isu kementerian dan risiko rombakan berjalan seperti jawatan kabinet lain.</p>' : '') });
+    if (r.bukaLobi) { await lobi(); }
+    segarkan();
+  }
   async function keputusan() {
     var p = S.loadPlayer(), a = PRU.getPRU(p).aktif;
     if (!a || a.fasa !== 'keputusan' || !a.keputusan) { return; }
     await modal({ tajuk: 'Keputusan Pengundian', isi: htmlKeputusan(a.keputusan, a), butang: [{ label: 'Teruskan', nilai: true, kelas: 'btn--gold' }] });
     var buka = a.keputusan.kabinetBuka;
     PRU.tutupKeputusan(); segarkan();
-    if (buka) { await lobi(); }
+    if (PRU.nasionalTertunggak(S.loadPlayer())) { await nasional(); }
+    else if (buka) { await lobi(); }
   }
   async function selesai() {
     var r = PRU.selesaikan();
@@ -468,8 +514,8 @@
     if (!t || t.disabled) { return; }
     var a = t.getAttribute('data-pru');
     if (a === 'buka') { alir(); } else if (a === 'tindak') { tindak(t.getAttribute('data-id')); } else if (a === 'kejutan') { sibuk = true; kejutan().then(function () { sibuk = false; segarkan(); }, function () { sibuk = false; }); }
-    else if (a === 'selesai') { selesai(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'tarik') { tarikDiriPRU(); } else if (a === 'prk-tarik') { tarikDiriPRK(); } else if (a === 'prk-buka') { alirPRK(); } else if (a === 'prk-tindak') { tindakPRK(t.getAttribute('data-id')); } else if (a === 'prk-selesai') { selesaiPRK(); } else if (a === 'prk-keputusan') { keputusanPRK(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
+    else if (a === 'selesai') { selesai(); } else if (a === 'nasional') { nasional(); } else if (a === 'keputusan') { keputusan(); } else if (a === 'lobi') { lobi(); } else if (a === 'acara') { acara(); } else if (a === 'tarik') { tarikDiriPRU(); } else if (a === 'prk-tarik') { tarikDiriPRK(); } else if (a === 'prk-buka') { alirPRK(); } else if (a === 'prk-tindak') { tindakPRK(t.getAttribute('data-id')); } else if (a === 'prk-selesai') { selesaiPRK(); } else if (a === 'prk-keputusan') { keputusanPRK(); } else if (a === 'cdf') { salurCDF(t.getAttribute('data-jumlah')); } else if (a === 'janji') { majuJanji(t.getAttribute('data-id')); }
   });
 
-  W.NusaPRU_UI = {  musim: musim, kad: kad, lencana: lencana, selepasBulan: selepasBulan, alir: alir, kejutan: kejutan, keputusan: keputusan, lobi: lobi, acara: acara, selesai: selesai };
+  W.NusaPRU_UI = {  nasional: nasional, musim: musim, kad: kad, lencana: lencana, selepasBulan: selepasBulan, alir: alir, kejutan: kejutan, keputusan: keputusan, lobi: lobi, acara: acara, selesai: selesai };
 })(window);

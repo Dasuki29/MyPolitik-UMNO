@@ -53,6 +53,7 @@
     DUN:      { ipMin: 300, minPeruntukan: 2000, pengundi: [22000, 34000], bonusIp: 150 },
     PARLIMEN: { ipMin: 600, minPeruntukan: 5000, pengundi: [60000, 95000], bonusIp: 220 },
     GABUNGAN: { awal: 50, peluangRunding: 0.5 },
+    NASIONAL: { JUMLAH: 222, MAJORITI: 112, GAGAL_PM_HUBUNGAN: -10 },    // v7.22: keputusan nasional (anggaran permainan) untuk Presiden parti
     PECAH_3: 0.8,                       // bahagian undi 1-lawan-1 yang kekal pada anda dalam 3-penjuru (selebihnya ke rakan gabungan)
     SKALA_GAIN: 0.6,                    // penyesuaian keseimbangan kesan tindakan kempen
     TEKANAN_LAWAN_HARIAN: 1.0,          // voterSupport susut sedikit setiap hari (lawan juga berkempen)
@@ -280,7 +281,9 @@
     var tarik = a.candidateType !== 'NONE' && a.fasa !== 'isytihar';        // v7.18: menarik diri selepas dicalonkan menjejas reputasi
     var jadi = tamatMusim(pru, p, { jenis: a.candidateType === 'NONE' ? 'NONE' : a.candidateType, hasil: 'tidak_bertanding', kerusi: a.kerusi ? a.kerusi.nama : '' });
     if (tarik) { S().applyEffects({ reputasi: -3 }, { kiraTindakan: false, log: { tindakan: 'pru_tarik', nama: 'Menarik diri selepas dicalonkan', peringkat: 'ahli' } }); }
-    return { ok: true, tarik: tarik, mesej: tarik ? 'Anda menarik diri daripada pilihan raya. Reputasi Parti -3 kerana menarik diri selepas dicalonkan.' : 'Anda tidak bertanding pada pilihan raya kali ini. Fokus pada jawatan parti.', hasil: jadi };
+    var nas = null;
+    if (adalahPresiden(p)) { var p2 = S().loadPlayer(), pr2 = getPRU(p2); pr2.nasional = janaNasional(p2, pr2, a, null, false); simpanPRU(pr2, {}, {}); nas = true; }   // v7.22
+    return { ok: true, tarik: tarik, nasional: nas, mesej: tarik ? 'Anda menarik diri daripada pilihan raya. Reputasi Parti -3 kerana menarik diri selepas dicalonkan.' : 'Anda tidak bertanding pada pilihan raya kali ini. Fokus pada jawatan parti.', hasil: jadi };
   }
 
   /* ------------------------------------------------------------------------
@@ -559,6 +562,9 @@
       ipD = -Math.min(Number(p.ip) || 0, Math.abs(CONFIG.KALAH.ip)); kes.reputasi = CONFIG.KALAH.reputasi;
       pru.status = null;
     }
+    if (adalahPresiden(p)) {                                                  // v7.22: Presiden melihat keputusan nasional; kerajaan ditentukan di sana (bukan lambungan syiling)
+      pru.nasional = janaNasional(p, pru, a, o, k.menang && !petisyen && a.candidateType === 'PARLIMEN'); kabinetBuka = false; k.nasional = true;
+    }
     var rekod = { jenis: a.candidateType, kerusi: a.kerusi ? a.kerusi.nama : '', hasil: k.menang && !petisyen ? 'menang' : (k.menang ? 'batal' : 'kalah'), anda: k.anda, penjuru3: k.penjuru3, majoriti: k.majoriti, tahun: p.tahun, bulan: p.bulan };
     pru.sejarah = (pru.sejarah || []).concat([rekod]).slice(-10);
     k.siasatMsg = siasatMsg; k.rekod = rekod; k.kabinetBuka = kabinetBuka;
@@ -568,6 +574,61 @@
     if (!k.menang) { laras({ stress: CONFIG.KALAH.stress }); }
     if (kabinetBuka) { var Kb = modul('MyPolitikKabinet', 'kabinet.js'); if (Kb && Kb.bukaLobi) { Kb.bukaLobi(a.candidateType); } }
     return { ok: true, keputusan: k };
+  }
+
+
+  /* ------------------------------------------------------------------------
+     KEPUTUSAN NASIONAL & RUNDINGAN KERAJAAN (v7.22) — hanya untuk Presiden parti.
+     Andaian: jumlah kerusi ialah anggaran permainan daripada populariti parti; bukan data pilihan raya sebenar.
+     Hanya Ahli Parlimen yang menang boleh dilantik Perdana Menteri.
+     ------------------------------------------------------------------------ */
+  function adalahPresiden(p) {
+    var l = Array.isArray(p.jawatanList) ? p.jawatanList : [];
+    return /^Presiden$/i.test(String(p.jawatan || '')) || l.some(function (j) { return /^Presiden$/i.test(String(j && j.jawatan || '')); });
+  }
+  function janaNasional(p, pru, a, o, adaMP) {
+    var r = rng(o), N = CONFIG.NASIONAL, pop = a && a.partiPopulariti != null ? a.partiPopulariti : partiPopulariti(p, o);
+    var parti = bulat(N.JUMLAH * (0.18 + (pop - 30) / 40 * 0.42) + antara(r, -8, 8));
+    parti = clamp(parti, 30, 150);
+    var rakan = Math.min(N.JUMLAH - parti, bulat(N.JUMLAH * antara(r, 0.14, 0.26)));
+    var status = parti >= N.MAJORITI ? 'MAJORITI' : (parti + rakan >= N.MAJORITI ? 'GABUNGAN' : 'PEMBANGKANG');
+    var kongsi = rakan > 0 ? parti / (parti + rakan) : 1;
+    var peluangPM = status === 'GABUNGAN' && adaMP ? clamp(0.4 + (kongsi - 0.5) * 1.2 + ((Number(pru.hubunganGabungan) || 50) - 50) * 0.004 + ((Number(p.reputasi) || 50) - 50) * 0.002, 0.1, 0.9) : 0;
+    return { tahun: p.tahun, bulan: p.bulan, jumlah: N.JUMLAH, majoriti: N.MAJORITI, parti: parti, rakan: rakan, pembangkang: N.JUMLAH - parti - rakan,
+      status: status, bolehPM: !!adaMP, peluangPM: Math.round(peluangPM * 100), hubungan: Number(pru.hubunganGabungan) || 50, selesai: false, hasil: null };
+  }
+  /** Keputusan nasional yang menunggu keputusan Presiden (null jika tiada). */
+  function nasionalTertunggak(p) {
+    var n = getPRU(p).nasional;
+    return n && !n.selesai ? n : null;
+  }
+  /** pilihan: 'PM' | 'TPM' | 'KABINET' | 'PEMBANGKANG' (juga 'TUTUP' bagi parti pembangkang). */
+  function rundingKerajaan(pilihan, o) {
+    var p = S().loadPlayer(), pru = getPRU(p), n = pru.nasional, K = modul('MyPolitikKabinet', 'kabinet.js'), r = rng(o);
+    if (!n || n.selesai) { return { ok: false, ralat: 'Tiada rundingan kerajaan.' }; }
+    var mesej = '', hasil = '', buka = false, kes = {};
+    if (n.status === 'PEMBANGKANG') { pilihan = 'PEMBANGKANG'; }
+    if (pilihan === 'PM') {
+      if (!n.bolehPM) { return { ok: false, ralat: 'Hanya Ahli Parlimen yang menang boleh menjadi Perdana Menteri.' }; }
+      if (n.status === 'PEMBANGKANG') { return { ok: false, ralat: 'Parti anda tidak membentuk kerajaan.' }; }
+      var lulus = n.status === 'MAJORITI' || r() * 100 < n.peluangPM;
+      if (lulus) { K.lantikKanan('PERDANA_MENTERI'); hasil = 'PM'; mesej = 'Anda dilantik sebagai Perdana Menteri.'; kes.reputasi = 3; }
+      else { pru.hubunganGabungan = clamp(pru.hubunganGabungan + CONFIG.NASIONAL.GAGAL_PM_HUBUNGAN, 0, 100); K.lantikKanan('TIMBALAN_PM'); hasil = 'TPM'; mesej = 'Rakan gabungan enggan melepaskan jawatan Perdana Menteri. Hubungan gabungan ' + CONFIG.NASIONAL.GAGAL_PM_HUBUNGAN + '. Anda menerima jawatan Timbalan Perdana Menteri.'; }
+    } else if (pilihan === 'TPM') {
+      if (n.status === 'PEMBANGKANG') { return { ok: false, ralat: 'Parti anda tidak membentuk kerajaan.' }; }
+      K.lantikKanan('TIMBALAN_PM'); hasil = 'TPM'; mesej = 'Anda menerima jawatan Timbalan Perdana Menteri.';
+    } else if (pilihan === 'KABINET') {
+      if (n.status === 'PEMBANGKANG') { return { ok: false, ralat: 'Parti anda tidak membentuk kerajaan.' }; }
+      K.bukaLobi('PARLIMEN'); buka = true; hasil = 'KABINET'; mesej = 'Lobi portfolio kabinet dibuka.';
+    } else {
+      hasil = 'PEMBANGKANG'; mesej = n.status === 'PEMBANGKANG' ? 'Parti anda menjadi pembangkang.' : 'Anda menolak gabungan. Parti menjadi pembangkang.';
+    }
+    n.selesai = true; n.hasil = hasil;
+    pru.nasional = n;
+    pru.sejarahNasional = (pru.sejarahNasional || []).concat([{ tahun: n.tahun, bulan: n.bulan, parti: n.parti, rakan: n.rakan, status: n.status, hasil: hasil }]).slice(-5);
+    var res = simpanPRU(pru, kes, { log: { tindakan: 'pru_kerajaan', nama: 'Rundingan kerajaan: ' + hasil, peringkat: 'ahli' } });
+    if (!res.ok) { return { ok: false, ralat: res.ralat }; }
+    return { ok: true, hasil: hasil, mesej: mesej, bukaLobi: buka };
   }
 
   /** Tutup skrin keputusan dan tamatkan musim; jadualkan PRU seterusnya. */
@@ -635,7 +696,7 @@
     CONFIG: CONFIG, PROFIL: PROFIL, IKON_PROFIL: IKON_PROFIL, PENGGANDA: PENGGANDA, JANJI: JANJI, TINDAKAN: TINDAKAN, FINAL: FINAL, KEJUTAN: KEJUTAN, KOS_RUNDING: KOS_RUNDING,
     setRng: function (f) { rngLalai = f || Math.random; },
     getPRU: getPRU, profilKawasan: profilKawasan, kelayakan: kelayakan, ringkasan: ringkasan, prosesBulan: prosesBulan, isytihar: isytihar,
-    pilihKerusi: pilihKerusi, tidakBertanding: tidakBertanding, runding: runding, peruntukanPilihan: peruntukanPilihan, bonusManifesto: bonusManifesto,
+    pilihKerusi: pilihKerusi, tidakBertanding: tidakBertanding, adalahPresiden: adalahPresiden, nasionalTertunggak: nasionalTertunggak, rundingKerajaan: rundingKerajaan, runding: runding, peruntukanPilihan: peruntukanPilihan, bonusManifesto: bonusManifesto,
     mulaKempen: mulaKempen, keadaanKempen: keadaanKempen, tindakanKempen: tindakanKempen, jawabKejutan: jawabKejutan, selesaikan: selesaikan, tutupKeputusan: tutupKeputusan,
     janjiStatus: janjiStatus, majukanJanji: majukanJanji, pecahan: pecahan, hitungKeputusan: hitungKeputusan
   };
