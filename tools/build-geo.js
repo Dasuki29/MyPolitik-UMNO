@@ -296,6 +296,7 @@ function utama() {
     const fail = path.join(KELUAR, 'dm-' + L.negeri + '.json');
     fs.writeFileSync(fail, JSON.stringify({ peringkat: 'dm', negeri: L.negeri, pemilihSebenar: true, bil: fitur.length, fitur, demografi: dmDemo }));
     const jum = saiz.reduce((a, b) => a + b, 0), kb = Math.round(fs.statSync(fail).size / 1024);
+    fitur.forEach(f => { if (f.parlimen && !negeriDariP[f.parlimen]) { negeriDariP[f.parlimen] = L.negeri; } });   // WP: hierarki sumber tiada code_state
     meta.dm[L.negeri] = { bil: fitur.length, kb, jumlahPemilih: jum, amaran };
     console.log(('dm-' + L.negeri).padEnd(9), String(fitur.length).padStart(4), 'DM     ', String(kb).padStart(5) + ' KB', ' pemilih ' + jum.toLocaleString('en'), amaran.length ? ' AMARAN: ' + amaran.slice(0, 5).join('; ') : '');
   });
