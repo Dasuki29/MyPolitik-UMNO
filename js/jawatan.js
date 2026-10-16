@@ -198,7 +198,8 @@
     if (d.perluPAU && !(perwakilanSah(p, 'bahagian').layak)) {
       return { terbuka: false, sebab: 'Perlu Perwakilan Bahagian ke PAU tahun ' + p.tahun + ' (atau Ketua Bahagian/pemegang jawatan Pusat).' };
     }
-    if (d.pangkatMin && Math.max(pangkatTertinggi(p, d.kumpulan === 'utama' ? 'utama' : null), Number(p.pangkatUtamaLalu) || 0) < d.pangkatMin) {
+    // v7.44: jawatan sayap dan utama sama-sama dikira untuk syarat tangga (Ketua Wanita Pusat tidak perlu AJK Cawangan dahulu)
+    if (d.pangkatMin && Math.max(pangkatTertinggi(p), Number(p.pangkatUtamaLalu) || 0) < d.pangkatMin) {
       var perlu = null;
       KATALOG.forEach(function (x) { if (x.pangkat === d.pangkatMin && !perlu && x.kumpulan === 'utama') { perlu = x.jawatan; } });
       if (!perlu) { KATALOG.forEach(function (x) { if (x.pangkat === d.pangkatMin && !perlu) { perlu = x.jawatan; } }); }
