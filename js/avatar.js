@@ -30,7 +30,8 @@
     puteri:  { bg1: '#5B6BC0', bg2: '#232A63' },
     wanita:  { bg1: '#FFD84D', bg2: '#B8860B' },
     biasa:   { bg1: '#2E8B6E', bg2: '#0E3B2E' },
-    veteran: { bg1: '#6B7387', bg2: '#242834' }
+    veteran: { bg1: '#6B7387', bg2: '#242834' },
+    veteran_p: { bg1: '#6B7387', bg2: '#242834' }          // v7.50: variasi Veteran perempuan (dashboard sahaja; bukan pilihan pendaftaran)
   };
 
   var seq = 0;
@@ -151,6 +152,36 @@
       return s;
     }
 
+    /* veteran perempuan (v7.50): paparan dashboard bagi pemain perempuan kategori Veteran */
+    if (kod === 'veteran_p') {
+      var kw = '#D9A47E', gw = '#A8714C', tud = '#E3E5EB', bay = '#A9AEBB';
+      // baju kurung merah
+      s += '<path d="M6 96 C8 76 26 68 48 68 C70 68 88 76 90 96Z" fill="#B3122B"/>' +
+           '<path d="M6 96 C8 76 26 68 48 68 C70 68 88 76 90 96" fill="none" stroke="#7E0A1D" stroke-width="1.6"/>' +
+           '<path d="M48 80 L48 96" stroke="#7E0A1D" stroke-width="1.5"/><circle cx="48" cy="86" r="1.4" fill="#E2B93B"/><circle cx="48" cy="92" r="1.4" fill="#E2B93B"/>' +
+           '<path d="M26 90 Q36 86 44 88 M70 90 Q60 86 52 88" fill="none" stroke="#C93249" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>';
+      // tudung kelabu perak
+      s += '<path d="M20 50 C18 16 78 16 76 50 C76 62 80 70 84 79 C72 77 60 80 48 80 C36 80 24 77 12 79 C16 70 20 62 20 50Z" fill="' + tud + '"/>' +
+           '<path d="M12 79 C24 77 36 80 48 80 C60 80 72 77 84 79" fill="none" stroke="' + bay + '" stroke-width="1.7"/>' +
+           '<path d="M23 58 C25 66 28 72 32 78 M73 58 C71 66 68 72 64 78" fill="none" stroke="' + bay + '" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>' +
+           '<path d="M30 28 C38 21 58 21 66 28" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".8"/>';
+      // muka tua
+      s += '<ellipse cx="48" cy="48" rx="14.8" ry="17.8" fill="' + bay + '"/>' +
+           '<ellipse cx="48" cy="48.6" rx="13.7" ry="16.9" fill="' + kw + '"/>' +
+           '<path d="M39 41.4 q4 -2 8 -.2 M50 41.2 q4 -1.8 8 .2" fill="none" stroke="#9A9AA4" stroke-width="1.6" stroke-linecap="round"/>' +
+           MATA(42.6, 46.4, 1) + MATA(53.4, 46.4, 1) +
+           // cermin mata
+           '<circle cx="42.6" cy="46.4" r="5.2" fill="none" stroke="#5B4636" stroke-width="1.1"/><circle cx="53.4" cy="46.4" r="5.2" fill="none" stroke="#5B4636" stroke-width="1.1"/><path d="M47.8 46 q.2 -.8 .4 0" stroke="#5B4636" stroke-width="1.1" fill="none"/>' +
+           '<path d="M40 35.5 q8 -2.2 16 0 M41.5 38 q6.5 -1.6 13 0" fill="none" stroke="' + gw + '" stroke-width="1" stroke-linecap="round" opacity=".8"/>' +
+           '<path d="M36.6 45.4 l-3 -.9 M36.7 47.2 l-3 .4 M59.4 45.4 l3 -.9 M59.3 47.2 l3 .4" stroke="' + gw + '" stroke-width="1" stroke-linecap="round"/>' +
+           '<path d="M48 47.5 q-2 5 .8 5.6" fill="none" stroke="' + gw + '" stroke-width="1.3" stroke-linecap="round"/>' +
+           '<path d="M40.4 51.4 q-1.6 5 .6 9 M55.6 51.4 q1.6 5 -.6 9" fill="none" stroke="' + gw + '" stroke-width="1" stroke-linecap="round" opacity=".8"/>' +
+           '<path d="M43.4 57.4 q4.6 3.4 9.2 0" fill="none" stroke="#9A4A3A" stroke-width="1.9" stroke-linecap="round"/>' +
+           '<circle cx="38.8" cy="54" r="3" fill="#E3877A" opacity=".2"/><circle cx="57.2" cy="54" r="3" fill="#E3877A" opacity=".2"/>';
+      s += '<g transform="translate(33 76)"><circle r="3" fill="#E2B93B" stroke="#B8860B" stroke-width="1"/><circle r="1" fill="#fff" opacity=".8"/></g>';
+      return s;
+    }
+
     /* veteran */
     var kv = '#D49C74', gv = '#A8714C';
     s += '<path d="M6 96 C8 76 26 68 48 68 C70 68 88 76 90 96Z" fill="#B3122B"/>' +
@@ -191,7 +222,11 @@
       '<g clip-path="url(#' + id + 'c)">' + bahagian(kod) + '</g></svg>';
   }
   function adaKod(kod) { return LIST.some(function (a) { return a.kod === kod; }); }
-  function pasang(el, kod, opts) { if (!el) { return; } el.innerHTML = svg(adaKod(kod) ? kod : 'pemuda', opts); }
+  function pasang(el, kod, opts) {
+    if (!el) { return; }
+    if (kod === 'veteran' && opts && opts.jantina === 'Perempuan') { el.innerHTML = svg('veteran_p', Object.assign({ label: 'Veteran' }, opts)); return; }   // v7.50: Veteran perempuan
+    el.innerHTML = svg(adaKod(kod) ? kod : 'pemuda', opts);
+  }
   function cadangan(demografik) { var k = demografik && demografik.kod ? demografik.kod : demografik; return adaKod(k) ? k : 'pemuda'; }
   return { LIST: LIST, svg: svg, pasang: pasang, cadangan: cadangan, adaKod: adaKod };
 });

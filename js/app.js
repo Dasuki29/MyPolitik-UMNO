@@ -529,7 +529,7 @@
   /* ---------- Header & bar sumber ---------- */
   function renderHeader(p) {
     $('p-nama').textContent = p.nama;
-    if (W.MyPolitikAvatar) { W.MyPolitikAvatar.pasang($('p-avatar'), p.avatar || (p.demografik && p.demografik.kategoriKod), { saiz: 84 }); }
+    if (W.MyPolitikAvatar) { W.MyPolitikAvatar.pasang($('p-avatar'), p.avatar || (p.demografik && p.demografik.kategoriKod), { saiz: 84, jantina: p.demografik && p.demografik.jantina }); }   // v7.50: jantina untuk avatar Veteran
     else { $('p-avatar').textContent = inisial(p.nama); }
     var lp = $('p-perwakilan'), sp = M ? M.getStatusPerwakilan(p) : null;
     if (lp) { var lb = sp && (sp.pau.lencana || sp.bahagian.lencana); lp.hidden = !lb; lp.textContent = lb || ''; }
