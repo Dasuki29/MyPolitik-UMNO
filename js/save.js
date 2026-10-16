@@ -241,6 +241,13 @@
     } catch (e) { return null; }
   }
 
+  /** v7.31: migrasi simpanan lama (isi medan baharu yang hilang) sebelum normalisasi. Selamat jika infra.js tiada. */
+  function migrasi(p, sandar) {
+    var M = root.MyPolitikMigrasi;
+    if (!M || !sah(p)) { return p; }
+    try { return M.migrasi(p, { versi: VERSI, sandar: sandar }).profil || p; } catch (e) { return p; }
+  }
+
   /** Muat profil (sentiasa lengkap). Pulang objek atau null jika tiada. Data rosak dipulihkan daripada sandaran jika ada. */
   function loadPlayer() {
     var s = storan();
@@ -248,7 +255,7 @@
     var mentah;
     try { mentah = s.getItem(KEY); } catch (e) { return null; }
     if (mentah === null) { return null; }
-    try { var p = JSON.parse(mentah); if (sah(p)) { return normalisasi(p); } } catch (e) { /* rosak: cuba sandaran */ }
+    try { var p = JSON.parse(mentah); if (sah(p)) { return normalisasi(migrasi(p, function (lama) { try { s.setItem(KEY_BAK, JSON.stringify(lama)); } catch (x) { /* abaikan */ } })); } } catch (e) { /* rosak: cuba sandaran */ }
     return pulihDariSandaran(s);
   }
 
@@ -268,7 +275,7 @@
   function loadGame(noSlot) {
     var n = slotLain(noSlot), s = storan();
     if (!n) { return loadPlayer(); }
-    try { var p = JSON.parse(s.getItem(modulSlot().kunci(n, 'player'))); return sah(p) ? normalisasi(p) : null; } catch (e) { return null; }
+    try { var p = JSON.parse(s.getItem(modulSlot().kunci(n, 'player'))); return sah(p) ? normalisasi(migrasi(p)) : null; } catch (e) { return null; }
   }
   function saveGame(profil, noSlot) {
     var n = slotLain(noSlot), s = storan();
