@@ -66,7 +66,7 @@
     h += '<p class="note">Hari <b>' + ck.hariSemasa + '/14</b> · ' + (a.isThreeCorneredFight ? '<b class="pru-ng">⚠️ Pertandingan 3-penjuru</b>' : 'Pertandingan 1-lawan-1') + ' · Populariti parti ' + a.partiPopulariti + '%</p>';
     h += '<div class="pru-hari" aria-hidden="true">';
     for (var i = 0; i < 14; i++) { h += '<i class="' + (i < ck.hariSemasa ? 'd' : i === ck.hariSemasa ? 'n' : '') + (i >= 12 ? ' f' : '') + '"></i>'; }
-    h += '</div>' + pecahHtml(ck.pecahan);
+    h += '</div>';                                     // v7.46: tiada bar peratus Anda-vs-lawan semasa kempen (keputusan hanya selepas hari mengundi)
     h += bar('Sokongan pengundi', a.voterSupport, a.voterSupport < 30) + bar('Dana kempen', Math.min(100, a.campaignFunds / 100), a.campaignFunds < 1500, 'RM ' + fmt(a.campaignFunds)) + bar('Tenaga jentera', a.jentera, a.jentera < 40) + bar('Stress', p.stress || 0, (p.stress || 0) >= 60);
     h += '<p class="note" style="margin-top:6px">📜 ' + ck.janji.map(function (j) { return esc(j.ikon + ' ' + j.nama); }).join(' · ') + '</p>';
     if (ck.kejutan) { h += '<button type="button" class="btn btn--primary btn--block" data-pru="kejutan">⚡ Kejutan Kempen hari ke-' + ck.kejutan.hari + ': ' + esc(ck.kejutan.tajuk) + '</button>'; }
