@@ -130,6 +130,78 @@ function binaFitur(f, peringkat) {
   return { d, bbox, titik };
 }
 
+
+/* ---- Lapisan DM: pemudahan BERTOPOLOGI (v7.29) ----
+   Setiap kawasan dahulu dipermudahkan sendiri-sendiri, jadi sempadan yang dikongsi dua kawasan menjadi
+   berbeza lalu timbul celah, jalur dan garisan tidak sepadan. Di sini sempadan dipecah kepada "arka"
+   pada setiap simpang, setiap arka dipermudahkan SEKALI sahaja, dan kedua-dua jiran guna arka yang sama.
+   Ketepatan 0.1 unit (~11 m) supaya DM kecil tidak 'tersangkut' pada grid 110 m. */
+const DM_TOL = 0.25, DM_LUAS_MIN = 0.05;                              // unit (1 unit ~ 110 m); luas dalam unit^2
+function topoDM(features) {
+  const vid = new Map(), V = [];
+  const getV = c => { const [x, y] = unjur(c), X = Math.round(x * 10), Y = Math.round(y * 10), k = X + ',' + Y; let i = vid.get(k); if (i === undefined) { i = V.length; V.push([X, Y]); vid.set(k, i); } return i; };
+  const sen = [];                                                      // sen[f] = [ [gelang vertex-id ...] ... ] (gelang pertama setiap poligon = luar)
+  features.forEach((ft, fi) => {
+    sen[fi] = [];
+    if (!ft.geometry) { return; }
+    const polis = ft.geometry.type === 'Polygon' ? [ft.geometry.coordinates] : ft.geometry.coordinates;
+    polis.forEach((p, pi) => p.forEach((r, ri) => {
+      let g = r.map(getV); g = g.filter((v, k) => k === 0 || v !== g[k - 1]);
+      if (g.length > 1 && g[0] === g[g.length - 1]) { g.pop(); }
+      if (g.length >= 3) { sen[fi].push({ pi, luar: ri === 0, g }); }
+    }));
+  });
+  const kunciSisi = (a, b) => a < b ? a + '_' + b : b + '_' + a;
+  const pemilik = new Map();
+  sen.forEach((ls, fi) => ls.forEach(({ g }) => { for (let i = 0; i < g.length; i++) { const k = kunciSisi(g[i], g[(i + 1) % g.length]); let s = pemilik.get(k); if (!s) { s = new Set(); pemilik.set(k, s); } s.add(fi); } }));
+  const tanda = (a, b) => Array.from(pemilik.get(kunciSisi(a, b))).sort((x, y) => x - y).join(',');
+  const arka = new Map();                                              // kunci kanonik -> vertex-id dipermudahkan (arah kanonik)
+  const kanon = ids => {
+    const n = ids.length; let balik = false;
+    if (ids[0] > ids[n - 1]) { balik = true; } else if (ids[0] === ids[n - 1] && n > 2 && ids[1] > ids[n - 2]) { balik = true; }
+    const c = balik ? ids.slice().reverse() : ids; return { c, balik, kunci: c.join(',') };
+  };
+  const ptsUnit = ids => ids.map(i => V[i]);
+  const ringkas = ids => { const t = dp(ptsUnit(ids), DM_TOL * 10); const set = new Set(t.map(p => p[0] + ',' + p[1])); return ids.filter(i => set.has(V[i][0] + ',' + V[i][1])); };
+  const hasil = features.map(() => ({ bahagian: {}, bbox: [Infinity, Infinity, -Infinity, -Infinity] }));
+  sen.forEach((ls, fi) => {
+    const bag = {};                                                    // poligon -> [laluan]
+    ls.forEach(({ pi, luar, g }) => {
+      const n = g.length, sig = []; for (let i = 0; i < n; i++) { sig.push(tanda(g[i], g[(i + 1) % n])); }
+      let nod = []; for (let i = 0; i < n; i++) { if (sig[(i - 1 + n) % n] !== sig[i]) { nod.push(i); } }
+      let kitaran = [];                                                // urutan vertex-id gelang yang dipermudahkan
+      const arkaUntuk = ids => { const k = kanon(ids); if (!arka.has(k.kunci)) { arka.set(k.kunci, ringkas(k.c)); } const r = arka.get(k.kunci); return k.balik ? r.slice().reverse() : r; };
+      if (!nod.length) {                                               // gelang tertutup tanpa simpang: mula pada id terkecil, arah kanonik
+        let m = 0; for (let i = 1; i < n; i++) { if (g[i] < g[m]) { m = i; } }
+        let r = g.slice(m).concat(g.slice(0, m)); if (r[1] > r[n - 1]) { r = [r[0]].concat(r.slice(1).reverse()); }
+        const k = r.join('~'); if (!arka.has(k)) { arka.set(k, ringkas(r.concat([r[0]])).slice(0, -1)); }
+        kitaran = arka.get(k);
+      } else {
+        for (let a = 0; a < nod.length; a++) {
+          const i = nod[a], j = nod[(a + 1) % nod.length], ids = [];
+          for (let k = i; ; k = (k + 1) % n) { ids.push(g[k]); if (k === j && ids.length > 1) { break; } if (ids.length > n + 1) { break; } }
+          if (nod.length === 1) { ids.push(g[i]); }
+          kitaran = kitaran.concat(arkaUntuk(ids).slice(0, -1));
+        }
+      }
+      if (kitaran.length < 3) { kitaran = g; }                          // runtuh: guna titik asal
+      const pt = kitaran.map(i => V[i]); let l = 0; for (let i = 0; i < pt.length; i++) { const a = pt[i], b = pt[(i + 1) % pt.length]; l += a[0] * b[1] - b[0] * a[1]; }
+      if (!luar && Math.abs(l) / 2 / 100 < DM_LUAS_MIN) { return; }      // lubang terlalu kecil dibuang
+      (bag[pi] = bag[pi] || []).push(pt);
+    });
+    const bb = hasil[fi].bbox; let d = '';
+    Object.keys(bag).forEach(k => bag[k].forEach(pt => {
+      const f1 = v => { const t = (Math.round(v) / 10).toFixed(1); return t.endsWith('.0') ? t.slice(0, -2) : t; };
+      d += 'M' + f1(pt[0][0]) + ' ' + f1(pt[0][1]) + 'l'; const rel = [];
+      for (let i = 1; i < pt.length; i++) { rel.push(f1(pt[i][0] - pt[i - 1][0]) + ' ' + f1(pt[i][1] - pt[i - 1][1])); }
+      d += rel.join(' ') + 'z';
+      pt.forEach(p => { bb[0] = Math.min(bb[0], p[0] / 10); bb[1] = Math.min(bb[1], p[1] / 10); bb[2] = Math.max(bb[2], p[0] / 10); bb[3] = Math.max(bb[3], p[1] / 10); });
+    }));
+    hasil[fi].d = d;
+  });
+  return hasil;
+}
+
 /* ---- Demografi ---- */
 const MEDAN = {                                                      // nama dalam fail -> nama ringkas
   area_km2: 'luas', population_total: 'penduduk', nationality_citizen: 'warganegara',
@@ -207,12 +279,13 @@ function utama() {
   meta.dm = {};
   LAPISAN_DM.forEach(L => {
     const gj = JSON.parse(fs.readFileSync(path.join(SUMBER, L.fail), 'utf8')), ada = {}, fitur = [], dmDemo = {}, amaran = [];
-    gj.features.forEach(f => {
+    const topo = topoDM(gj.features);
+    gj.features.forEach((f, fi) => {
       const pr = f.properties, id = pr.kod_dm;
       if (!f.geometry) { amaran.push('tiada geometri ' + id); return; }
       if (ada[id]) { amaran.push('kod_dm berganda ' + id); return; }
       ada[id] = true;
-      const r = binaFitur(f, 'dm'), kodDun = pr.kod_dun ? L.negeri + '_N.' + String(pr.kod_dun).replace(/^N\./, '') : null;      // Wilayah Persekutuan: tiada DUN
+      const r = topo[fi], kodDun = pr.kod_dun ? L.negeri + '_N.' + String(pr.kod_dun).replace(/^N\./, '') : null;      // Wilayah Persekutuan: tiada DUN
       if (kodDun && !demo.dun[kodDun]) { amaran.push('DUN tiada dalam banci: ' + kodDun + ' (' + id + ')'); }
       maksX = Math.max(maksX, r.bbox[2]); maksY = Math.max(maksY, r.bbox[3]);
       fitur.push({ id, nama: pr.daerah_mengundi, negeri: L.negeri, parlimen: pr.kod_parlimen, dun: kodDun, bbox: r.bbox, d: r.d });
