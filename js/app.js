@@ -349,7 +349,7 @@
     if (!demografik) { setError('umur', 'Umur dan jantina tidak sah.'); el.umur.focus(); return; }
 
     var ahliEl = document.getElementById('s-ahli');
-    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan, avatar: avatarTerpilih(), sayap: sayapTerpilih(), tahunAhli: ahliEl ? ahliEl.value : 0 });
+    var profil = S.buildPlayerProfile({ nama: v.nama, demografik: demografik, cawangan: state.cawangan, avatar: avatarTerpilih(), sayap: sayapTerpilih(), difficultyLevel: (el.form.querySelector('input[name="kesukaran"]:checked') || {}).value, tahunAhli: ahliEl ? ahliEl.value : 0 });
     var hasil = S.savePlayer(profil);
     if (!hasil.ok) { el.formError.textContent = hasil.ralat; return; }
 
@@ -914,7 +914,7 @@
     var st = E.getStatusModul(p), f = st.fokus, h = '';
     h += '<div class="banner ' + (f.fasa === 'pemilihan' ? 'banner--gold' : '') + '"><strong>' + esc(p.tahun + ': ' + f.tajuk + (K ? ' · Bulan ' + p.bulan : '')) + '</strong>' + esc(f.fokus.join(' · ')) +
       (f.fasa === 'pemilihan' ? '' : '. Pertandingan jawatan seterusnya pada ' + f.pemilihanBerikutnya + '.') + '</div>';
-    h += PUIh(p, 'pemilihan') + bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
+    h += PUIh(p, 'pemilihan') + bannerDisiplin(p) + bannerUndiTP(p) + bannerTransisi(p) + kadBlok(p) + (window.MyPolitikRival ? window.MyPolitikRival.htmlKad(p) : '') + kadEtika(p) + kadJawatan(p) + kadWatak(p) + kadLaluan();
     if (f.fasa !== 'pemilihan') {
       h += '<div class="banner"><strong>Pertandingan jawatan ditutup</strong>Tahun pentadbiran: hanya pemilihan perwakilan tahunan yang dibuka. Pertandingan jawatan dan kempen dibuka semula pada tahun ' + f.pemilihanBerikutnya + '.</div>';
     }

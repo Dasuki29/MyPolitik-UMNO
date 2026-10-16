@@ -1241,6 +1241,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 <!-- INLINE-CSS:END -->
   <link rel="stylesheet" href="css/tema.css">
   <link rel="stylesheet" href="css/tema-index.css">
+  <link rel="stylesheet" href="css/rival.css">
 </head>
 <body>
   <!-- v4.4: Menu utama bergaya kertas undi. Latar: assets/images/menara-dato-onn.jpg (jika ada), kemudian ilustrasi .svg -->
@@ -1450,6 +1451,16 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
             <div class="sayap-grid" id="sayap-grid" role="radiogroup" aria-label="Pilih laluan kerjaya sayap"></div>
             <p class="avatar-hint" id="sayap-hint">Sayap dicadangkan mengikut jantina dan umur anda. Setiap laluan ada kelebihan tersendiri.</p>
             <p class="field__error" id="e-sayap" role="alert"></p>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend><svg class="legend-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9 16H3L12 3Zm0 6v5m0 3v.01"/></svg>Tahap kesukaran</legend>
+            <div class="dif-grid" role="radiogroup" aria-label="Pilih tahap kesukaran">
+              <label class="dif"><input type="radio" name="kesukaran" value="EASY"><b>Mudah</b><span>Stress &minus;25%, perbelanjaan &minus;20%. Pencabar AI pasif.</span></label>
+              <label class="dif"><input type="radio" name="kesukaran" value="NORMAL" checked><b>Biasa</b><span>Seimbang. Pencabar berkempen aktif menjelang musim pemilihan.</span></label>
+              <label class="dif"><input type="radio" name="kesukaran" value="HARDCORE"><b>Hardcore</b><span>Stress +40%, perbelanjaan +20%. Pencabar melobi, memfitnah dan mengagih dana politik.</span></label>
+            </div>
+            <p class="avatar-hint">Tahap kesukaran <b>dikunci</b> selepas anda mendaftar dan tidak boleh ditukar.</p>
           </fieldset>
 
           <fieldset class="form-section">
