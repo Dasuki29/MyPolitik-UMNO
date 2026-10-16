@@ -912,13 +912,6 @@
         if (adaTimur(it.f)) { timur += el; } else { barat += el; }
       });
       lap.garis.forEach(function (f) { var el = '<path class="mpm-garisdun-halo" d="' + f.d + '" vector-effect="non-scaling-stroke"/><path class="mpm-garisdun" d="' + f.d + '" vector-effect="non-scaling-stroke"/>'; if (adaTimur(f)) { timur += el; } else { barat += el; } });
-      if (st.mode === 'negeri') {
-        lap.items.forEach(function (it) {
-          var f = it.f, kg = KOD_GEO_GAME[f.id], def = kg ? M.idxN[kg] : null; if (!def || !def.pendek || f.bbox[2] - f.bbox[0] < 380 || (f.id === '14' || f.id === '16')) { return; }
-          var t = '<text class="mpm-label" x="' + Math.round((f.bbox[0] + f.bbox[2]) / 2) + '" y="' + Math.round((f.bbox[1] + f.bbox[3]) / 2 + 70) + '">' + esc(def.pendek) + '</text>';
-          if (adaTimur(f)) { timur += t; } else { barat += t; }
-        });
-      }
       return '<svg class="mpm-peta" viewBox="' + vb.map(Math.round).join(' ') + '" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Peta poligon ' + esc(lap.tajuk) + '">' +
         '<g>' + barat + '</g><g transform="translate(' + dx + ' 0)">' + timur + '</g>' + ln + '</svg>';
     }
