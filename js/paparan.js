@@ -16,7 +16,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (root) {
   'use strict';
 
-  var CONFIG = { JUMLAH_PARLIMEN: 222, MAJORITI: 112, GABUNG_MS: 400, MAKS_TOAST: 3, MAKS_BIASA: 4, TOAST_MS: 5200, BEBAS_MAKS: 8, KUNCI_LIHAT: 'myPolitik_logLihat' };
+  var CONFIG = { JUMLAH_PARLIMEN: 222, MAJORITI: 112, GABUNG_MS: 400, MAKS_TOAST: 3, MAKS_BIASA: 4, TOAST_MS: 4000, BEBAS_MAKS: 8, KUNCI_LIHAT: 'myPolitik_logLihat' };
   var BULAN = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
   var DUN_NEGERI = { perlis: 15, kedah: 36, kelantan: 45, terengganu: 32, 'pulau pinang': 40, perak: 59, pahang: 42, selangor: 56, 'negeri sembilan': 36, melaka: 28, johor: 56, sabah: 73, sarawak: 82 };   // bilangan kerusi DUN dipilih (anggaran)
 
@@ -63,6 +63,9 @@
     var semua = Array.prototype.filter.call(st.children, function (x) { return x.classList.contains('pp-toast--impak') === t.classList.contains('pp-toast--impak'); });
     while (semua.length > maks) { buangToast(semua.shift()); }
     var timer = setTimeout(function () { buangToast(t); }, ms);
+    var x = dok().createElement('button');                                  // butang tutup kecil (kanan atas)
+    x.type = 'button'; x.className = 'pp-toast__x'; x.setAttribute('aria-label', 'Tutup notifikasi'); x.textContent = '\u2715';
+    t.appendChild(x);
     t.addEventListener('click', function () { clearTimeout(timer); buangToast(t); });
   }
   /** Mesej biasa (serasi dengan toast(teks, jenis) lama). */
@@ -72,7 +75,7 @@
     t.className = 'toast pp-toast' + (jenis === 'ok' ? ' toast--success' : jenis === 'ralat' ? ' toast--danger' : '');
     t.setAttribute('role', jenis === 'ralat' ? 'alert' : 'status');
     t.textContent = teks;
-    letak(t, jenis === 'ralat' ? 6500 : CONFIG.TOAST_MS - 700);
+    letak(t, jenis === 'ralat' ? 5500 : CONFIG.TOAST_MS - 500);
   }
   /** Toast impak: tajuk + chip warna. */
   function toastImpak(tajuk, chip) {
