@@ -587,15 +587,29 @@
     usul.pilihan = { peranan: peranan, pendirian: pendirian };
     usul.keputusan = { lulus: hasil.lulus, sokongan: hasil.sokongan, hadir: hasil.hadir, undiSokong: hasil.undiSokong, undiBantah: hasil.undiBantah, padan: kesan.padan, ip: kesan.ip, reputasi: kesan.reputasi };
 
-    var r = S.applyEffects({ ap: -CONFIG.KOS_AP[peranan], ip: kesan.ip, reputasi: kesan.reputasi }, {
-      patch: { mesyuarat: ms },
+    // v7.54: usul isu tempatan (Sembang Warung) yang LULUS menyelesaikan isu itu pada papan Isu Tempatan; akar umbi +3.
+    var patchUsul = { mesyuarat: ms }, kesetiaanUsul = null, isuSelesai = null;
+    if (hasil.lulus && usul.sumber === 'sembang_warung' && Array.isArray(p.isu)) {
+      var kodIsu = String(usul.kod || '').replace(/^isu_/, '');
+      var senaraiIsu = p.isu.map(function (x) { return x; }), ix = -1;
+      senaraiIsu.forEach(function (x, n) { if (ix < 0 && x && x.kod === kodIsu && !x.selesai) { ix = n; } });
+      if (ix >= 0) {
+        isuSelesai = senaraiIsu[ix];
+        senaraiIsu[ix] = Object.assign({}, isuSelesai, { selesai: true, cara: 'usul', selesaiTahun: p.tahun, selesaiBulan: p.bulan });
+        patchUsul.isu = senaraiIsu; kesetiaanUsul = { akarUmbi: 3 };
+      }
+    }
+    var kesanUsul = { ap: -CONFIG.KOS_AP[peranan], ip: kesan.ip, reputasi: kesan.reputasi };
+    if (kesetiaanUsul) { kesanUsul.kesetiaan = kesetiaanUsul; }
+    var r = S.applyEffects(kesanUsul, {
+      patch: patchUsul,
       log: { tindakan: 'usul_' + peranan, nama: usul.tajuk + ' (' + peranan + ', ' + pendirian + ')', peringkat: peringkat }
     });
     if (!r.ok) { return r; }
 
     var nama = { pembawa: 'Pembawa', pembahas: 'Pembahas', undi: 'Mengundi' }[peranan];
     var mesej = nama + ' (' + pendirian + '): usul ' + (hasil.lulus ? 'LULUS' : 'DITOLAK') + ' dengan ' + hasil.undiSokong + ' sokong dan ' +
-                hasil.undiBantah + ' bantah. ' + S.ringkasPerubahan(r.perubahan) + '.';
+                hasil.undiBantah + ' bantah. ' + S.ringkasPerubahan(r.perubahan) + '.' + (isuSelesai ? ' Isu tempatan diselesaikan: ' + isuSelesai.tajuk + ' (Akar Umbi +3).' : '');
     return { ok: true, mesej: mesej, keputusan: usul.keputusan, usul: usul, perubahan: r.perubahan, profil: r.profil };
   }
 

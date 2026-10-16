@@ -88,6 +88,24 @@
     { id: 'perumahan',   ikon: '🏠', nama: 'Rumah mampu milik', sesuai: { URBAN: 3, MIXED: 2, RURAL: 1 }, kosBulan: 3000, ingkar: 0.50 },
     { id: 'pertanian',   ikon: '🌱', nama: 'Pertanian & kebajikan petani', sesuai: { RURAL: 3, MIXED: 1.5, URBAN: 0 }, kosBulan: 1500, ingkar: 0.30 }
   ];
+  /** v7.54: janji manifesto menyelesaikan isu tempatan (papan Isu Tempatan) yang berkaitan apabila kemajuan janji mencapai ambang puas (60%). */
+  var ISU_JANJI = {
+    jalan_air: ['jalan_berlubang', 'air_terputus', 'longkang_tersumbat', 'lampu_jalan', 'dewan_usang'],
+    kerja_belia: ['kerja_belia'], klinik_warga: ['bantuan_lewat'], harga_barang: ['harga_barang']
+  };
+  function selesaiIsuJanji() {
+    var p = S().loadPlayer(), pru = p && getPRU(p), m = pru && pru.manifesto;
+    if (!p || !m || !Array.isArray(p.isu) || !p.isu.length) { return []; }
+    var siap = {};
+    (m.ids || []).forEach(function (id) { if ((m.kemajuan[id] || 0) >= 60) { (ISU_JANJI[id] || []).forEach(function (k) { siap[k] = id; }); } });
+    var tajuk = [], isu = p.isu.map(function (x) {
+      if (x && !x.selesai && siap[x.kod]) { tajuk.push(x.tajuk); return Object.assign({}, x, { selesai: true, cara: 'manifesto', selesaiTahun: p.tahun, selesaiBulan: p.bulan }); }
+      return x;
+    });
+    if (!tajuk.length) { return []; }
+    S().applyEffects({ kesetiaan: { akarUmbi: Math.min(6, tajuk.length * 2) } }, { kiraTindakan: false, patch: { isu: isu }, log: { tindakan: 'isu_selesai', nama: 'Isu tempatan selesai (manifesto): ' + tajuk.join(', '), peringkat: 'ahli' } });
+    return tajuk;
+  }
   function janjiId(id) { for (var i = 0; i < JANJI.length; i++) { if (JANJI[i].id === id) { return JANJI[i]; } } return null; }
 
   /* tindakan kempen. gain = [min,max]; sasaran = pengganda profil */
@@ -663,14 +681,15 @@
     var p2 = S().loadPlayer(), pru2 = getPRU(p2);
     pru2.manifesto.kemajuan[id] = clamp((pru2.manifesto.kemajuan[id] || 0) + 34, 0, 100);
     simpanPRU(pru2, {});
-    return { ok: true, mesej: j.nama + ': kemajuan ' + pru2.manifesto.kemajuan[id] + '%. (-RM ' + kos.toLocaleString('ms-MY') + ')' };
+    var isuSiap = selesaiIsuJanji();
+    return { ok: true, mesej: j.nama + ': kemajuan ' + pru2.manifesto.kemajuan[id] + '%. (-RM ' + kos.toLocaleString('ms-MY') + ')' + (isuSiap.length ? ' Isu tempatan diselesaikan: ' + isuSiap.join(', ') + '.' : '') };
   }
   function prosesJanji(p, pru, o) {
     var m = pru.manifesto, ev = [], Kb = modul('MyPolitikKabinet', 'kabinet.js');
     if (!m || m.dinilai) { return ev; }
     var r = rng(o), role = Kb && Kb.getKabinet ? Kb.getKabinet(p).hasGovernmentRole : false;
     if (role) { m.ids.forEach(function (id) { m.kemajuan[id] = clamp((m.kemajuan[id] || 0) + 3, 0, 100); }); }     // pentadbir menyumbang kemajuan bulanan
-    if (idx(p) - m.sejakIdx < CONFIG.BULAN_NILAI_JANJI) { simpanPRU(pru, {}); return ev; }
+    if (idx(p) - m.sejakIdx < CONFIG.BULAN_NILAI_JANJI) { simpanPRU(pru, {}); if (role) { var sisu = selesaiIsuJanji(); if (sisu.length) { ev.push({ jenis: 'isu_selesai', mesej: 'Isu tempatan diselesaikan melalui manifesto: ' + sisu.join(', ') + '.' }); } } return ev; }
     var kekal = 0, ingkar = 0, kes = { ip: 0, reputasi: 0, kesetiaan: { akarUmbi: 0 } }, ringkas = [];
     m.ids.forEach(function (id) {
       var j = janjiId(id), k = m.kemajuan[id] || 0, puas = k >= 60 || (k >= 30 && r() > j.ingkar);
