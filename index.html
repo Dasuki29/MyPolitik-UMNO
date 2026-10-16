@@ -492,7 +492,8 @@ body.has-bottom-nav { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-i
   font-size: .7rem;
 }
 /* Hierarki jawatan */
-.badge-office--ahli        { --badge-c1: #3A3F4C; --badge-c2: #2A2E38; }
+.badge-office--ahli        { --badge-c1: #E4E8F2; --badge-c2: #E4E8F2; --badge-fg: #111; border: 2px solid #111; }   /* v7.19: kontras pada latar putih */
+.badge-office--ahli::before { background: #3A3F4C; color: #fff; }
 .badge-office--cawangan    { --badge-c1: #2B6CB0; --badge-c2: #1E4E82; --badge-fg: #fff; }
 .badge-office--bahagian    { --badge-c1: #2F9E6B; --badge-c2: #1F7550; --badge-fg: #fff; }
 .badge-office--mt          { --badge-c1: #7A4DD8; --badge-c2: #5A34A8; --badge-fg: #fff; }
