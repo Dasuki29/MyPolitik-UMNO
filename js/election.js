@@ -75,8 +75,8 @@
     IP_SKALA: { cawangan: 120, bahagian: 250, pusat: 450 },  // IP sebanyak ini = skor IP penuh (100) pada peringkat itu
     MENANG_IP: { jawatan: 20, perwakilan: 10 },
     KALAH_IP: { jawatan: -5, perwakilan: -3 },
-    MENANG_IP_PERINGKAT: { cawangan: 20, bahagian: 30, pusat: 50 },   // jawatan
-    KALAH_IP_PERINGKAT: { cawangan: -5, bahagian: -8, pusat: -10 },
+    MENANG_IP_PERINGKAT: { cawangan: 20, bahagian: 30, pusat: 50, sayap_cawangan: 20, sayap_bahagian: 30 },   // jawatan
+    KALAH_IP_PERINGKAT: { cawangan: -5, bahagian: -8, pusat: -10, sayap_cawangan: -5, sayap_bahagian: -8 },
     BONUS_SAYAP: 8,                      // kekuatan tambahan dalam pertandingan sayap sendiri
     ANGGARAN_ULANGAN: 300,               // bilangan larian simulasi pengundian
     // Berat kekuatan calon (jumlah setiap peringkat = 1)
@@ -281,7 +281,7 @@
       J.katalogUntuk(p).forEach(function (d) {
         var k = J.semakKelayakan(p, d);
         tambah({
-          kod: d.kod, jenis: 'jawatan', jawatan: d.jawatan, peringkat: d.peringkat, kumpulan: d.kumpulan, sayap: d.sayap,
+          kod: d.kod, jenis: 'jawatan', jawatan: d.jawatan, peringkat: peringkatPemilihan(d), kumpulan: d.kumpulan, sayap: d.sayap,
           kerusi: d.kerusi, kesukaran: d.kesukaran, pangkat: d.pangkat, ipPerlu: d.ipMin,
           pertahan: !!k.pertahan, terbuka: k.terbuka, sebab: k.sebab
         });
@@ -292,6 +292,8 @@
 
   /* ---- Takwim bulanan (js/calendar.js, pilihan) ---- */
   function kalendar() { var g = typeof globalThis !== 'undefined' ? globalThis : null; return g && g.MyPolitikCalendar ? g.MyPolitikCalendar : null; }
+  /** v7.27: jawatan sayap Cawangan/Bahagian dipilih dalam MESYUARAT SAYAP (sayap_cawangan / sayap_bahagian), bukan mesyuarat induk. Ketua Sayap Pusat kekal di PAU. */
+  function peringkatPemilihan(d) { return d.kumpulan === 'sayap' && (d.peringkat === 'cawangan' || d.peringkat === 'bahagian') ? 'sayap_' + d.peringkat : d.peringkat; }
   function tetingkapPeringkat(p, peringkat) {
     var K = kalendar();
     return K ? K.getTetingkap(peringkat === 'pusat' ? 'pau' : peringkat, p.bulan) : null;

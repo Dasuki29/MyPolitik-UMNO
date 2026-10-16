@@ -33,7 +33,7 @@
   var BIASA = 'Ahli Biasa';
   var SAYAP = ['pemuda', 'puteri', 'wanita'];
   var NAMA_SAYAP = { pemuda: 'Pemuda', puteri: 'Puteri', wanita: 'Wanita' };
-  var LABEL_PERINGKAT = { cawangan: 'Cawangan', bahagian: 'Bahagian', pusat: 'Pusat' };
+  var LABEL_PERINGKAT = { cawangan: 'Cawangan', bahagian: 'Bahagian', pusat: 'Pusat', sayap_cawangan: 'Sayap Cawangan', sayap_bahagian: 'Sayap Bahagian' };
 
   /* ------------------------------------------------------------------------
      KATALOG. ipMin dan pangkatMin ialah andaian permainan, boleh diubah di sini.
