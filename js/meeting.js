@@ -251,7 +251,7 @@
     var g = pegangan(p);
     if (peringkat === 'bahagian') {
       return (g.pw.sah || g.exB.sah || (p.perwakilan && p.perwakilan.g10 === p.tahun)) ? { ok: true }
-        : { ok: false, sebab: 'Hanya Perwakilan Cawangan atau G10 sayap tahun ' + p.tahun + ' yang terpilih dan pemegang jawatan Bahagian/Pusat boleh hadir. Mandat tahun lepas sudah luput.' };
+        : { ok: false, sebab: 'Hanya Perwakilan Cawangan atau G10 sayap tahun ' + p.tahun + ' yang terpilih, Ketua Cawangan dan pemegang jawatan Bahagian/Pusat boleh hadir. Mandat tahun lepas sudah luput.' };
     }
     return (g.pp.sah || g.exP.sah) ? { ok: true }
       : { ok: false, sebab: 'Hanya Perwakilan Bahagian tahun ' + p.tahun + ' yang terpilih, Ketua Bahagian dan pemegang jawatan Pusat boleh hadir PAU.' };

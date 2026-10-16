@@ -135,7 +135,7 @@
   function exOfficio(p, aras) {
     var senarai = getJawatan(p);
     if (aras === 'bahagian') {
-      var h = senarai.filter(function (j) { return j.peringkat === 'bahagian' || j.peringkat === 'pusat'; })[0];
+      var h = senarai.filter(function (j) { return j.peringkat === 'bahagian' || j.peringkat === 'pusat' || j.kod === 'ketua_cawangan'; })[0];   // v7.51: Ketua Cawangan hadir Mesyuarat Bahagian secara ex-officio
       return h ? { sah: true, sumber: h.jawatan } : { sah: false };
     }
     var h2 = senarai.filter(function (j) { return j.peringkat === 'pusat' || j.kod === 'ketua_bahagian' || (j.kod === 'lama' && /Ketua Bahagian/.test(j.jawatan)); })[0];
@@ -193,7 +193,7 @@
       return { terbuka: false, sebab: 'Menangi jawatan Ketua ' + NAMA_SAYAP[d.sayap] + ' Cawangan dahulu (pertandingan menentang calon NPC di Cawangan).' };
     }
     if (d.perluBahagian && !(perwakilanSah(p, 'cawangan').layak)) {
-      return { terbuka: false, sebab: 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu (atau pegang jawatan Bahagian/Pusat).' };
+      return { terbuka: false, sebab: 'Menangi Perwakilan Cawangan tahun ' + p.tahun + ' dahulu (atau pegang jawatan Ketua Cawangan/Bahagian/Pusat).' };
     }
     if (d.perluPAU && !(perwakilanSah(p, 'bahagian').layak)) {
       return { terbuka: false, sebab: 'Perlu Perwakilan Bahagian ke PAU tahun ' + p.tahun + ' (atau Ketua Bahagian/pemegang jawatan Pusat).' };
