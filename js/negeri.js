@@ -434,7 +434,9 @@
 
   function htmlKad(p) {
     if (!p || !ctx.aktif(p)) { return ''; }
-    var st = status(p), bp = st.bp, h = '<div class="card pp-negeri" data-b="' + ctx.id + '"><h3>Badan Perhubungan UMNO ' + esc(st.negeri) + '</h3>';
+    var st = status(p), bp = st.bp;
+    if (!(st.layak && !st.sayaPresiden) && !menunggu(p) && !st.sayaPengerusi) { return ''; }      // v7.40: tiada tindakan untuk pemain: kad disembunyikan (maklumat ada dalam Struktur)
+    var h = '<div class="card pp-negeri" data-b="' + ctx.id + '"><h3>Badan Perhubungan UMNO ' + esc(st.negeri) + '</h3>';
     h += '<p class="note">Pengerusi: ' + esc(bp.pengerusi.nama) + (bp.pengerusi.pemain ? ' (anda)' : '') + '. Senarai penuh pemimpin ada dalam <b>Struktur</b>.</p>';
     if (st.layak && !st.sayaPresiden) {
       h += '<div class="kv"><span>Kedekatan dengan Presiden</span><b>' + bp.dekat + '%</b></div><div class="rv-m"><i class="a" style="width:' + bp.dekat + '%"></i><i class="b" style="width:' + (100 - bp.dekat) + '%"></i></div>';
