@@ -1,5 +1,5 @@
-/* Nusa Politik service worker (v7.8): network-first supaya sentiasa dapat versi terkini; cache hanya sebagai sandaran luar talian. */
-var VERSI = 'nusa-v7.8';
+/* Nusa Politik service worker (v7.25): network-first supaya sentiasa dapat versi terkini; cache hanya sebagai sandaran luar talian. */
+var VERSI = 'nusa-v7.25';
 var ASAS = ['index.html', 'dashboard.html', 'manifest.webmanifest', 'assets/images/favicon.svg', 'assets/images/icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSI).then(function (c) { return c.addAll(ASAS); }).then(function () { return self.skipWaiting(); }));

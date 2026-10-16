@@ -20,12 +20,12 @@
   'use strict';
 
   var MAKS = 5, INDEKS = 'myPolitik_slot_aktif';
-  var KANON = { player: 'myPolitik_player', events: 'myPolitik_events', tutorial: 'myPolitik_tutorial' };
+  var KANON = { player: 'myPolitik_player', player_bak: 'myPolitik_player_bak', events: 'myPolitik_events', tutorial: 'myPolitik_tutorial' };
   var JENIS = Object.keys(KANON);
 
   function S() { try { return root.localStorage || null; } catch (e) { return null; } }
   function kunciSlot(n, j) { return 'myPolitik_slot' + n + '_' + j; }
-  function sahNo(n) { n = parseInt(n, 10); return n >= 1 && n <= MAKS ? n : 0; }
+  function sahNo(n) { if (typeof n === 'string') { n = n.replace(/^slot_/i, ''); } n = parseInt(n, 10); return n >= 1 && n <= MAKS ? n : 0; }     // v7.25: terima 'slot_1' … 'slot_5'
 
   function aktif() {
     var s = S(); if (!s) { return 1; }
@@ -86,5 +86,5 @@
     return { ok: true };
   }
 
-  return { MAKS: MAKS, aktif: aktif, senarai: senarai, ringkasan: ringkasan, slotKosong: slotKosong, aktifkan: aktifkan, padam: padam };
+  return { MAKS: MAKS, nombor: sahNo, kunci: kunciSlot, aktif: aktif, senarai: senarai, ringkasan: ringkasan, slotKosong: slotKosong, aktifkan: aktifkan, padam: padam };
 });
