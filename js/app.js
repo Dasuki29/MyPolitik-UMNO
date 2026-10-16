@@ -1346,6 +1346,8 @@
         h += '<p class="note"><strong>' + esc(s.nama) + '</strong>: ' + esc(s.penerangan) + ' Isu yang diperjuangkan:</p><ul class="org-isu">' + s.isu.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' +
           OG.PERINGKAT.map(function (k) { return blok(s.peringkat[k]); }).join('');
       }
+      var NGs = W.MyPolitikNegeri;
+      if (NGs) { h += tab === 'induk' ? NGs.htmlStruktur(p) : (NGs.sayap.aktif(p) && p.sayap === tab ? NGs.sayap.htmlStruktur(p) : ''); }
       if (st.ahli) {
         h += '<p class="note"><b>Ahli Cawangan anda mengikut kumpulan:</b> Induk (lelaki atas 40) ' + fmt(st.ahli.induk) + ' · Pemuda (lelaki bawah 40) ' + fmt(st.ahli.pemuda) + ' · Puteri (perempuan bawah 40) ' + fmt(st.ahli.puteri) + ' · Wanita (perempuan atas 40) ' + fmt(st.ahli.wanita) +
           (st.ahli.langsung ? '' : '. Angka ini anggaran daripada data jantina dan umur (andaian kedua-duanya tidak bersandar)') + '.</p>';
@@ -1485,6 +1487,26 @@
   $('btn-simpan').addEventListener('click', simpan);
 
   /* ---------- Mula ---------- */
+  /** Sumber nama bahagian (Parlimen) bagi negeri pemain; Wilayah Persekutuan (KL, Putrajaya, Labuan) dikira satu negeri. */
+  function sediaNamaBahagian() {
+    var G = W.MyPolitikGeo, NGs = W.MyPolitikNegeri; if (!G || !NGs || !NGs.setSumberBahagian) { return; }
+    var nz = function (x) { return String(x || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
+    G.muat('parlimen').then(function () {
+      var fs = G.getFitur('parlimen'), cache = {};
+      NGs.setSumberBahagian(function (p) {
+        var k = nz(p.negeri) + '|' + nz(p.bahagian); if (cache[k]) { return cache[k]; }
+        var wp = /kuala lumpur|putrajaya|labuan|wilayah/i.test(p.negeri || ''), kod = null;
+        var sendiri = fs.filter(function (f) { return nz(f.nama).indexOf(nz(p.bahagian)) >= 0 || (nz(p.bahagian) && nz(p.bahagian).indexOf(nz(f.nama)) >= 0); })[0];
+        if (sendiri) { kod = sendiri.negeri; }
+        var WPK = ['14', '15', '16'];
+        var senarai = fs.filter(function (f) { return kod ? (WPK.indexOf(kod) >= 0 ? WPK.indexOf(f.negeri) >= 0 : f.negeri === kod) : (wp && WPK.indexOf(f.negeri) >= 0); }).map(function (f) { return f.nama; });
+        if (senarai.length) { cache[k] = senarai; }
+        return senarai;
+      });
+      render();
+    }).catch(function () { /* jatuh ke 'Bahagian N' */ });
+  }
+
   function mula() {
     var p = S && S.loadPlayer();
     if (!p) { W.location.replace(INDEX_URL); return; }
@@ -1494,6 +1516,7 @@
     render();
     if (state.tab === 'peta') { muatPeta(); }
     S.subscribe(jadualRender);
+    sediaNamaBahagian();                                             // nama bahagian sebenar untuk NPC Badan Perhubungan
     if (LAT && LAT.aktif()) { LAT.init(); }                          // v7.13: mod Latihan Amir (simpanan berasingan)
     else if (TUT) {                                                  // butang (?) + tutorial kali pertama
       var mulaTut = function () { TUT.init({ profil: p }); };
