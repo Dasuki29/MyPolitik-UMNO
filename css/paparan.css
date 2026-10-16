@@ -1,0 +1,47 @@
+/* Nusa Politik v7.26 — Visual & Scannability Upgrade. Guna pembolehubah tema sedia ada (cerah/gelap). */
+.toast-stack:has(.pp-toast){top:auto;left:auto;right:var(--space-3);bottom:calc(var(--bottom-nav-h,64px) + 66px);width:min(340px,calc(100vw - 24px))}
+@media(min-width:900px){.toast-stack:has(.pp-toast){bottom:74px}}
+.pp-toast{display:block;position:relative;overflow:hidden;animation:ppMasuk .25s ease-out}
+.pp-toast--impak{border-left-color:var(--red,#C8102E)}
+.pp-toast__tajuk{display:block;font-size:.85rem;margin-bottom:.35rem}
+.pp-toast__masa{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--gold,#d4a017);transform-origin:left;animation:ppMasa linear forwards}
+@keyframes ppMasuk{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes ppMasa{to{transform:scaleX(0)}}
+@media(prefers-reduced-motion:reduce){.pp-toast,.pp-toast__masa{animation:none}}
+.pp-chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.pp-chip{font-size:.75rem;font-weight:700;padding:.15rem .5rem;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.pp-chip--g{color:#14994F;background:rgba(20,153,79,.12)}
+.pp-chip--r{color:#D93636;background:rgba(217,54,54,.12)}
+.pp-chip--o{color:#C77700;background:rgba(199,119,0,.14)}
+.pp-loceng{position:fixed;left:12px;bottom:calc(var(--bottom-nav-h,64px) + 68px);z-index:150;width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--bg-elev-3);color:var(--white);box-shadow:var(--shadow);font-size:1.15rem;cursor:pointer}
+@media(min-width:900px){.pp-loceng{bottom:76px;left:20px}}
+.toast-stack:has(.pp-toast) ~ .pp-loceng{}
+.pp-loceng em{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 4px;border-radius:99px;background:#C8102E;color:#fff;font:700 .7rem/20px system-ui;font-style:normal;text-align:center}
+.pp-loceng em[hidden]{display:none}
+.pp-drawer{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+.pp-drawer.is-open{opacity:1;pointer-events:auto}
+.pp-drawer__panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--bg-elev-1,var(--bg-elev-3));color:var(--white);border-left:2px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s}
+.pp-drawer.is-open .pp-drawer__panel{transform:none}
+.pp-drawer__kepala{display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;border-bottom:1px solid var(--border)}
+.pp-drawer__kepala h2{font-size:1rem;margin:0}.pp-drawer__kepala small{opacity:.65;font-weight:400}
+.pp-drawer__kepala button{min-width:40px;min-height:40px;background:none;border:0;color:inherit;font-size:1.1rem;cursor:pointer}
+.pp-drawer__isi{overflow:auto;padding:.8rem 1rem 1.5rem}
+.pp-tapis{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.7rem}
+.pp-tapis button{padding:.3rem .7rem;border-radius:99px;border:1px solid var(--border);background:none;color:inherit;font-size:.78rem;cursor:pointer}
+.pp-tapis button.on{background:var(--red,#C8102E);border-color:var(--red,#C8102E);color:#fff}
+.pp-bulan{display:block;margin:.8rem 0 .3rem;font-size:.68rem;letter-spacing:.08em;opacity:.65}
+.pp-log{padding:.55rem 0;border-bottom:1px solid var(--border);font-size:.85rem}.pp-log .pp-chips{margin-top:.3rem}
+.pp-kosong,.pp-nota{font-size:.8rem;opacity:.8;margin:.4rem 0 0}
+.pp-kad h4{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;margin:.2rem 0 .5rem;font-size:.9rem}
+.pp-kad h4 small{font-weight:400;opacity:.65;font-size:.72rem}.pp-sub{margin-top:1rem!important}
+.pp-stack{position:relative;display:flex;height:26px;border-radius:6px;overflow:hidden;background:rgba(128,128,128,.28)}
+.pp-stack i{display:block;color:#fff;font:700 .68rem/26px system-ui;font-style:normal;text-align:center;overflow:hidden;white-space:nowrap;transition:width .4s}
+.pp-maj{position:absolute;top:-2px;bottom:-2px;width:0;border-left:2px dashed var(--white)}
+.pp-leg{display:flex;flex-wrap:wrap;gap:.2rem .8rem;margin-top:.4rem;font-size:.72rem}
+.pp-leg span::before{content:"";display:inline-block;width:.6rem;height:.6rem;margin-right:.3rem;border-radius:2px;background:var(--c)}
+.pp-pb{margin-bottom:.6rem}.pp-pb__t{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.2rem}
+.pp-pb__b{height:10px;border-radius:99px;background:rgba(128,128,128,.28);overflow:hidden}
+.pp-pb__b i{display:block;height:100%;border-radius:99px;transition:width .4s}
+.pp-live{color:#fff;background:#C8102E;border-radius:4px;padding:0 .35rem;font-size:.62rem;font-weight:700;animation:ppDenyut 1.4s infinite}
+@keyframes ppDenyut{50%{opacity:.5}}
+@media(prefers-reduced-motion:reduce){.pp-live{animation:none}.pp-stack i,.pp-pb__b i,.pp-drawer,.pp-drawer__panel{transition:none}}
