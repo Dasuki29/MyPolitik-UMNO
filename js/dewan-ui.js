@@ -6,8 +6,10 @@
    ========================================================================== */
 (function (W) {
   'use strict';
-  var D = W.MyPolitikDewan, S = W.MyPolitikSave;
-  if (!D || !S) { return; }
+  var D0 = W.MyPolitikDewan, N = W.MyPolitikDUN, S = W.MyPolitikSave, D = D0;
+  if (!D0 || !S) { return; }
+  /** Pilih enjin: Dewan Rakyat (MP/Menteri) atau DUN (ADUN/EXCO); API kedua-duanya sama. */
+  function pilih(p) { D = D0.aktif(p) ? D0 : (N && N.aktif(p) ? N : D0); return D; }
   var BULAN = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
   var WARNA = { BN: '#2D50B8', PH: '#D7263D', PN: '#0B2A5B', LAIN: '#7A808C' };
 
@@ -47,22 +49,22 @@
   /* ---------- Panel ---------- */
   function panel(p) {
     try {
-      var r = D.ringkasan(p);
-      if (!r.aktif) { return '<div class="banner"><strong>Dewan Rakyat</strong>Tab ini terbuka apabila anda menjadi Ahli Parlimen atau Menteri.</div>'; }
+      var r = pilih(p).ringkasan(p), L = r.label || { dewan: 'Dewan Rakyat', usul: 'RUU', ketua: 'kerajaan' };
+      if (!r.aktif) { return '<div class="banner"><strong>Dewan Rakyat</strong>Tab ini terbuka apabila anda menjadi Ahli Parlimen, Menteri, ADUN atau EXCO Negeri.</div>'; }
       var k = r.kerusi, h = '';
-      h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🏛️ Dewan Rakyat</h2>';
+      h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🏛️ ' + esc(L.dewan) + (L.negeri ? ' · ' + esc(L.negeri) : '') + '</h2>';
       if (!k) { return h + '<p class="note">Belum ada keputusan PRU untuk dipaparkan.</p></section>'; }
-      h += '<p class="note">' + esc(r.peranan === 'MP' ? 'Ahli Parlimen' : 'Menteri') + (r.portfolio ? ' · ' + esc(r.portfolio) : '') + ' · ' + (r.kerajaan ? '<b>Kerajaan: BN</b>' : 'Bukan kerajaan BN') + ' · majoriti ' + r.ambang + '/' + k.jumlah + '</p>';
+      h += '<p class="note">' + esc(r.peranan === 'MP' ? 'Ahli Parlimen' : r.peranan === 'ADUN' ? 'ADUN' : r.peranan === 'EXCO' ? 'EXCO Negeri' : 'Menteri') + (r.portfolio ? ' · ' + esc(r.portfolio) : '') + ' · ' + (r.kerajaan ? '<b>Kerajaan: BN</b>' : 'Bukan kerajaan BN') + ' · majoriti ' + r.ambang + '/' + k.jumlah + '</p>';
       h += pecahKerusi(k);
       h += '<p class="note">Kerajaan (BN) <b>' + k.BN + '</b> · PH <b>' + k.PH + '</b> · PN <b>' + k.PN + '</b> · Bebas/lain <b>' + k.LAIN + '</b></p>';
       if (r.kerajaan) { h += bar('Kestabilan gabungan', r.kestabilan, r.kestabilan < 30) + (r.rating !== null ? bar('Penarafan Tadbir Urus', r.rating, r.rating < 30) : ''); }
       h += '<p class="note" style="font-size:.78rem">Simulasi: angka kerusi dianggar daripada keputusan PRU dalam permainan.</p></section>';
 
-      if (r.tp) { h += kadTP(r.tp); }
+      if (r.tp) { h += kadTP(r.tp, L); }
       if (r.soalan) { h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🎤 Waktu Pertanyaan Menteri</h2><p class="note"><b>' + esc(r.soalan.yb) + '</b>: ' + esc(r.soalan.soal) + '</p><button type="button" class="btn btn--primary btn--block" data-dewan="soalan">Jawab Soalan</button></section>'; }
       if (r.undi) { h += kadUndi(r.undi); }
-      else if (r.bolehBentang && r.kerajaan && !r.tp) { h += kadBentang(r.bentang); }
-      else if (!r.bolehBentang) { h += '<section class="card"><p class="note">Hanya Menteri Penuh, Timbalan Perdana Menteri atau Perdana Menteri boleh membentang RUU dan Bajet.</p></section>'; }
+      else if (r.bolehBentang && r.kerajaan && !r.tp) { h += kadBentang(r.bentang, L); }
+      else if (!r.bolehBentang) { h += '<section class="card"><p class="note">' + (r.dun ? 'Hanya EXCO Negeri boleh membentang Enakmen dan Bajet Negeri.' : 'Hanya Menteri Penuh, Timbalan Perdana Menteri atau Perdana Menteri boleh membentang RUU dan Bajet.') + '</p></section>'; }
       if (r.sejarah.length) {
         h += '<section class="card"><h2 class="card__title" style="margin:0 0 4px">📜 Rekod Dewan</h2><ul class="dw-sej">' + r.sejarah.slice().reverse().map(function (x) {
           return '<li>' + esc(BULAN[(x.bulan || 1) - 1] + ' ' + x.tahun) + ': ' + esc(x.tajuk || 'Usul Undi Tidak Percaya') + ' — <span class="' + (x.lulus ? 'dw-lulus' : 'dw-gagal') + '">' + (x.jenis === 'tp' ? (x.lulus ? 'selamat' : 'tumbang') : (x.lulus ? 'lulus' : 'gagal')) + '</span> (' + x.sokong + ')</li>';
@@ -71,10 +73,10 @@
       return h;
     } catch (e) { return ''; }
   }
-  function kadBentang(b) {
-    var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">📑 Bentang RUU &amp; Bajet</h2>';
+  function kadBentang(b, L) {
+    var h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">📑 Bentang ' + esc(L.usul) + ' &amp; Bajet</h2>';
     h += '<ul class="dw-list">';
-    if (b.bajet) { h += btn('bentang', 'bajet', '💰 ' + b.bajet.tajuk, 'Dibentang sekali setahun (bulan 10). Gagal = Tadbir Urus −30%, kestabilan −25%.', true, 'btn--gold'); }
+    if (b.bajet) { h += btn('bentang', 'bajet', '💰 ' + b.bajet.tajuk, 'Dibentang sekali setahun (bulan ' + D.CONFIG.BULAN_BAJET + '). Gagal = Tadbir Urus ' + D.CONFIG.GAGAL_BAJET.rating + '%, kestabilan ' + D.CONFIG.GAGAL_BAJET.kestabilan + '%.', true, 'btn--gold'); }
     b.ruu.forEach(function (x) { h += btn('bentang', x.id, x.tajuk, x.kategoriNama + ' · ' + x.huraian, true); });
     h += '</ul>';
     if (!b.ruu.length) { h += '<p class="note">' + esc(b.sebabRUU) + '</p>'; }
@@ -82,17 +84,16 @@
   }
   function kadUndi(s) {
     var u = s.undi, h = '<section class="card"><h2 class="card__title" style="margin:0 0 4px">🗳️ Undian: ' + esc(u.tajuk) + '</h2>';
-    var jangka = u.sokong + Math.round(u.atas * 0.3);
     h += '<div class="dw-undi"><div>Sokong<b>' + u.sokong + '</b></div><div>Atas pagar<b>' + u.atas + '</b></div><div>Bantah<b>' + u.bantah + '</b></div></div>';
     h += '<p class="note">Perlu <b>' + s.ambang + '</b> sokong · anggaran peluang lulus: <b>' + esc(s.kebarangkalian) + '</b> · lobi berbaki: ' + s.baki + '</p><ul class="dw-list">';
     s.tindakan.forEach(function (t) { h += btn('lobi', t.id, t.nama, t.huraian, t.boleh ? true : t.sebab); });
     h += '</ul><button type="button" class="btn btn--primary btn--block" data-dewan="undi">🗳️ Mula Undian Sekarang</button> <button type="button" class="btn btn--ghost btn--block" data-dewan="tarik">Tarik Balik Usul</button></section>';
     return h;
   }
-  function kadTP(s) {
-    var t = s.tp, h = '<section class="card dw-tp"><h2 class="card__title" style="margin:0 0 4px">⚠️ Usul Undi Tidak Percaya · Hari ' + Math.min(t.hari, s.hariMaks) + '/' + s.hariMaks + '</h2>';
+  function kadTP(s, L) {
+    var t = s.tp, h = '<section class="card dw-tp"><h2 class="card__title" style="margin:0 0 4px">⚠️ Undi Tidak Percaya (' + esc(L.ketua) + ') · Hari ' + Math.min(t.hari, s.hariMaks) + '/' + s.hariMaks + '</h2>';
     h += '<div class="dw-undi"><div>Setia<b>' + t.setia + '</b></div><div>Goyah<b>' + t.goyah + '</b></div><div>Pembangkang<b>' + t.tentang + '</b></div></div>';
-    h += '<p class="note">Perlu <b>' + s.ambang + '</b> undi untuk kekal. Setiap MP goyah boleh dipujuk; sebahagian kecil akan menyokong anda pada hari undian. Hubungan gabungan: ' + s.hubungan + '%.</p><ul class="dw-list">';
+    h += '<p class="note">Perlu <b>' + s.ambang + '</b> undi untuk kekal. Setiap wakil rakyat goyah boleh dipujuk; sebahagian kecil akan menyokong anda pada hari undian. Hubungan gabungan: ' + s.hubungan + '%.</p><ul class="dw-list">';
     s.tindakan.forEach(function (a) { h += btn('tp', a.id, a.nama, a.huraian, a.boleh ? true : a.sebab, a.id === 'bubar' ? 'btn--ghost' : 'btn--primary'); });
     h += '</ul>' + (t.log.length ? '<ul class="dw-sej">' + t.log.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') + '</section>';
     return h;
@@ -111,7 +112,7 @@
     if (!ok) { return; }
     var r = D.undi();
     if (!r.ok) { toast(r.ralat, 'ralat'); return; }
-    await modal({ tajuk: r.lulus ? '✅ Lulus' : '❌ Gagal', isi: '<div class="dw-undi"><div>Sokong<b>' + r.sokong + '</b></div><div>Bantah<b>' + r.bantah + '</b></div><div>Perlu<b>' + D.CONFIG.AMBANG + '</b></div></div><p>' + esc(r.mesej) + '</p>' });
+    await modal({ tajuk: r.lulus ? '✅ Lulus' : '❌ Gagal', isi: '<div class="dw-undi"><div>Sokong<b>' + r.sokong + '</b></div><div>Bantah<b>' + r.bantah + '</b></div><div>Perlu<b>' + (D.ringkasan(S.loadPlayer()).ambang) + '</b></div></div><p>' + esc(r.mesej) + '</p>' });
     segarkan();
   }
   async function tarik() {
@@ -130,6 +131,7 @@
     segarkan();
   }
   async function soalan() {
+    pilih(S.loadPlayer());
     var s = D.soalanSemasa(S.loadPlayer());
     if (!s) { return; }
     function ringkas(j) {
@@ -149,8 +151,8 @@
 
   /* ---------- Selepas bulan berganti ---------- */
   async function selepasBulan(peristiwa) {
-    var s = peristiwa || [];
-    if (s.some(function (e) { return e.jenis === 'dewan_tp'; })) { await modal({ tajuk: '⚠️ Usul Undi Tidak Percaya', isi: '<p>Pembangkang mengemukakan usul undi tidak percaya terhadap kerajaan. Buka tab <b>Dewan Rakyat</b>: anda ada 3 hari untuk mengumpul 112 kerusi.</p>' }); if (U() && U().gotoTab) { U().gotoTab('dewan'); } return true; }
+    var s = peristiwa || []; pilih(S.loadPlayer());
+    if (s.some(function (e) { return e.jenis === 'dewan_tp'; })) { await modal({ tajuk: '⚠️ Usul Undi Tidak Percaya', isi: '<p>' + esc(((s.filter(function (e) { return e.jenis === 'dewan_tp'; })[0] || {}).mesej) || 'Pembangkang mengemukakan usul undi tidak percaya.') + ' Buka tab <b>' + (N && N.aktif(S.loadPlayer()) ? 'DUN' : 'Dewan Rakyat') + '</b>.</p>' }); if (U() && U().gotoTab) { U().gotoTab('dewan'); } return true; }
     if (s.some(function (e) { return e.jenis === 'dewan_soalan'; })) { await soalan(); return true; }
     return false;
   }
@@ -158,10 +160,11 @@
   W.document.addEventListener('click', function (ev) {
     var t = ev.target.closest ? ev.target.closest('[data-dewan]') : null;
     if (!t || t.disabled) { return; }
-    var a = t.getAttribute('data-dewan'), id = t.getAttribute('data-id');
+    var a = t.getAttribute('data-dewan'), id = t.getAttribute('data-id'); pilih(S.loadPlayer());
     if (a === 'bentang') { bentang(id); } else if (a === 'lobi') { lobi(id); } else if (a === 'undi') { mulaUndi(); } else if (a === 'tarik') { tarik(); }
     else if (a === 'tp') { tindakTP(id); } else if (a === 'soalan') { soalan(); }
   });
 
-  W.NusaDewan_UI = { panel: panel, selepasBulan: selepasBulan, soalan: soalan };
+  function guna(p) { return pilih(p); }
+  W.NusaDewan_UI = { guna: guna, panel: panel, selepasBulan: selepasBulan, soalan: soalan };
 })(window);
