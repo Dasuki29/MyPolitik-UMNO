@@ -421,7 +421,7 @@
   }
   function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-  var TABS = ['peta', 'tindakan', 'pemilihan', 'mesyuarat', 'pilihanraya'];
+  var TABS = ['peta', 'tindakan', 'pemilihan', 'mesyuarat', 'dewan', 'pilihanraya'];
   var state = {
     tab: 'peta', kodSimulasi: '', anggaran: {}, mesej: {},
     peta: { status: 'kosong', instance: null, data: null }, renderTerjadual: false
@@ -1040,7 +1040,7 @@
     var id = state.tab, el = $('panel-' + id);
     if (id === 'peta') { return; }
     var fk = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute('data-fk') : null;
-    el.innerHTML = id === 'tindakan' ? panelTindakan(p) : id === 'pemilihan' ? panelPemilihan(p) : id === 'pilihanraya' ? PUIh(p, 'pilihanraya') : panelMesyuarat(p);
+    el.innerHTML = id === 'tindakan' ? panelTindakan(p) : id === 'pemilihan' ? panelPemilihan(p) : id === 'pilihanraya' ? PUIh(p, 'pilihanraya') : id === 'dewan' ? (W.NusaDewan_UI ? W.NusaDewan_UI.panel(p) : '') : panelMesyuarat(p);
     if (fk) { var f = el.querySelector('[data-fk="' + fk.replace(/"/g, '\\"') + '"]'); if (f && !f.disabled) { f.focus({ preventScroll: true }); } }
   }
 
@@ -1050,6 +1050,9 @@
     if (!musim && state.tab === 'pilihanraya') { state.tab = 'tindakan'; }
     state.musimLalu = musim;
     $('tab-pilihanraya').hidden = !musim; $('nav-pilihanraya').hidden = !musim;
+    var dw = !!(W.MyPolitikDewan && W.MyPolitikDewan.aktif(p));                   // v7.55: tab Dewan Rakyat untuk Ahli Parlimen / Menteri
+    if (!dw && state.tab === 'dewan') { state.tab = 'tindakan'; }
+    $('tab-dewan').hidden = !dw; $('nav-dewan').hidden = !dw;
     TABS.forEach(function (t) {
       var b = $('tab-' + t), a = t === state.tab;
       b.setAttribute('aria-selected', String(a)); b.tabIndex = a ? 0 : -1;
@@ -1311,6 +1314,7 @@
     if (W.MyPolitikNegeri) { await tawarkanLobi(W.MyPolitikNegeri); await tawarkanLobi(W.MyPolitikNegeri.sayap); await urusNegeri(W.MyPolitikNegeri); await urusNegeri(W.MyPolitikNegeri.sayap); }   // v7.34/36: lobi & lantikan (induk dan sayap)
     //                                            // v7.34: Presiden/Pengerusi membuat lantikan
     if (W.NusaPRU_UI && W.NusaPRU_UI.selepasBulan) { await W.NusaPRU_UI.selepasBulan(r.peristiwa); }     // v7.3: PRU/PRN & Kabinet
+    if (W.NusaDewan_UI && W.NusaDewan_UI.selepasBulan) { await W.NusaDewan_UI.selepasBulan(r.peristiwa); }     // v7.55: undi tidak percaya & soalan lisan
     if (EV) { await tunjukAcara(EV.janaAcara({ pencetus: 'bulan' })); }       // acara rawak pergantian bulan
   }
 
@@ -1533,6 +1537,6 @@
     }
     if (EV && EV.getTertunggak()) { tunjukAcara(EV.getTertunggak()); }          // acara yang belum dijawab sebelum muat semula                                      // kemas kini masa nyata (juga antara tab pelayar)
   }
-  W.NusaUI = { modal: modal, toast: toast, render: render, esc: esc, fmt: fmt, lapor: urusPeristiwa };   // v7.3: dikongsi dengan js/pru-ui.js
+  W.NusaUI = { modal: modal, toast: toast, render: render, esc: esc, fmt: fmt, lapor: urusPeristiwa, gotoTab: setTab };   // v7.3: dikongsi dengan js/pru-ui.js
   mula();
 })();
