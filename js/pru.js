@@ -237,6 +237,8 @@
     var p = S() && S().loadPlayer();
     if (!p || p.tamat) { return { peristiwa: [] }; }
     var pru = getPRU(p), ev = [], now = idx(p), r = rng(o);
+    var sj = pru.sejarah && pru.sejarah[pru.sejarah.length - 1];                // v7.49: baiki simpanan lama: status ADUN/MP yang kekal selepas tidak bertanding
+    if (pru.status && sj && sj.hasil === 'tidak_bertanding' && (sj.tahun * 12 + sj.bulan) >= ((Number(pru.status.sejakTahun) || 0) * 12 + (Number(pru.status.sejakBulan) || 0)) && !pru.aktif) { pru.status = null; simpanPRU(pru, {}, {}); p = S().loadPlayer(); pru = getPRU(p); }
     var ev2 = prosesJanji(p, pru, o);
     if (ev2.length) { ev = ev.concat(ev2); p = S().loadPlayer(); pru = getPRU(p); }
     if (pru.aktif) { return { peristiwa: ev }; }
@@ -279,6 +281,7 @@
     if (!a) { return { ok: false, ralat: 'Tiada pilihan raya aktif.' }; }
     if (a.fasa === 'kempen' || a.fasa === 'keputusan') { return { ok: false, ralat: 'Kempen sudah bermula.' }; }
     var tarik = a.candidateType !== 'NONE' && a.fasa !== 'isytihar';        // v7.18: menarik diri selepas dicalonkan menjejas reputasi
+    pru.status = null;                                                      // v7.49: tidak bertanding/menarik diri = penggal lama tamat; status ADUN/MP dilucutkan
     var jadi = tamatMusim(pru, p, { jenis: a.candidateType === 'NONE' ? 'NONE' : a.candidateType, hasil: 'tidak_bertanding', kerusi: a.kerusi ? a.kerusi.nama : '' });
     if (tarik) { S().applyEffects({ reputasi: -3 }, { kiraTindakan: false, log: { tindakan: 'pru_tarik', nama: 'Menarik diri selepas dicalonkan', peringkat: 'ahli' } }); }
     var nas = null;
