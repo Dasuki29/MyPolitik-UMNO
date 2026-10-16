@@ -650,6 +650,35 @@
     return loadPartyData(tab ? Object.assign({}, opts, { tab: tab }) : opts);
   }
 
+  /**
+   * v7.24: data SEMUA negeri untuk peta (setiap tab dimuat selari, lalu digabungkan). Jika Sheet bukan berbilang tab,
+   * kembali kepada data tunggal lama. Tab yang gagal dilangkau dan dicatat dalam `amaran`; tab negeri pemain diutamakan
+   * (jika ia gagal, ralat dilontar seperti biasa).
+   */
+  async function loadSemuaNegeri(negeriPemain, opts) {
+    opts = opts || {};
+    var sen = null; try { sen = await loadSenaraiTab(opts); } catch (e) { sen = null; }
+    if (!sen || !sen.tab.length) { return loadPartyData(opts); }
+    var rumah = negeriPemain ? sen.tab.filter(function (t) { return namaNegeriTab(t).toLowerCase() === String(negeriPemain).toLowerCase(); })[0] : null;
+    var hasil = await Promise.all(sen.tab.map(function (t) {
+      return loadPartyData(Object.assign({}, opts, { tab: t })).then(function (d) { return { tab: t, d: d }; }, function (e) { return { tab: t, ralat: e }; });
+    }));
+    var ok = hasil.filter(function (x) { return x.d; });
+    if (rumah && !ok.some(function (x) { return x.tab === rumah; })) { throw hasil.filter(function (x) { return x.tab === rumah; })[0].ralat; }
+    if (!ok.length) { throw new Error('Data negeri tidak dapat dimuatkan.'); }
+    var negeri = [], bahagian = [], amaran = [], jumlah = { negeri: 0, bahagian: 0, dun: 0, cawangan: 0, ahli: 0 };
+    ok.forEach(function (x) {
+      negeri = negeri.concat(x.d.negeri); bahagian = bahagian.concat(x.d.bahagian);
+      Object.keys(jumlah).forEach(function (k) { jumlah[k] += (x.d.jumlah && x.d.jumlah[k]) || 0; });
+      amaran = amaran.concat(x.d.amaran || []);
+    });
+    hasil.filter(function (x) { return !x.d; }).forEach(function (x) { amaran.push('Tab ' + x.tab + ' tidak dapat dimuatkan.'); });
+    bahagian.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+    negeri.sort(function (a, b) { return a.bahagian[0].id < b.bahagian[0].id ? -1 : 1; });
+    var f = ok[0].d;
+    return { source: f.source, sumber: f.sumber, amaran: amaran, dimuatPada: Date.now(), negeri: negeri, bahagian: bahagian, jumlah: jumlah };
+  }
+
   function getFallbackData() { return rowsToHierarchy(fallbackRows()); }
 
   /* ------------------------------------------------------------------------
@@ -971,6 +1000,7 @@
     namaNegeriTab: namaNegeriTab,
     loadSenaraiTab: loadSenaraiTab,
     loadUntukNegeri: loadUntukNegeri,
+    loadSemuaNegeri: loadSemuaNegeri,
     fetchSheetCSV: fetchSheetCSV,
     parseCSV: parseCSV,
     teksKeBaris: teksKeBaris,
