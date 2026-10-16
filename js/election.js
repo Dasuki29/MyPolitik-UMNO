@@ -463,6 +463,8 @@
     var bil = Math.max(4, kerusi + CONFIG.PESAING_TAMBAHAN);
     var aras = (CONFIG.ARAS_PESAING[String(peringkat).replace(/^sayap_/, '')] || 0) + (d.kesukaran || 0) * CONFIG.GANDA_KESUKARAN;
     var calon = janaPesaing(p, d.kod, bil - 1, aras);
+    var gR = typeof globalThis !== 'undefined' ? globalThis : null, RVL = gR && gR.MyPolitikRival, bp = RVL && RVL.bonusPesaing ? RVL.bonusPesaing(p, peringkat, d.jenis) : null;      // v7.28: pencabar utama menguatkan calon lawan terkuat
+    if (bp && calon.length) { var kuat = calon[0]; calon.forEach(function (c) { if (c.kekuatan > kuat.kekuatan) { kuat = c; } }); kuat.kekuatan = clamp(kuat.kekuatan + bp.bonus, 8, 99); kuat.nama = bp.nama; }
     calon.push({ nama: p.nama, pemain: true, kekuatan: kekuatanPemain(p, st, peringkat, d) });
     return { calon: calon, kerusi: kerusi, pemilih: bilPemilih(p, peringkat, opts) };
   }

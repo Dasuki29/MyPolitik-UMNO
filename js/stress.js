@@ -68,7 +68,7 @@
 
   function SY() { return root.MyPolitikSayap || (typeof require === 'function' ? tryReq('./sayap.js') : null); }
   /** v5.9: beban bulanan selepas kelebihan sayap (Pemuda +10%, Wanita -20%). */
-  function bebanEfektif(p) { var b = bebanJawatan(p), y = SY(); return y ? y.bebanStres(p, b) : b; }
+  function bebanEfektif(p) { var b = bebanJawatan(p), y = SY(); b = y ? y.bebanStres(p, b) : b; var R = root.MyPolitikRival; return R ? Math.round(b * R.pengali(p, 'stress')) : b; }   // v7.28: tahap kesukaran
   function pemulihanEfektif(p) { var y = SY(); return CONFIG.PEMULIHAN + (y ? y.pemulihanStres(p) : 0); }
 
   function umur(p) { var h = H(); return h && h.umurSemasa ? h.umurSemasa(p) : null; }
@@ -104,7 +104,8 @@
   function laras(d) {
     var s = S(), p = s && s.loadPlayer();
     if (!p) { return { ok: false }; }
-    var n = nilai(p), ns = clamp(n.stress + (Number(d && d.stress) || 0), 0, 100), nk = clamp(n.kesihatan + (Number(d && d.kesihatan) || 0), 0, 100);
+    var ds = Number(d && d.stress) || 0, R = root.MyPolitikRival; if (R && ds > 0) { ds = Math.round(ds * R.pengali(p, 'stress')); }   // v7.28: hanya kenaikan stress dilaras
+    var n = nilai(p), ns = clamp(n.stress + ds, 0, 100), nk = clamp(n.kesihatan + (Number(d && d.kesihatan) || 0), 0, 100);
     var r = s.applyEffects({}, { kiraTindakan: false, patch: { stress: ns, kesihatan: nk } });
     return { ok: !!(r && r.ok), stress: ns, kesihatan: nk };
   }

@@ -317,6 +317,9 @@
     var MIS = muat('MyPolitikMisi', 'misi.js');                                                 // v6.7: Undi Tidak Percaya sayap
     if (MIS && MIS.prosesBulan) { peristiwa = peristiwa.concat(MIS.prosesBulan().peristiwa || []); }
 
+    var RVL = muat('MyPolitikRival', 'rival.js');                                               // v7.28: AI pencabar bergerak pada akhir setiap bulan
+    if (RVL && RVL.tick) { peristiwa = peristiwa.concat(RVL.tick().peristiwa || []); }
+
     var HY = tahunBaharu ? muat('MyPolitikHayat', 'hayat.js') : null;                       // v5.0: umur +1 dan semakan kesihatan
     if (HY) {
       var ht = HY.prosesTahunBaharu();

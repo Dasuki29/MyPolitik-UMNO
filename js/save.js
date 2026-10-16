@@ -76,6 +76,8 @@
     if (!avatarSah(p.avatar)) { p.avatar = avatarSah(p.demografik && p.demografik.kategoriKod) ? p.demografik.kategoriKod : 'pemuda'; }
     if (SY && !SY.sah(p.sayap)) { p.sayap = SY.kod(p); }          // v5.9: laluan sayap (simpanan lama mengikut avatar/kategori)
     p.versi = VERSI;
+    if (!p.settings || typeof p.settings !== 'object') { p.settings = {}; }
+    if (['EASY', 'NORMAL', 'HARDCORE'].indexOf(p.settings.difficultyLevel) < 0) { p.settings.difficultyLevel = 'NORMAL'; }   // v7.28: simpanan lama = Biasa
     var bln = parseInt(p.bulan, 10);                 // Bulan 1 hingga 12 (sistem masa bulanan)
     p.bulan = isFinite(bln) ? Math.max(1, Math.min(12, bln)) : DEFAULTS.bulan;
     p.stress = isFinite(Number(p.stress)) ? clamp(Math.round(Number(p.stress)), 0, 100) : 0;                 // v5.6
@@ -157,6 +159,7 @@
         bawah40: c.bawah40, atas40: c.atas40,
         kumpulan: c.kumpulan ? { pemuda: c.kumpulan.pemuda, puteri: c.kumpulan.puteri, wanita: c.kumpulan.wanita, induk: c.kumpulan.induk, langsung: !!c.kumpulan.langsung } : null     // v6.3
       },
+      settings: { difficultyLevel: input.difficultyLevel === 'EASY' || input.difficultyLevel === 'HARDCORE' ? input.difficultyLevel : 'NORMAL' },   // v7.28: dikunci selepas daftar
       avatar: avatarSah(input.avatar) ? input.avatar : (avatarSah(d.kod) ? d.kod : 'pemuda'),   // pilihan watak (kosmetik)
       sayap: SY && SY.sah(input.sayap) && (input.sayap === 'utama' || input.sayap === d.kod) ? input.sayap : (SY ? SY.cadangan(d.jantina, d.umur) : 'utama'),   // v5.9: laluan kerjaya (Utama / Pemuda / Puteri / Wanita)
       jawatan: DEFAULTS.jawatan,
@@ -238,6 +241,8 @@
     var p = loadPlayer();
     if (!p) { return { ok: false, kod: 'tiada_profil', ralat: 'Tiada profil pemain. Daftar dahulu di halaman utama.' }; }
 
+    var RV = root.MyPolitikRival || null;                                                      // v7.28: perbelanjaan mengikut tahap kesukaran (hanya perbelanjaan, bukan pendapatan)
+    if (RV && kesan.myr < 0 && !opts.tanpaKesukaran) { kesan = salin(kesan); kesan.myr = -Math.round(-kesan.myr * RV.pengali(p, 'belanja')); }
     var sebelum = { ip: p.ip, myr: p.myr, ap: p.ap, reputasi: p.reputasi, kesetiaan: salin(p.kesetiaan) };
     var ap = p.ap + (kesan.ap || 0), myr = p.myr + (kesan.myr || 0);
     if (ap < 0) { return { ok: false, kod: 'ap', ralat: 'Mata Tindakan (AP) tidak mencukupi.' }; }
