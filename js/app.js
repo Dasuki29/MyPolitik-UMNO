@@ -1341,11 +1341,11 @@
       var h = '<div class="org-tabs" role="tablist">' + [['induk', 'Induk'], ['pemuda', 'Pemuda'], ['puteri', 'Puteri'], ['wanita', 'Wanita']].map(function (t) {
         return '<button type="button" class="org-tab" role="tab" data-org="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + (st.laluan === t[0] || (t[0] === 'induk' && st.laluan === 'utama') ? ' ★' : '') + '</button>'; }).join('') + '</div>';
       if (tab === 'induk') {
-        h += '<p class="note">Struktur Induk: Ketua, Naib Ketua dan AJK di setiap peringkat. Sayap meniru struktur ini.</p>' + OG.PERINGKAT.map(function (k) { return blok(st.induk[k]); }).join('');
+        h += '<p class="note">Struktur Induk: Ketua, Naib Ketua dan AJK di setiap peringkat. Sayap meniru struktur ini.</p>' + OG.PERINGKAT.map(function (k) { return blok(st.induk[k]) + (k === 'pusat' && W.MyPolitikNegeri ? W.MyPolitikNegeri.htmlPusat(p) : ''); }).join('');
       } else {
         var s = st.sayap[tab];
         h += '<p class="note"><strong>' + esc(s.nama) + '</strong>: ' + esc(s.penerangan) + ' Isu yang diperjuangkan:</p><ul class="org-isu">' + s.isu.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' +
-          OG.PERINGKAT.map(function (k) { return blok(s.peringkat[k]); }).join('');
+          OG.PERINGKAT.map(function (k) { return blok(s.peringkat[k]) + (k === 'pusat' && W.MyPolitikNegeri && W.MyPolitikNegeri.sayap.aktif(p) && p.sayap === tab ? W.MyPolitikNegeri.sayap.htmlPusat(p) : ''); }).join('');
       }
       var NGs = W.MyPolitikNegeri;
       if (NGs) { h += tab === 'induk' ? NGs.htmlStruktur(p) : (NGs.sayap.aktif(p) && p.sayap === tab ? NGs.sayap.htmlStruktur(p) : ''); }
