@@ -43,3 +43,7 @@
 .pp-live{color:#fff;background:#C8102E;border-radius:4px;padding:0 .35rem;font-size:.62rem;font-weight:700;animation:ppDenyut 1.4s infinite}
 @keyframes ppDenyut{50%{opacity:.5}}
 @media(prefers-reduced-motion:reduce){.pp-live{animation:none}.pp-stack i,.pp-pb__b i,.pp-drawer,.pp-drawer__panel{transition:none}}
+
+.pp-toast{padding-right:2.4rem}
+.pp-toast__x{position:absolute;top:2px;right:2px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:transparent;color:inherit;opacity:.65;font-size:.85rem;line-height:1;cursor:pointer}
+.pp-toast__x:hover,.pp-toast__x:focus-visible{opacity:1;background:rgba(128,128,128,.25)}
