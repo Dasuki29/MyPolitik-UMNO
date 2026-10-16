@@ -90,7 +90,11 @@
 
   function pegang(p, kod) { return getJawatan(p).some(function (j) { return j.kod === kod; }); }
   /** kumpulan (pilihan): 'utama' hanya mengira jawatan utama, supaya jawatan sayap tidak melangkau tangga jawatan utama (v3.8). */
-  function pangkatTertinggi(p, kumpulan) { return getJawatan(p).reduce(function (m, j) { return (kumpulan && j.kumpulan !== kumpulan) ? m : Math.max(m, j.pangkat || 0); }, 0); }
+  function pangkatTertinggi(p, kumpulan) {
+    var asas = getJawatan(p).reduce(function (m, j) { return (kumpulan && j.kumpulan !== kumpulan) ? m : Math.max(m, j.pangkat || 0); }, 0);
+    var exMkt = p && p.negeriBP && p.negeriBP.pengerusi && p.negeriBP.pengerusi.pemain && (!kumpulan || kumpulan === 'utama') ? 8 : 0;      // v7.34: Pengerusi Badan Perhubungan Negeri = ahli MKT ex-officio (pangkat 8)
+    return Math.max(asas, exMkt);
+  }
   function jawatanTertinggi(p) {
     var t = null;
     getJawatan(p).forEach(function (j) { if (!t || (j.pangkat || 0) > (t.pangkat || 0)) { t = j; } });
