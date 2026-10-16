@@ -274,20 +274,46 @@
   function bar(segmen, majoriti) {
     var jumlah = segmen.reduce(function (a, s) { return a + s.n; }, 0) || 1;
     return '<div class="pp-stack" role="img" aria-label="' + esc(segmen.map(function (s) { return s.nama + ' ' + s.n; }).join(', ')) + '">' +
-      segmen.filter(function (s) { return s.n > 0; }).map(function (s) { return '<i style="width:' + (s.n / jumlah * 100).toFixed(2) + '%;background:' + s.warna + '">' + (s.n / jumlah > 0.09 ? esc(s.nama + ' ' + s.n) : '') + '</i>'; }).join('') +
+      segmen.filter(function (s) { return s.n > 0; }).map(function (s) { return '<i style="width:' + (s.n / jumlah * 100).toFixed(2) + '%;background:' + s.warna + '">' + (s.n / jumlah > 0.09 ? esc((s.label !== undefined ? s.label : s.nama) + (s.label === '' ? '' : ' ' + s.n)) : '') + '</i>'; }).join('') +
       (majoriti ? '<span class="pp-maj" style="left:' + (majoriti / jumlah * 100).toFixed(2) + '%" title="Majoriti ' + majoriti + '"></span>' : '') + '</div>';
   }
   function legend(segmen) { return '<div class="pp-leg">' + segmen.map(function (s) { return '<span style="--c:' + s.warna + '">' + esc(s.nama) + ' ' + s.n + '</span>'; }).join('') + '</div>'; }
+  /* v7.52: nama gabungan sebenar. Warna mengikut nama warna rasmi (BN biru diraja, PH merah, PN biru tua); hex ialah anggaran. */
+  var GABUNGAN = {
+    BN: { nama: 'Barisan Nasional', pendek: 'BN', warna: '#2D50B8' },
+    PH: { nama: 'Pakatan Harapan', pendek: 'PH', warna: '#D7263D' },
+    PN: { nama: 'Perikatan Nasional', pendek: 'PN', warna: '#0B2A5B' },
+    LAIN: { nama: 'Bebas & lain-lain', pendek: 'Bebas', warna: '#7A808C' }
+  };
+  /** Pecah kerusi pembangkang kepada PH/PN (anggaran deterministik). Jika parti anda kalah, PH diberi bahagian lebih besar (gabungan pembangkang utama). */
+  function pecahPembangkang(p, k, jumlah, kerajaan, kunci) {
+    var rng = S().rngBerbenih(hash((p.id || '') + '|' + k.tahun + '|' + k.bulan + '|' + kunci)), r = kerajaan ? 0.4 + rng() * 0.3 : 0.6 + rng() * 0.25, ph = Math.round(jumlah * r);
+    return { PH: ph, PN: jumlah - ph };
+  }
+  function segGabungan(n) {
+    return ['BN', 'PH', 'PN', 'LAIN'].map(function (k) { return { nama: GABUNGAN[k].nama + (k === 'BN' ? ' (★ parti anda)' : ''), n: n[k], warna: GABUNGAN[k].warna, kod: k, label: k === 'LAIN' ? '' : GABUNGAN[k].pendek }; });
+  }
+  /** Selaras dengan permainan: BN membentuk kerajaan jika kerusinya mencapai ambang; jika tidak, pihak pembangkang membentuk kerajaan (diketuai PH atau PN yang lebih besar). */
+  function ayatKerajaan(tajuk, n, ambang) {
+    if (n.BN >= ambang) { return '<b>' + tajuk + ': ' + GABUNGAN.BN.nama + '</b> (' + n.BN + ' kerusi, majoriti ' + ambang + ').'; }
+    var ketua = n.PH >= n.PN ? 'PH' : 'PN', lain = ketua === 'PH' ? 'PN' : 'PH', opp = n.PH + n.PN + n.LAIN;
+    if (opp >= ambang) {
+      return '<b>' + tajuk + ': gabungan pembangkang diketuai ' + GABUNGAN[ketua].nama + '</b> (' + GABUNGAN[ketua].pendek + ' ' + n[ketua] + ' + ' + GABUNGAN[lain].pendek + ' ' + n[lain] + ' + lain-lain ' + n.LAIN + ' = ' + opp + ' kerusi, majoriti ' + ambang + '). ' +
+        GABUNGAN.BN.nama + ' menjadi pembangkang (' + n.BN + ' kerusi).';
+    }
+    return '<b>Tiada majoriti</b> (perlu ' + ambang + '): ' + GABUNGAN.BN.pendek + ' ' + n.BN + ', ' + GABUNGAN.PH.pendek + ' ' + n.PH + ', ' + GABUNGAN.PN.pendek + ' ' + n.PN + '. Kerajaan minoriti atau gabungan baharu perlu dibentuk.';
+  }
   function htmlKerusi(p) {
     var k = p.kerusiNasional, r = kunciRekod(p);
     if (!k || !r) { return '<p class="pp-nota">Belum ada keputusan PRU. Anggaran kerusi muncul selepas pilihan raya pertama.</p>'; }
-    var seg = [{ nama: 'Parti', n: k.parti, warna: '#C8102E' }, { nama: 'Rakan', n: k.rakan, warna: '#2B6CB0' }, { nama: 'Pembangkang', n: k.pembangkang, warna: '#555B66' }, { nama: 'Bebas', n: k.bebas, warna: '#14994F' }];
-    var gabung = k.parti + k.rakan;
+    var gabung = k.parti + k.rakan, pp = pecahPembangkang(p, k, k.pembangkang, k.kerajaan, 'parlimen');
+    var np = { BN: gabung, PH: pp.PH, PN: pp.PN, LAIN: k.bebas }, seg = segGabungan(np);
     var h = '<h4>Kerusi Parlimen <small>PRU ' + esc(k.tahun) + ' · anggaran</small></h4>' + bar(seg, CONFIG.MAJORITI) + legend(seg) +
-      '<p class="pp-nota">' + (k.kerajaan ? '<b>Kerajaan: ' + gabung + ' kerusi</b> (majoriti ' + CONFIG.MAJORITI + ')' : '<b>Pembangkang</b>: gabungan anda ' + gabung + ' kerusi, kurang ' + (CONFIG.MAJORITI - gabung) + ' daripada majoriti ' + CONFIG.MAJORITI) + '. Garis putus = majoriti.</p>';
+      '<p class="pp-nota">' + ayatKerajaan('Kerajaan persekutuan', np, CONFIG.MAJORITI) + ' Garis putus = majoriti.</p>';
     if (k.dun) {
-      var sd = [{ nama: 'Kerajaan', n: k.dun.kerajaan, warna: '#C8102E' }, { nama: 'Pembangkang', n: k.dun.pembangkang, warna: '#555B66' }, { nama: 'Bebas', n: k.dun.bebas, warna: '#14994F' }];
-      h += '<h4 class="pp-sub">Kerusi DUN <small>' + esc(p.negeri) + ' · ' + k.dun.jumlah + ' kerusi · anggaran</small></h4>' + bar(sd, Math.floor(k.dun.jumlah / 2) + 1) + legend(sd);
+      var amb = Math.floor(k.dun.jumlah / 2) + 1, pd = pecahPembangkang(p, k, k.dun.pembangkang, k.dun.kerajaan >= amb, 'dun'), nd = { BN: k.dun.kerajaan, PH: pd.PH, PN: pd.PN, LAIN: k.dun.bebas }, sd = segGabungan(nd);
+      h += '<h4 class="pp-sub">Kerusi DUN <small>' + esc(p.negeri) + ' · ' + k.dun.jumlah + ' kerusi · anggaran</small></h4>' + bar(sd, amb) + legend(sd) +
+        '<p class="pp-nota">' + ayatKerajaan('Kerajaan negeri', nd, amb) + '</p>';
     }
     return h;
   }
