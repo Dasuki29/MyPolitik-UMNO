@@ -1066,6 +1066,7 @@
     if (ET && ET.kuatkuasaGantung) { ET.kuatkuasaGantung(); }          // v4.6: lucut jawatan jika digantung
     if (HY) { HY.kemaskiniJawatanTertinggi(); }                         // v5.0: rekod jawatan tertinggi untuk Legacy Summary
     var p = S.loadPlayer();
+    if (S.diPulihkan && S.diPulihkan()) { toast('Simpanan rosak dikesan. Permainan dipulihkan daripada sandaran terakhir.', 'ralat'); }      // v7.25
     if (!p) { W.location.replace(INDEX_URL); return; }
     if (p.tamat) { paparLegasi(p); return; }                            // v5.0: kerjaya tamat
     renderHeader(p); renderSisi(p); renderTabs(p); renderPanel(p);
@@ -1405,7 +1406,7 @@
         (x.aktif ? '<span class="note">Dimainkan</span>' : '<button type="button" class="btn btn--gold btn--sm" data-slot-main="' + x.no + '">Main</button>') + '</div>';
     }).join('');
   }
-  function bukaMenu() { var o = $('menu-win'); if (!o) { return; } renderSlotMenu(); o.classList.add('is-open'); o.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-open'); var b = $('menu-tutup'); if (b) { b.focus(); } }
+  function bukaMenu() { var o = $('menu-win'); if (!o) { return; } renderSlotMenu(); var ms = $('menu-simpan'), td = S.terakhirDisimpan && S.terakhirDisimpan(); if (ms) { ms.textContent = td ? 'Disimpan automatik ' + ('0' + td.getHours()).slice(-2) + ':' + ('0' + td.getMinutes()).slice(-2) : 'Simpanan automatik aktif.'; } o.classList.add('is-open'); o.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-open'); var b = $('menu-tutup'); if (b) { b.focus(); } }
   function tutupMenu() { var o = $('menu-win'); if (!o || !o.classList.contains('is-open')) { return; } o.classList.remove('is-open'); o.setAttribute('aria-hidden', 'true'); document.body.classList.remove('modal-open'); var b = $('btn-menu'); if (b) { b.focus(); } }
   if ($('btn-menu')) {
     $('btn-menu').addEventListener('click', bukaMenu);

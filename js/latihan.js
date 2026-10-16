@@ -30,7 +30,7 @@
   'use strict';
 
   var K_BANDERA = 'myPolitik_latihan', K_ASAL = 'myPolitik_latihan_asal', K_TAWAR = 'myPolitik_latihan_tawar';
-  var KUNCI = { player: 'myPolitik_player', events: 'myPolitik_events', tutorial: 'myPolitik_tutorial' };
+  var KUNCI = { player: 'myPolitik_player', player_bak: 'myPolitik_player_bak', events: 'myPolitik_events', tutorial: 'myPolitik_tutorial' };
 
   /* ---------- storan & modul ---------- */
   function stor() { try { return root.localStorage || null; } catch (e) { return null; } }

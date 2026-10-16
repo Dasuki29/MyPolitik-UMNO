@@ -19,6 +19,7 @@
   'use strict';
 
   var KEY = 'myPolitik_player';
+  var KEY_BAK = 'myPolitik_player_bak';      // v7.25: sandaran simpanan sah sebelumnya (watak yang sama)
   var VERSI = 2;
   var NAMA_ACARA = 'myPolitik:player-updated';
   var MAKS_LOG = 50;
@@ -179,31 +180,100 @@
     } catch (e) { /* acara tidak kritikal */ }
   }
 
-  /** Simpan profil. Pulang { ok:true } atau { ok:false, ralat:'...' }. Bacaan semula mengesahkan simpanan. */
+  /**
+   * v7.25: JSON.stringify yang selamat daripada rujukan bulat (circular). Rujukan bulat dibuang (bukan dilontar) dan dikira.
+   * Pulang { teks, dibuang }. Rujukan kongsi yang bukan bulat dikekalkan.
+   */
+  function selamatSerial(nilai) {
+    var tindanan = [], dibuang = 0;
+    var teks = JSON.stringify(nilai, function (k, v) {
+      if (v && typeof v === 'object') {
+        while (tindanan.length && tindanan[tindanan.length - 1] !== this) { tindanan.pop(); }
+        if (tindanan.indexOf(v) >= 0) { dibuang++; return undefined; }
+        tindanan.push(v);
+      }
+      return v;
+    });
+    return { teks: teks, dibuang: dibuang };
+  }
+  function sahTeks(t) { try { return sah(JSON.parse(t)); } catch (e) { return false; } }
+
+  var masaSimpan = null, dipulihkan = false;
+
+  /** Simpan profil. Pulang { ok:true } atau { ok:false, ralat:'...' }. Bacaan semula mengesahkan simpanan; kegagalan memulihkan nilai lama. */
   function savePlayer(profil, meta) {
     if (!sah(profil)) { return { ok: false, ralat: 'Profil pemain tidak lengkap.' }; }
     var s = storan();
     if (!s) { return { ok: false, ralat: 'Pelayar menyekat storan setempat. Matikan mod peribadi atau benarkan data tapak web, kemudian cuba lagi.' }; }
+    var sebelum = null;
     try {
       normalisasi(profil);
-      s.setItem(KEY, JSON.stringify(profil));
+      var sr = selamatSerial(profil);
+      sebelum = s.getItem(KEY);
+      s.setItem(KEY, sr.teks);
       var balik = JSON.parse(s.getItem(KEY));
       if (!sah(balik) || balik.id !== profil.id) { throw new Error('semakan gagal'); }
+      var lama = null; try { lama = sebelum ? JSON.parse(sebelum) : null; } catch (x) { lama = null; }
+      if (lama && sah(lama) && lama.id === profil.id && sebelum !== sr.teks) { s.setItem(KEY_BAK, sebelum); }   // sandaran = simpanan sah terakhir watak yang sama
+      else if (!lama || !sah(lama) || lama.id !== profil.id) { s.removeItem(KEY_BAK); }                          // watak berbeza: jangan simpan sandaran watak lain
+      masaSimpan = new Date();
     } catch (e) {
+      try { if (sebelum === null) { s.removeItem(KEY); } else { s.setItem(KEY, sebelum); } } catch (x) { /* abaikan */ }   // pulihkan nilai lama
       return { ok: false, ralat: 'Profil tidak dapat disimpan (storan penuh atau disekat).' };
     }
     siarkan(profil, meta);
     return { ok: true };
   }
 
-  /** Muat profil (sentiasa lengkap). Pulang objek atau null jika tiada / rosak. */
+  /** Jika simpanan utama rosak, pulihkan daripada sandaran (hanya apabila kunci utama WUJUD tetapi tidak sah). */
+  function pulihDariSandaran(s) {
+    try {
+      var mentah = s.getItem(KEY_BAK);
+      if (!mentah || !sahTeks(mentah)) { return null; }
+      s.setItem(KEY, mentah);
+      dipulihkan = true;
+      var b = normalisasi(JSON.parse(mentah));
+      siarkan(b, { pulih: true });
+      return b;
+    } catch (e) { return null; }
+  }
+
+  /** Muat profil (sentiasa lengkap). Pulang objek atau null jika tiada. Data rosak dipulihkan daripada sandaran jika ada. */
   function loadPlayer() {
     var s = storan();
     if (!s) { return null; }
-    try {
-      var p = JSON.parse(s.getItem(KEY));
-      return sah(p) ? normalisasi(p) : null;
-    } catch (e) { return null; }
+    var mentah;
+    try { mentah = s.getItem(KEY); } catch (e) { return null; }
+    if (mentah === null) { return null; }
+    try { var p = JSON.parse(mentah); if (sah(p)) { return normalisasi(p); } } catch (e) { /* rosak: cuba sandaran */ }
+    return pulihDariSandaran(s);
+  }
+
+  /** v7.25: pulang true sekali sahaja jika simpanan dipulihkan daripada sandaran (untuk makluman kepada pemain). */
+  function diPulihkan() { var d = dipulihkan; dipulihkan = false; return d; }
+  /** v7.25: masa simpanan berjaya terakhir dalam sesi ini (Date) atau null. */
+  function terakhirDisimpan() { return masaSimpan; }
+
+  /* v7.25: nama pendek mengikut slot. noSlot kosong / slot aktif = simpanan utama; slot lain dibaca/ditulis terus pada kunci slotnya. */
+  function modulSlot() { return root.MyPolitikSlot || (typeof module === 'object' && typeof require === 'function' ? (function () { try { return require('./slot.js'); } catch (e) { return null; } })() : null); }
+  function slotLain(noSlot) {
+    var SL = modulSlot();
+    if (noSlot === undefined || noSlot === null || !SL || !SL.nombor) { return 0; }
+    var n = SL.nombor(noSlot);
+    return n && n !== SL.aktif() ? n : 0;
+  }
+  function loadGame(noSlot) {
+    var n = slotLain(noSlot), s = storan();
+    if (!n) { return loadPlayer(); }
+    try { var p = JSON.parse(s.getItem(modulSlot().kunci(n, 'player'))); return sah(p) ? normalisasi(p) : null; } catch (e) { return null; }
+  }
+  function saveGame(profil, noSlot) {
+    var n = slotLain(noSlot), s = storan();
+    if (!n) { return savePlayer(profil || loadPlayer()); }
+    if (!sah(profil)) { return { ok: false, ralat: 'Profil pemain tidak lengkap.' }; }
+    if (!s) { return { ok: false, ralat: 'Pelayar menyekat storan setempat.' }; }
+    try { normalisasi(profil); var k = modulSlot().kunci(n, 'player'), t = selamatSerial(profil).teks; s.setItem(k, t); if (!sahTeks(s.getItem(k))) { throw new Error('semakan gagal'); } return { ok: true }; }
+    catch (e) { return { ok: false, ralat: 'Profil tidak dapat disimpan (storan penuh atau disekat).' }; }
   }
 
   function hasPlayer() { return loadPlayer() !== null; }
@@ -221,7 +291,7 @@
   function clearPlayer() {
     var s = storan();
     if (!s) { return false; }
-    try { s.removeItem(KEY); return true; } catch (e) { return false; }
+    try { s.removeItem(KEY); s.removeItem(KEY_BAK); return true; } catch (e) { return false; }
   }
 
   /**
@@ -338,6 +408,11 @@
     buildPlayerProfile: buildPlayerProfile,
     savePlayer: savePlayer,
     loadPlayer: loadPlayer,
+    saveGame: saveGame,
+    loadGame: loadGame,
+    selamatSerial: selamatSerial,
+    diPulihkan: diPulihkan,
+    terakhirDisimpan: terakhirDisimpan,
     hasPlayer: hasPlayer,
     updatePlayer: updatePlayer,
     clearPlayer: clearPlayer,
