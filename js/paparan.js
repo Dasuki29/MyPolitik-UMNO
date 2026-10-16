@@ -16,7 +16,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : this), function (root) {
   'use strict';
 
-  var CONFIG = { JUMLAH_PARLIMEN: 222, MAJORITI: 112, GABUNG_MS: 400, MAKS_TOAST: 3, MAKS_BIASA: 4, TOAST_MS: 4000, BEBAS_MAKS: 8, KUNCI_LIHAT: 'myPolitik_logLihat' };
+  var CONFIG = { JUMLAH_PARLIMEN: 222, MAJORITI: 112, GABUNG_MS: 400, MAKS_TOAST: 3, MAKS_BIASA: 4, TOAST_MS: 4000, BEBAS_MAKS: 8, KUNCI_LIHAT: 'myPolitik_logLihat', KUNCI_SENYAP: 'myPolitik_notifSenyap' };
   var BULAN = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
   var DUN_NEGERI = { perlis: 15, kedah: 36, kelantan: 45, terengganu: 32, 'pulau pinang': 40, perak: 59, pahang: 42, selangor: 56, 'negeri sembilan': 36, melaka: 28, johor: 56, sabah: 73, sarawak: 82 };   // bilangan kerusi DUN dipilih (anggaran)
 
@@ -56,6 +56,14 @@
      ------------------------------------------------------------------------ */
   function bekas() { var d = dok(); return d ? d.getElementById('toasts') : null; }
   function buangToast(t) { if (t && t.parentNode) { t.parentNode.removeChild(t); } }
+  /* Mod senyap: pilihan per peranti (localStorage). Mesej ralat tetap dipaparkan. */
+  function senyap() { try { return root.localStorage.getItem(CONFIG.KUNCI_SENYAP) === '1'; } catch (e) { return false; } }
+  function setSenyap(v) {
+    try { root.localStorage.setItem(CONFIG.KUNCI_SENYAP, v ? '1' : '0'); } catch (e) { /* abaikan */ }
+    var st = bekas();
+    if (v && st) { Array.prototype.slice.call(st.querySelectorAll('.pp-toast:not(.toast--danger)')).forEach(buangToast); }
+    kemaskiniLoceng();
+  }
   function letak(t, ms) {
     var st = bekas(); if (!st) { return; }
     st.appendChild(t);
@@ -63,14 +71,19 @@
     var semua = Array.prototype.filter.call(st.children, function (x) { return x.classList.contains('pp-toast--impak') === t.classList.contains('pp-toast--impak'); });
     while (semua.length > maks) { buangToast(semua.shift()); }
     var timer = setTimeout(function () { buangToast(t); }, ms);
-    var x = dok().createElement('button');                                  // butang tutup kecil (kanan atas)
-    x.type = 'button'; x.className = 'pp-toast__x'; x.setAttribute('aria-label', 'Tutup notifikasi'); x.textContent = '\u2715';
-    t.appendChild(x);
-    t.addEventListener('click', function () { clearTimeout(timer); buangToast(t); });
+    var bt = dok().createElement('div'); bt.className = 'pp-toast__bt';
+    bt.innerHTML = '<button type="button" class="pp-toast__min" aria-label="Kecilkan notifikasi (senyap)" title="Kecilkan">\u2014</button><button type="button" class="pp-toast__x" aria-label="Tutup notifikasi" title="Tutup">\u2715</button>';
+    t.appendChild(bt);
+    t.addEventListener('click', function (ev) {
+      clearTimeout(timer);
+      if (ev.target.closest && ev.target.closest('.pp-toast__min')) { setSenyap(true); }
+      buangToast(t);
+    });
   }
   /** Mesej biasa (serasi dengan toast(teks, jenis) lama). */
   function toast(teks, jenis) {
     var d = dok(); if (!d || !bekas()) { return; }
+    if (senyap() && jenis !== 'ralat') { kemaskiniLoceng(); return; }
     var t = d.createElement('div');
     t.className = 'toast pp-toast' + (jenis === 'ok' ? ' toast--success' : jenis === 'ralat' ? ' toast--danger' : '');
     t.setAttribute('role', jenis === 'ralat' ? 'alert' : 'status');
@@ -79,7 +92,7 @@
   }
   /** Toast impak: tajuk + chip warna. */
   function toastImpak(tajuk, chip) {
-    var d = dok(); if (!d || !bekas() || !chip.length) { return; }
+    var d = dok(); if (!d || !bekas() || !chip.length || senyap()) { return; }
     var t = d.createElement('div');
     t.className = 'toast pp-toast pp-toast--impak';
     t.setAttribute('role', 'status');
@@ -134,8 +147,10 @@
   }
   function kemaskiniLoceng() {
     var d = dok(), b = d && d.getElementById('pp-loceng'); if (!b || !S()) { return; }
-    var n = bilBaharu(S().loadPlayer()), em = b.querySelector('em');
+    var n = bilBaharu(S().loadPlayer()), em = b.querySelector('em'), sy = senyap();
     if (em) { em.textContent = n > 99 ? '99+' : String(n); em.hidden = !n; }
+    b.classList.toggle('pp-pil--penuh', n > 0 || sy);                       // teks \"Notifikasi\" hanya bila ada yang belum dibaca atau mod senyap
+    b.classList.toggle('pp-pil--senyap', sy);
   }
   function htmlLog(p) {
     var log = (p && p.log) || [], fn = PENAPIS.filter(function (x) { return x[0] === penapis; })[0][2];
@@ -165,23 +180,49 @@
     dr.classList.remove('is-open'); dr.setAttribute('aria-hidden', 'true');
     var b = d.getElementById('pp-loceng'); if (b) { b.focus(); }
   }
+  function htmlPop(p) {
+    var log = ((p && p.log) || []).filter(function (e) { return e.perubahan && chipDaripada(e.perubahan).length; }).slice(0, 4);
+    var h = '<div class="pp-pop__kepala"><b>Notifikasi terkini</b></div>';
+    if (!log.length) { h += '<p class="pp-kosong">Tiada notifikasi baharu.</p>'; }
+    log.forEach(function (e) { h += '<div class="pp-pop__baris"><b>' + esc(e.nama || e.tindakan || 'Aktiviti') + '</b><div class="pp-chips">' + chipHtml(chipDaripada(e.perubahan)) + '</div></div>'; });
+    h += '<div class="pp-pop__kaki"><button type="button" data-pp-lihat>Lihat semua \u203A Log Aktiviti</button><button type="button" data-pp-senyap aria-pressed="' + senyap() + '">' + (senyap() ? '\uD83D\uDD14 Aktifkan pop-up semula' : '\uD83D\uDD15 Senyapkan pop-up') + '</button></div>';
+    return h;
+  }
+  function tutupPop(fokus) {
+    var d = dok(), po = d && d.getElementById('pp-pop'); if (!po || po.hidden) { return; }
+    po.hidden = true; var b = d.getElementById('pp-loceng'); if (b) { b.setAttribute('aria-expanded', 'false'); if (fokus) { b.focus(); } }
+  }
+  function togolPop() {
+    var d = dok(), po = d && d.getElementById('pp-pop'), b = d && d.getElementById('pp-loceng'); if (!po || !S()) { return; }
+    if (!po.hidden) { tutupPop(true); return; }
+    po.innerHTML = htmlPop(S().loadPlayer()); po.hidden = false; b.setAttribute('aria-expanded', 'true');
+    tandaLihat(); kemaskiniLoceng();
+  }
   function pasangUI() {
     var d = dok(); if (!d || d.getElementById('pp-loceng')) { return; }
     var b = d.createElement('button');
-    b.type = 'button'; b.id = 'pp-loceng'; b.className = 'pp-loceng'; b.setAttribute('aria-label', 'Buka Log Aktiviti');
-    b.innerHTML = '<span aria-hidden="true">🔔</span><em hidden>0</em>';
+    b.type = 'button'; b.id = 'pp-loceng'; b.className = 'pp-loceng'; b.setAttribute('aria-label', 'Notifikasi'); b.setAttribute('aria-haspopup', 'true'); b.setAttribute('aria-expanded', 'false');
+    b.innerHTML = '<span aria-hidden="true">🔔</span><span class="pp-pil__t">Notifikasi</span><em hidden>0</em><span class="pp-pil__a" aria-hidden="true">\u25B4</span>';
     d.body.appendChild(b);
+    var po = d.createElement('div'); po.id = 'pp-pop'; po.className = 'pp-pop'; po.hidden = true; po.setAttribute('role', 'region'); po.setAttribute('aria-label', 'Notifikasi terkini');
+    d.body.appendChild(po);
+    po.addEventListener('click', function (ev) {
+      var t = ev.target.closest ? ev.target.closest('button') : null; if (!t) { return; }
+      if (t.hasAttribute('data-pp-lihat')) { tutupPop(false); bukaLog(); }
+      else if (t.hasAttribute('data-pp-senyap')) { setSenyap(!senyap()); po.innerHTML = htmlPop(S().loadPlayer()); }
+    });
+    d.addEventListener('click', function (ev) { if (!po.hidden && !po.contains(ev.target) && !b.contains(ev.target)) { tutupPop(false); } });
     var dr = d.createElement('div');
     dr.id = 'pp-drawer'; dr.className = 'pp-drawer'; dr.setAttribute('role', 'dialog'); dr.setAttribute('aria-modal', 'true'); dr.setAttribute('aria-hidden', 'true'); dr.setAttribute('aria-label', 'Log Aktiviti');
     dr.innerHTML = '<div class="pp-drawer__panel"><div class="pp-drawer__kepala"><h2>📜 Log Aktiviti <small>50 terakhir</small></h2><button type="button" id="pp-drawer-tutup" aria-label="Tutup">✕</button></div><div id="pp-drawer-isi" class="pp-drawer__isi"></div></div>';
     d.body.appendChild(dr);
-    b.addEventListener('click', bukaLog);
+    b.addEventListener('click', togolPop);
     dr.addEventListener('click', function (ev) {
       if (ev.target === dr || (ev.target.id === 'pp-drawer-tutup')) { tutupLog(); return; }
       var t = ev.target.closest ? ev.target.closest('[data-pp-tapis]') : null;
       if (t) { penapis = t.getAttribute('data-pp-tapis'); renderDrawer(); }
     });
-    d.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { tutupLog(); } });
+    d.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { tutupLog(); tutupPop(true); } });
   }
 
   /* ------------------------------------------------------------------------
@@ -295,5 +336,5 @@
   }
   if (dok()) { if (dok().readyState === 'loading') { dok().addEventListener('DOMContentLoaded', function () { try { mula(); } catch (e) { /* abaikan */ } }); } else { try { mula(); } catch (e) { /* abaikan */ } } }
 
-  return { CONFIG: CONFIG, toast: toast, toastImpak: toastImpak, chipDaripada: chipDaripada, render: render, anggarKerusi: anggarKerusi, kemaskiniKerusi: kemaskiniKerusi, htmlKerusi: htmlKerusi, htmlSentimen: htmlSentimen, bukaLog: bukaLog, tutupLog: tutupLog, mula: mula };
+  return { CONFIG: CONFIG, toast: toast, toastImpak: toastImpak, chipDaripada: chipDaripada, render: render, anggarKerusi: anggarKerusi, kemaskiniKerusi: kemaskiniKerusi, htmlKerusi: htmlKerusi, htmlSentimen: htmlSentimen, bukaLog: bukaLog, tutupLog: tutupLog, senyap: senyap, setSenyap: setSenyap, mula: mula };
 });
