@@ -1051,9 +1051,10 @@
     if (!musim && state.tab === 'pilihanraya') { state.tab = 'tindakan'; }
     state.musimLalu = musim;
     $('tab-pilihanraya').hidden = !musim; $('nav-pilihanraya').hidden = !musim;
-    var dw = !!(W.MyPolitikDewan && W.MyPolitikDewan.aktif(p));                   // v7.55: tab Dewan Rakyat untuk Ahli Parlimen / Menteri
+    var dwD = !!(W.MyPolitikDewan && W.MyPolitikDewan.aktif(p)), dwN = !!(W.MyPolitikDUN && W.MyPolitikDUN.aktif(p)), dw = dwD || dwN;                   // v7.55: tab Dewan Rakyat untuk Ahli Parlimen / Menteri
     if (!dw && state.tab === 'dewan') { state.tab = 'tindakan'; }
     $('tab-dewan').hidden = !dw; $('nav-dewan').hidden = !dw;
+    if (dw) { $('tab-dewan').textContent = dwD && dwN ? '🏛️ Dewan' : dwN ? '🏛️ DUN' : '🏛️ Dewan Rakyat'; $('nav-dewan').innerHTML = '<span class="icon" aria-hidden="true">🏛️</span>' + (dwN && !dwD ? 'DUN' : 'Dewan'); }
     TABS.forEach(function (t) {
       var b = $('tab-' + t), a = t === state.tab;
       b.setAttribute('aria-selected', String(a)); b.tabIndex = a ? 0 : -1;

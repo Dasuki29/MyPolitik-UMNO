@@ -339,6 +339,8 @@
     if (KAB && KAB.prosesBulan) { peristiwa = peristiwa.concat(KAB.prosesBulan().peristiwa || []); }
     var DWN = muat('MyPolitikDewan', 'dewan.js');                                               // v7.55: Dewan Rakyat (undi tidak percaya, soalan lisan)
     if (DWN && DWN.prosesBulan) { peristiwa = peristiwa.concat(DWN.prosesBulan().peristiwa || []); }
+    var DUNS = muat('MyPolitikDUN', 'dun.js');                                                  // v7.56: sidang DUN (ADUN / EXCO)
+    if (DUNS && DUNS.prosesBulan) { peristiwa = peristiwa.concat(DUNS.prosesBulan().peristiwa || []); }
     var PRU = muat('MyPolitikPRU', 'pru.js');                                                   // v7.3: pengisytiharan PRU/PRN & penilaian manifesto
     if (PRU && PRU.prosesBulan) { peristiwa = peristiwa.concat(PRU.prosesBulan().peristiwa || []); }
     var PRK = muat('MyPolitikPRK', 'prk.js');                                                   // v7.6: sentimen nasional & PRK pertengahan penggal

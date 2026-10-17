@@ -132,7 +132,7 @@
   /* ---------- Status pemain ---------- */
   var TAHAP_PARLIMEN = ['TIMBALAN_MENTERI', 'MENTERI_PENUH', 'TIMBALAN_PM', 'PERDANA_MENTERI'];
   var TAHAP_BENTANG = ['MENTERI_PENUH', 'TIMBALAN_PM', 'PERDANA_MENTERI'];
-  function statusMP(p) { var P = PRU(), st = P && p ? P.getPRU(p).status : null; return !!(st && st.jenis === 'MP'); }
+  function statusMP(p) { var P = PRU(); return !!(P && p && P.pegang && P.pegang(p, 'MP')); }
   function peranKabinet(p) { var K = KB(); return K ? K.getKabinet(p) : { hasGovernmentRole: false, roleLevel: 'NONE' }; }
   function menteriParlimen(p) { var k = peranKabinet(p); return !!(k.hasGovernmentRole && TAHAP_PARLIMEN.indexOf(k.roleLevel) >= 0); }
   /** Tab Dewan Rakyat dibuka untuk Ahli Parlimen atau Menteri/Timbalan Menteri persekutuan. */
