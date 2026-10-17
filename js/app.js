@@ -536,6 +536,8 @@
     var l = $('p-jawatan'); l.textContent = p.jawatan; l.className = 'badge-office badge-office--' + kelasLencana(p.jawatan);
     var rg = ET ? ET.ringkasan(p) : null, gantung = !!(rg && rg.status === 'digantung');
     if (gantung) { l.textContent = 'Ahli (Digantung)'; l.className = 'badge-office badge-office--gantung'; if (lp) { lp.hidden = true; } }     // v4.6
+    var pecat = !!(rg && rg.status === 'dipecat');                                       // v7.57: dipecat = bukan ahli (bukan 'Ahli Biasa')
+    if (pecat) { l.textContent = 'Dipecat (Bukan Ahli)'; l.className = 'badge-office badge-office--gantung'; if (lp) { lp.hidden = true; } }
     var kg = $('p-gantung');
     if (kg) {
       kg.hidden = !gantung;
@@ -559,7 +561,7 @@
       sb.textContent = si.ikon + ' Laluan ' + si.nama;
       sb.title = si.ringkas + '. Kelebihan: ' + si.kelebihan.join('; ');
       sb.setAttribute('aria-label', 'Laluan kerjaya ' + si.nama + '. Kelebihan: ' + si.kelebihan.join(', '));
-      sb.hidden = false;
+      sb.hidden = pecat;                                                            // v7.57: dipecat tidak lagi mempunyai laluan sayap
     }
     var um = $('p-umur');                                                                // v5.0: umur sentiasa dipaparkan
     if (um) {
